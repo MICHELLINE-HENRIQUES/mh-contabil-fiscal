@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conciliação de Razão Contábil — MH Consultoria</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0f1117; --bg2: #161b22; --border: rgba(255,255,255,0.08);
+  --text1: #e8e6e0; --text2: #a0a0a0; --text3: #5a5a5a; --text4: #3a3a3a;
+  --blue: #378add; --blue-light: #85b7eb; --blue-bg: rgba(55,138,221,0.12);
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text1); min-height: 100vh; }
+
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0.85rem 2rem;
+  border-bottom: 0.5px solid var(--border);
+  background: var(--bg);
+  position: sticky; top: 0; z-index: 10;
+}
+.btn-back {
+  background: none; border: 0.5px solid var(--border);
+  color: var(--text3); padding: 5px 12px; border-radius: 6px;
+  font-size: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.btn-back:hover { color: var(--text1); border-color: rgba(255,255,255,0.25); }
+
+.topbar-divider { color: var(--text4); font-size: 14px; }
+.topbar-title { font-size: 13px; color: var(--text2); font-weight: 500; }
+.topbar-sector {
+  margin-left: auto;
+  font-size: 10px;
+  background: var(--blue-bg); color: var(--blue-light);
+  padding: 3px 8px; border-radius: 20px;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+
+.main { max-width: 960px; margin: 0 auto; padding: 2rem; }
+
+.tool-header { margin-bottom: 2rem; }
+.tool-label { font-size: 10px; color: var(--text4); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+.tool-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text1); }
+.tool-desc { font-size: 13px; color: var(--text3); margin-top: 6px; line-height: 1.6; }
+
+.placeholder {
+  background: var(--bg2);
+  border: 0.5px dashed rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--text4);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.placeholder strong { color: var(--blue-light); font-weight: 500; display: block; font-size: 14px; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="btn-back" href="../index.html">← Painel</a>
+  <span class="topbar-divider">/</span>
+  <span class="topbar-title">Conciliação de Razão Contábil</span>
+  <span class="topbar-sector">Contábil</span>
+</div>
+
+<div class="main">
+  <div class="tool-header">
+    <div class="tool-label">Setor Contábil</div>
+    <div class="tool-title">Conciliação de Razão Contábil</div>
+    <div class="tool-desc">Cruzamento entre razão analítico e lançamentos contábeis por conta. Identifica diferenças, duplicidades e saldos divergentes.</div>
+  </div>
+
+  <!-- ================================================
+       FERRAMENTA SERÁ DESENVOLVIDA AQUI
+       Me envie o formato dos seus arquivos (CSV, Excel?)
+       e como funciona o processo atual para começarmos.
+       ================================================ -->
+
+  <div class="placeholder">
+    <strong>Conciliação de Razão Contábil</strong>
+    Esta ferramenta será desenvolvida na próxima etapa.<br>
+    Envie o formato dos seus arquivos e explicação do processo para começar.
+  </div>
+
+</div>
+</body>
+</html>

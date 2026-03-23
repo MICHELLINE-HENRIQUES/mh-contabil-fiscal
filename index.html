@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MH Consultoria — Painel Fiscal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0f1117;
+  --bg2: #161b22;
+  --bg3: #1a2230;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.13);
+  --text1: #e8e6e0;
+  --text2: #a0a0a0;
+  --text3: #5a5a5a;
+  --text4: #3a3a3a;
+  --green: #1d9e75;
+  --green-light: #5dcaa5;
+  --green-bg: rgba(29,158,117,0.12);
+  --blue: #378add;
+  --blue-light: #85b7eb;
+  --blue-bg: rgba(55,138,221,0.12);
+  --amber: #ba7517;
+  --amber-light: #ef9f27;
+  --amber-bg: rgba(186,117,23,0.12);
+  --purple: #7f77dd;
+  --purple-light: #afa9ec;
+  --purple-bg: rgba(127,119,221,0.12);
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text1);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- LOGIN ---- */
+#login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 2rem;
+}
+
+.login-wrap {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-logo {
+  width: 56px; height: 56px;
+  background: linear-gradient(135deg, #2a7d5f, #0f5c3f);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px; color: #9fe1cb;
+  box-shadow: 0 0 0 1px rgba(93,202,165,0.15);
+}
+
+.login-company {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px; color: var(--text1);
+  text-align: center; line-height: 1.3;
+}
+
+.login-card {
+  width: 100%;
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  display: flex; flex-direction: column; gap: 1.25rem;
+}
+
+.login-hint {
+  font-size: 12px; color: var(--text3);
+  text-align: center; line-height: 1.6;
+}
+.login-hint strong { color: var(--green-light); font-weight: 500; }
+
+.google-btn {
+  width: 100%;
+  background: #fff;
+  border: none; border-radius: 8px;
+  padding: 11px 16px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 500; color: #3c3c3c;
+  transition: background 0.15s, transform 0.1s;
+}
+.google-btn:hover { background: #f0f0f0; }
+.google-btn:active { transform: scale(0.98); }
+
+.login-note {
+  font-size: 10px; color: var(--text4);
+  text-align: center;
+}
+
+/* ---- APP ---- */
+#app-screen { display: none; flex-direction: column; min-height: 100vh; }
+
+/* Topbar */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.85rem 2rem;
+  border-bottom: 0.5px solid var(--border);
+  background: var(--bg);
+  position: sticky; top: 0; z-index: 10;
+}
+
+.logo-area { display: flex; align-items: center; gap: 10px; }
+
+.logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, #2a7d5f, #0f5c3f);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Serif Display', serif;
+  font-size: 14px; color: #9fe1cb;
+}
+
+.logo-text { display: flex; flex-direction: column; }
+.logo-name { font-family: 'DM Serif Display', serif; font-size: 14px; color: var(--text1); line-height: 1.1; }
+.logo-sub { font-size: 9px; color: var(--text4); letter-spacing: 0.07em; text-transform: uppercase; }
+
+.user-area { display: flex; align-items: center; gap: 10px; }
+.user-info { display: flex; flex-direction: column; align-items: flex-end; }
+.user-name { font-size: 13px; font-weight: 500; color: var(--text2); }
+.user-email { font-size: 10px; color: var(--text4); }
+
+.avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--green); color: #e1f5ee;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500;
+}
+
+.btn-logout {
+  background: none;
+  border: 0.5px solid var(--border2);
+  color: var(--text3); padding: 4px 10px;
+  border-radius: 6px; font-size: 11px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: color 0.2s, border-color 0.2s;
+}
+.btn-logout:hover { color: var(--text1); border-color: rgba(255,255,255,0.25); }
+
+/* Main */
+.main { flex: 1; padding: 2rem; max-width: 960px; margin: 0 auto; width: 100%; }
+
+.page-header { margin-bottom: 1.75rem; }
+.page-label {
+  font-size: 10px; color: var(--text4);
+  letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px;
+}
+.page-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px; color: var(--text1); line-height: 1.2;
+}
+.page-title em { font-style: italic; color: var(--green-light); }
+
+/* Sector tabs */
+.tabs {
+  display: flex; gap: 4px;
+  border-bottom: 0.5px solid var(--border);
+  margin-bottom: 1.75rem;
+}
+
+.tab-btn {
+  background: none; border: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text3);
+  padding: 8px 16px 10px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -0.5px;
+  transition: color 0.2s, border-color 0.2s;
+  display: flex; align-items: center; gap: 6px;
+}
+.tab-btn:hover { color: var(--text2); }
+.tab-btn.active { color: var(--green-light); border-bottom-color: var(--green-light); }
+
+.tab-count {
+  font-size: 10px; padding: 1px 6px;
+  border-radius: 20px;
+  background: var(--border);
+  color: var(--text4);
+}
+.tab-btn.active .tab-count { background: var(--green-bg); color: var(--green-light); }
+
+/* Panels */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.sector-desc {
+  font-size: 12px; color: var(--text3);
+  margin-bottom: 1.25rem; line-height: 1.6;
+}
+
+/* Tools grid */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tool-card {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: 12px; padding: 1.25rem;
+  cursor: pointer; text-decoration: none;
+  display: flex; flex-direction: column; gap: 10px;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  position: relative; overflow: hidden;
+}
+.tool-card:hover {
+  border-color: rgba(93,202,165,0.3);
+  background: var(--bg3);
+  transform: translateY(-1px);
+}
+.tool-card.inactive { opacity: 0.45; cursor: default; }
+.tool-card.inactive:hover { transform: none; border-color: var(--border); background: var(--bg2); }
+
+.card-stripe {
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  opacity: 0; transition: opacity 0.2s;
+}
+.tool-card:hover .card-stripe { opacity: 1; }
+.stripe-green { background: var(--green); }
+.stripe-blue { background: var(--blue); }
+.stripe-amber { background: var(--amber); }
+.stripe-purple { background: var(--purple); }
+
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; }
+
+.card-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+}
+.icon-green { background: var(--green-bg); }
+.icon-blue { background: var(--blue-bg); }
+.icon-amber { background: var(--amber-bg); }
+.icon-purple { background: var(--purple-bg); }
+
+.badge {
+  font-size: 9px; font-weight: 500; padding: 3px 7px;
+  border-radius: 20px; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.badge-active { background: var(--green-bg); color: var(--green-light); border: 0.5px solid rgba(93,202,165,0.2); }
+.badge-new { background: var(--blue-bg); color: var(--blue-light); border: 0.5px solid rgba(85,183,235,0.2); }
+.badge-soon { background: rgba(100,100,100,0.1); color: var(--text4); border: 0.5px solid var(--border); }
+
+.card-title { font-size: 13px; font-weight: 500; color: var(--text2); line-height: 1.3; }
+.card-desc { font-size: 11px; color: var(--text3); line-height: 1.5; }
+
+.card-foot {
+  display: flex; align-items: center;
+  padding-top: 8px; border-top: 0.5px solid var(--border);
+  margin-top: auto;
+}
+.card-meta { font-size: 10px; color: var(--text4); }
+.card-arrow { margin-left: auto; font-size: 13px; color: var(--text4); transition: color 0.2s, transform 0.2s; }
+.tool-card:hover .card-arrow { color: var(--green-light); transform: translateX(3px); }
+
+/* Add card */
+.add-card {
+  background: transparent;
+  border: 0.5px dashed rgba(255,255,255,0.09);
+  border-radius: 12px; padding: 1.25rem;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; min-height: 150px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.add-card:hover { border-color: rgba(93,202,165,0.2); background: rgba(29,158,117,0.03); }
+.add-circle {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 0.5px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--text4);
+}
+.add-label { font-size: 11px; color: var(--text4); }
+
+/* Info bar */
+.info-bar {
+  background: rgba(29,158,117,0.05);
+  border: 0.5px solid rgba(93,202,165,0.1);
+  border-radius: 10px; padding: 0.9rem 1.1rem;
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-top: 0.5rem;
+}
+.info-icon { font-size: 13px; margin-top: 1px; }
+.info-text { font-size: 11px; color: var(--text3); line-height: 1.6; }
+.info-text strong { color: var(--green-light); font-weight: 500; }
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.tab-panel.active .tool-card,
+.tab-panel.active .add-card {
+  animation: fadeUp 0.25s ease both;
+}
+.tab-panel.active .tool-card:nth-child(2) { animation-delay: 0.05s; }
+.tab-panel.active .tool-card:nth-child(3) { animation-delay: 0.1s; }
+.tab-panel.active .add-card { animation-delay: 0.12s; }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-screen">
+  <div class="login-wrap">
+    <div class="login-brand">
+      <div class="login-logo">MH</div>
+      <div class="login-company">MH Consultoria e<br>Assessoria Contábil</div>
+    </div>
+    <div class="login-card">
+      <div class="login-hint">Acesse com sua conta corporativa<br><strong>@henriquesconsultoria.com.br</strong></div>
+      <button class="google-btn" onclick="doLogin()">
+        <svg width="18" height="18" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Entrar com Google
+      </button>
+      <div class="login-note">Somente contas @henriquesconsultoria.com.br têm acesso</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app-screen">
+
+  <div class="topbar">
+    <div class="logo-area">
+      <div class="logo-icon">MH</div>
+      <div class="logo-text">
+        <span class="logo-name">MH Consultoria</span>
+        <span class="logo-sub">Painel de Ferramentas</span>
+      </div>
+    </div>
+    <div class="user-area">
+      <div class="user-info">
+        <span class="user-name" id="uname">—</span>
+        <span class="user-email" id="uemail">—</span>
+      </div>
+      <div class="avatar" id="uavatar">??</div>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <div class="page-header">
+      <div class="page-label">Central de ferramentas</div>
+      <div class="page-title">Selecione um <em>setor</em> e inicie o cruzamento</div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('fiscal', this)">
+        📂 Fiscal <span class="tab-count" id="cnt-fiscal">1</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('contabil', this)">
+        📒 Contábil <span class="tab-count" id="cnt-contabil">1</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('rh', this)">
+        👥 RH <span class="tab-count" id="cnt-rh">0</span>
+      </button>
+    </div>
+
+    <!-- FISCAL -->
+    <div id="tab-fiscal" class="tab-panel active">
+      <div class="sector-desc">Ferramentas de apuração e cruzamento de tributos estaduais e federais.</div>
+      <div class="tools-grid">
+
+        <a class="tool-card" href="fiscal/icms.html">
+          <div class="card-stripe stripe-green"></div>
+          <div class="card-head">
+            <div class="card-icon icon-green">📊</div>
+            <span class="badge badge-active">Ativo</span>
+          </div>
+          <div class="card-title">Cruzamento ICMS</div>
+          <div class="card-desc">Leitura de CSV por filial e consolidação na aba TOTAL</div>
+          <div class="card-foot">
+            <span class="card-meta">fiscal/icms.html</span>
+            <span class="card-arrow">→</span>
+          </div>
+        </a>
+
+        <div class="add-card" onclick="alert('Me diga qual cruzamento fiscal você quer criar!')">
+          <div class="add-circle">+</div>
+          <div class="add-label">Nova ferramenta fiscal</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CONTÁBIL -->
+    <div id="tab-contabil" class="tab-panel">
+      <div class="sector-desc">Ferramentas de conciliação e análise de lançamentos contábeis.</div>
+      <div class="tools-grid">
+
+        <a class="tool-card" href="contabil/razao.html">
+          <div class="card-stripe stripe-blue"></div>
+          <div class="card-head">
+            <div class="card-icon icon-blue">📒</div>
+            <span class="badge badge-new">Novo</span>
+          </div>
+          <div class="card-title">Conciliação de Razão Contábil</div>
+          <div class="card-desc">Cruzamento entre razão e lançamentos por conta contábil</div>
+          <div class="card-foot">
+            <span class="card-meta">contabil/razao.html</span>
+            <span class="card-arrow">→</span>
+          </div>
+        </a>
+
+        <div class="add-card" onclick="alert('Me diga qual cruzamento contábil você quer criar!')">
+          <div class="add-circle">+</div>
+          <div class="add-label">Nova ferramenta contábil</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RH -->
+    <div id="tab-rh" class="tab-panel">
+      <div class="sector-desc">Ferramentas de folha de pagamento e obrigações trabalhistas.</div>
+      <div class="tools-grid">
+
+        <div class="tool-card inactive">
+          <div class="card-stripe stripe-amber"></div>
+          <div class="card-head">
+            <div class="card-icon icon-amber">👥</div>
+            <span class="badge badge-soon">Em breve</span>
+          </div>
+          <div class="card-title">Cruzamento de Folha</div>
+          <div class="card-desc">Conferência de FGTS, INSS e IRRF sobre a folha de pagamento</div>
+          <div class="card-foot">
+            <span class="card-meta">a desenvolver</span>
+          </div>
+        </div>
+
+        <div class="add-card" onclick="alert('Me diga qual ferramenta de RH você quer criar!')">
+          <div class="add-circle">+</div>
+          <div class="add-label">Nova ferramenta de RH</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="info-bar">
+      <div class="info-icon">🔒</div>
+      <div class="info-text">
+        Acesso restrito a <strong>@henriquesconsultoria.com.br</strong>. Os arquivos são processados localmente no navegador — nenhum dado é enviado para servidores externos.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function doLogin() {
+  document.getElementById('login-screen').style.display = 'none';
+  const app = document.getElementById('app-screen');
+  app.style.display = 'flex';
+  app.style.flexDirection = 'column';
+  document.getElementById('uname').textContent = 'Maria H.';
+  document.getElementById('uemail').textContent = 'maria@henriquesconsultoria.com.br';
+  document.getElementById('uavatar').textContent = 'MH';
+}
+
+function doLogout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+}
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
