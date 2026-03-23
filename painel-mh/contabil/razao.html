@@ -254,26 +254,51 @@ function handleFile(file) {
     const data = new Uint8Array(e.target.result);
     const workbook = XLSX.read(data, { type: 'array', cellDates: true });
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json(firstSheet, { raw: false });
+    const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
     
-    todosOsDados = json.map((row, index) => {
-      const debito = parseMoeda(row['Débito']);
-      const credito = parseMoeda(row['Crédito']);
-      const conta = String(row['Conta'] || row['Código Conta'] || row['CONTA'] || row['CODIGO'] || '');
-      return {
-        id: index,
-        conta: conta,
-        data: row['Data'] || '',
-        historico: String(row['Histórico'] || row['HISTORICO'] || ''),
-        debito: debito,
-        credito: credito,
-        filial: String(row['Filial'] || row['FILIAL'] || '1'),
-        conciliado: false,
-        competencia: extrairCompetencia(String(row['Histórico'] || row['HISTORICO'] || ''))
-      };
-    });
+    if (json.length < 2) {
+      alert("Arquivo vazio ou sem dados válidos.");
+      return;
+    }
 
-    listaContasUnicas = [...new Set(todosOsDados.map(d => d.conta).filter(c => c))].sort();
+    const header = json[0];
+    const colData = header.findIndex(c => /data/i.test(c));
+    const colHist = header.findIndex(c => /histórico|historico/i.test(c));
+    const colVal = header.findIndex(c => /valor/i.test(c));
+    const colFilial = header.findIndex(c => /filial/i.test(c));
+    
+    // Colunas C e D fixas para Débito e Crédito (índices 2 e 3)
+    const colContaDeb = 2; 
+    const colContaCred = 3;
+
+    todosOsDados = [];
+    for (let i = 1; i < json.length; i++) {
+      const row = json[i];
+      if (!row[colData]) continue;
+
+      const valorTotal = parseMoeda(row[colVal]);
+      const contaDeb = String(row[colContaDeb] || '').trim();
+      const contaCred = String(row[colContaCred] || '').trim();
+
+      todosOsDados.push({
+        id: i,
+        contaDeb: contaDeb,
+        contaCred: contaCred,
+        data: row[colData] || '',
+        historico: String(row[colHist] || ''),
+        valor: valorTotal,
+        filial: String(row[colFilial] || '1'),
+        conciliado: false,
+        competencia: extrairCompetencia(String(row[colHist] || ''))
+      });
+    }
+
+    const contas = new Set();
+    todosOsDados.forEach(d => {
+      if (d.contaDeb && d.contaDeb !== 'undefined') contas.add(d.contaDeb);
+      if (d.contaCred && d.contaCred !== 'undefined') contas.add(d.contaCred);
+    });
+    listaContasUnicas = [...contas].sort();
     popularContas(listaContasUnicas);
     
     document.getElementById('uploadStatus').className = 'upload-status ok';
@@ -304,19 +329,28 @@ function selecionarConta() {
   const conta = document.getElementById('contaSelect').value;
   if (!conta) return;
 
-  dadosFiltrados = todosOsDados.filter(d => d.conta === conta);
+  // ISOLAMENTO ABSOLUTO: Filtra apenas onde a conta selecionada aparece
+  dadosFiltrados = todosOsDados.filter(d => d.contaDeb === conta || d.contaCred === conta);
   calcularSaldoConta();
   
-  // GARANTIR QUE OS BOTÕES E CARDS APAREÇAM
   document.getElementById('actionsBar').style.display = 'flex';
   document.getElementById('cardsResumo').style.display = 'grid';
   renderTabela();
 }
 
 function calcularSaldoConta() {
-  const totalDeb = dadosFiltrados.reduce((acc, cur) => acc + cur.debito, 0);
-  const totalCred = dadosFiltrados.reduce((acc, cur) => acc + cur.credito, 0);
+  const conta = document.getElementById('contaSelect').value;
+  let totalDeb = 0;
+  let totalCred = 0;
+
+  dadosFiltrados.forEach(d => {
+    // Se a conta está no Débito, somamos ao Débito da conta
+    if (d.contaDeb === conta) totalDeb += d.valor;
+    // Se a conta está no Crédito, somamos ao Crédito da conta
+    if (d.contaCred === conta) totalCred += d.valor;
+  });
   
+  // Saldo baseado na natureza
   saldoContaSelecionada = naturezaConta === 'C' ? (totalCred - totalDeb) : (totalDeb - totalCred);
   document.getElementById('saldoAlvo').value = fmtMoeda(saldoContaSelecionada).replace('R$', '').trim();
 }
@@ -333,15 +367,17 @@ function toggleCruzamentoFiliais() {
 }
 
 function sugerirConciliacao() {
+  const conta = document.getElementById('contaSelect').value;
   dadosFiltrados.forEach(d => d.conciliado = false);
 
-  const debitos = dadosFiltrados.filter(d => d.debito > 0);
-  const creditos = dadosFiltrados.filter(d => d.credito > 0);
+  // Débitos da conta vs Créditos da conta
+  const debitosConta = dadosFiltrados.filter(d => d.contaDeb === conta);
+  const creditosConta = dadosFiltrados.filter(d => d.contaCred === conta);
 
-  creditos.forEach(c => {
-    const par = debitos.find(d => 
+  creditosConta.forEach(c => {
+    const par = debitosConta.find(d => 
       !d.conciliado && 
-      Math.abs(d.debito - c.credito) < 0.01 && 
+      Math.abs(d.valor - c.valor) < 0.01 && 
       (cruzarFiliais || d.filial === c.filial) &&
       (d.competencia === c.competencia || calcularSimilaridade(d.historico, c.historico) > 0.6)
     );
@@ -351,14 +387,15 @@ function sugerirConciliacao() {
     }
   });
 
+  // N para 1 por competência
   const comps = [...new Set(dadosFiltrados.map(d => d.competencia).filter(c => c))];
   comps.forEach(comp => {
-    const provisoes = dadosFiltrados.filter(d => !d.conciliado && d.competencia === comp && (naturezaConta === 'C' ? d.credito > 0 : d.debito > 0));
-    const pagamentos = dadosFiltrados.filter(d => !d.conciliado && d.competencia === comp && (naturezaConta === 'C' ? d.debito > 0 : d.credito > 0));
+    const provisoes = dadosFiltrados.filter(d => !d.conciliado && d.competencia === comp && (naturezaConta === 'C' ? d.contaCred === conta : d.contaDeb === conta));
+    const pagamentos = dadosFiltrados.filter(d => !d.conciliado && d.competencia === comp && (naturezaConta === 'C' ? d.contaDeb === conta : d.contaCred === conta));
 
     if (provisoes.length > 1 && pagamentos.length === 1) {
-      const somaProv = provisoes.reduce((acc, cur) => acc + (naturezaConta === 'C' ? cur.credito : cur.debito), 0);
-      const valPag = naturezaConta === 'C' ? pagamentos[0].debito : pagamentos[0].credito;
+      const somaProv = provisoes.reduce((acc, cur) => acc + cur.valor, 0);
+      const valPag = pagamentos[0].valor;
       
       if (Math.abs(somaProv - valPag) < 0.01) {
         provisoes.forEach(p => p.conciliado = true);
@@ -419,11 +456,16 @@ function fmtMoeda(valor) {
 }
 
 function atualizarResumo() {
+  const conta = document.getElementById('contaSelect').value;
   const pendentes = dadosFiltrados.filter(d => !d.conciliado);
   const conciliados = dadosFiltrados.filter(d => d.conciliado);
   
-  const totalDeb = pendentes.reduce((acc, cur) => acc + cur.debito, 0);
-  const totalCred = pendentes.reduce((acc, cur) => acc + cur.credito, 0);
+  let totalDeb = 0;
+  let totalCred = 0;
+  pendentes.forEach(d => {
+    if (d.contaDeb === conta) totalDeb += d.valor;
+    if (d.contaCred === conta) totalCred += d.valor;
+  });
   
   const saldoPendente = naturezaConta === 'C' ? (totalCred - totalDeb) : (totalDeb - totalCred);
   const diferenca = saldoPendente - saldoContaSelecionada;
@@ -431,7 +473,7 @@ function atualizarResumo() {
   document.getElementById('resumoPendente').textContent = fmtMoeda(saldoPendente);
   document.getElementById('qtdPendente').textContent = `${pendentes.length} lançamentos`;
   
-  document.getElementById('resumoConciliado').textContent = fmtMoeda(conciliados.reduce((acc, cur) => acc + (cur.debito || cur.credito), 0));
+  document.getElementById('resumoConciliado').textContent = fmtMoeda(conciliados.reduce((acc, cur) => acc + cur.valor, 0));
   document.getElementById('qtdConciliado').textContent = `${conciliados.length} lançamentos`;
 
   const diffElem = document.getElementById('resumoDiferenca');
@@ -443,9 +485,9 @@ function atualizarResumo() {
     let somaSel = 0;
     selecionados.forEach(id => {
       const item = dadosFiltrados.find(d => d.id === id);
-      somaSel += (item.debito - item.credito);
+      somaSel += item.valor;
     });
-    document.getElementById('selectionVal').textContent = fmtMoeda(Math.abs(somaSel));
+    document.getElementById('selectionVal').textContent = fmtMoeda(somaSel);
     infoBox.style.display = 'block';
   } else {
     infoBox.style.display = 'none';
@@ -453,6 +495,7 @@ function atualizarResumo() {
 }
 
 function renderTabela() {
+  const conta = document.getElementById('contaSelect').value;
   const container = document.getElementById('tabelaContainer');
   let html = `
     <table class="lanc-table">
@@ -471,14 +514,17 @@ function renderTabela() {
 
   dadosFiltrados.forEach(d => {
     const isSel = selecionados.has(d.id);
+    const valDeb = d.contaDeb === conta ? d.valor : 0;
+    const valCred = d.contaCred === conta ? d.valor : 0;
+
     html += `
       <tr class="${d.conciliado ? 'conciliado' : ''} ${isSel ? 'selecionado' : ''}" onclick="toggleSelecao(${d.id}, event)">
         <td><div class="check-box"></div></td>
         <td style="color:var(--text3)">${d.data}</td>
         <td><span class="badge-filial">${d.filial}</span></td>
         <td style="color:var(--text2)">${d.historico}</td>
-        <td class="val-d" style="text-align:right">${d.debito > 0 ? fmtMoeda(d.debito) : '-'}</td>
-        <td class="val-c" style="text-align:right">${d.credito > 0 ? fmtMoeda(d.credito) : '-'}</td>
+        <td class="val-d" style="text-align:right">${valDeb > 0 ? fmtMoeda(valDeb) : '-'}</td>
+        <td class="val-c" style="text-align:right">${valCred > 0 ? fmtMoeda(valCred) : '-'}</td>
       </tr>
     `;
   });
@@ -489,6 +535,7 @@ function renderTabela() {
 }
 
 function exportarNaoConciliados() {
+  const conta = document.getElementById('contaSelect').value;
   const pendentes = dadosFiltrados.filter(d => !d.conciliado);
   if (pendentes.length === 0) {
     alert("Não há lançamentos pendentes para exportar.");
@@ -496,21 +543,22 @@ function exportarNaoConciliados() {
   }
 
   const dataExport = pendentes.map(p => ({
-    'Conta': p.conta,
+    'Conta Débito': p.contaDeb,
+    'Conta Crédito': p.contaCred,
     'Data': p.data,
     'Filial': p.filial,
     'Histórico': p.historico,
-    'Débito': p.debito,
-    'Crédito': p.credito,
+    'Valor': p.valor,
+    'Tipo': p.contaDeb === conta ? 'Débito' : 'Crédito',
     'Competência': p.competencia || ''
   }));
 
   const ws = XLSX.utils.json_to_sheet(dataExport);
-  ws['!cols'] = [{wch:15}, {wch:12}, {wch:8}, {wch:50}, {wch:15}, {wch:15}, {wch:12}];
+  ws['!cols'] = [{wch:15}, {wch:15}, {wch:12}, {wch:8}, {wch:50}, {wch:15}, {wch:15}, {wch:12}];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Pendências");
-  XLSX.writeFile(wb, `pendencias_conta_${document.getElementById('contaSelect').value}.xlsx`);
+  XLSX.writeFile(wb, `pendencias_conta_${conta}.xlsx`);
 }
 </script>
 </body>
