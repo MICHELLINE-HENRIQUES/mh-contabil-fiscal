@@ -3,91 +3,515 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Conciliação de Razão Contábil — MH Consultoria</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<title>Conciliação Inteligente — MH Consultoria</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
-  --bg: #0f1117; --bg2: #161b22; --border: rgba(255,255,255,0.08);
-  --text1: #e8e6e0; --text2: #a0a0a0; --text3: #5a5a5a; --text4: #3a3a3a;
-  --blue: #378add; --blue-light: #85b7eb; --blue-bg: rgba(55,138,221,0.12);
+  --bege: #b8996a;
+  --bege-claro: #d4bc96;
+  --bege-bg: rgba(184,153,106,0.1);
+  --bege-border: rgba(184,153,106,0.25);
+  --bg: #1a1713;
+  --bg2: #221e1a;
+  --bg3: #2a2520;
+  --border: rgba(184,153,106,0.12);
+  --border2: rgba(184,153,106,0.22);
+  --text1: #f0ede6;
+  --text2: #c4b89a;
+  --text3: #8c7b6b;
+  --text4: #5a4f44;
+  --verde-bg: rgba(74,124,89,0.12);
+  --verde-text: #7db890;
+  --vermelho-bg: rgba(140,58,58,0.12);
+  --vermelho-text: #c47070;
+  --amarelo-text: #d4a83c;
 }
 body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text1); min-height: 100vh; }
 
 .topbar {
   display: flex; align-items: center; gap: 12px;
-  padding: 0.85rem 2rem;
-  border-bottom: 0.5px solid var(--border);
-  background: var(--bg);
-  position: sticky; top: 0; z-index: 10;
+  padding: 0.85rem 2rem; border-bottom: 0.5px solid var(--border);
+  background: var(--bg); position: sticky; top: 0; z-index: 10;
 }
 .btn-back {
-  background: none; border: 0.5px solid var(--border);
-  color: var(--text3); padding: 5px 12px; border-radius: 6px;
-  font-size: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif;
-  text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
-  transition: color 0.2s, border-color 0.2s;
+  background: none; border: 0.5px solid var(--border2); color: var(--text3);
+  padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;
 }
-.btn-back:hover { color: var(--text1); border-color: rgba(255,255,255,0.25); }
-
-.topbar-divider { color: var(--text4); font-size: 14px; }
+.btn-back:hover { color: var(--text1); border-color: var(--bege); }
+.topbar-div { color: var(--text4); }
 .topbar-title { font-size: 13px; color: var(--text2); font-weight: 500; }
-.topbar-sector {
-  margin-left: auto;
-  font-size: 10px;
-  background: var(--blue-bg); color: var(--blue-light);
-  padding: 3px 8px; border-radius: 20px;
-  letter-spacing: 0.05em; text-transform: uppercase;
+.topbar-badge {
+  margin-left: auto; font-size: 9px; font-weight: 500;
+  background: var(--bege-bg); color: var(--bege-claro);
+  border: 0.5px solid var(--bege-border);
+  padding: 3px 9px; border-radius: 20px; letter-spacing: 0.06em; text-transform: uppercase;
 }
 
-.main { max-width: 960px; margin: 0 auto; padding: 2rem; }
+.main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
 
 .tool-header { margin-bottom: 2rem; }
-.tool-label { font-size: 10px; color: var(--text4); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
-.tool-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text1); }
+.tool-label { font-size: 10px; color: var(--text4); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+.tool-title { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 400; color: var(--text1); }
+.tool-title em { font-style: italic; color: var(--bege-claro); }
 .tool-desc { font-size: 13px; color: var(--text3); margin-top: 6px; line-height: 1.6; }
 
-.placeholder {
-  background: var(--bg2);
-  border: 0.5px dashed rgba(255,255,255,0.1);
-  border-radius: 12px;
-  padding: 3rem 2rem;
-  text-align: center;
-  color: var(--text4);
-  font-size: 13px;
-  line-height: 1.8;
+.upload-section {
+  background: var(--bg2); border: 0.5px dashed var(--border2);
+  border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem;
 }
-.placeholder strong { color: var(--blue-light); font-weight: 500; display: block; font-size: 14px; margin-bottom: 6px; }
+.upload-top { display: flex; align-items: flex-start; gap: 1.5rem; flex-wrap: wrap; }
+.upload-box {
+  flex: 1; min-width: 200px; border: 0.5px dashed var(--border2);
+  border-radius: 10px; padding: 1.5rem; text-align: center;
+  cursor: pointer; transition: all 0.2s; background: var(--bg3);
+}
+.upload-box:hover { border-color: var(--bege); background: var(--bege-bg); }
+.upload-icon { font-size: 22px; margin-bottom: 8px; }
+.upload-title { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 4px; }
+.upload-hint { font-size: 11px; color: var(--text4); }
+.upload-box input { display: none; }
+
+.natureza-box {
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: 10px; padding: 1.5rem; flex: 1; min-width: 250px;
+}
+.natureza-title { font-size: 12px; font-weight: 600; color: var(--bege-claro); margin-bottom: 12px; text-transform: uppercase; }
+.natureza-options { display: flex; gap: 10px; }
+.natureza-opt {
+  flex: 1; padding: 10px; border: 0.5px solid var(--border2); border-radius: 6px;
+  text-align: center; cursor: pointer; font-size: 12px; transition: all 0.2s;
+}
+.natureza-opt.active { background: var(--bege); color: #2a1f15; border-color: var(--bege); font-weight: 600; }
+
+.filtro-conta-box {
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: 10px; padding: 1.5rem; flex: 1; min-width: 250px;
+}
+.filtro-conta-title { font-size: 12px; font-weight: 600; color: var(--bege-claro); margin-bottom: 12px; text-transform: uppercase; }
+.filtro-conta-input {
+  width: 100%; background: var(--bg2); border: 0.5px solid var(--border2); color: var(--text2);
+  padding: 10px; border-radius: 6px; font-size: 13px; outline: none; margin-bottom: 8px;
+}
+.filtro-conta-select {
+  width: 100%; background: var(--bg2); border: 0.5px solid var(--border2); color: var(--text2);
+  padding: 10px; border-radius: 6px; font-size: 13px; outline: none; max-height: 150px;
+}
+
+.actions-bar { display: none; gap: 10px; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center; background: var(--bg2); padding: 1rem; border-radius: 10px; border: 0.5px solid var(--border); }
+.action-group { display: flex; align-items: center; gap: 10px; }
+.btn-primary { background: var(--bege); color: #2a1f15; border: none; border-radius: 6px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-primary:hover { background: var(--bege-claro); }
+.btn-secondary { background: none; border: 0.5px solid var(--border2); color: var(--text2); border-radius: 6px; padding: 8px 16px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+.btn-secondary:hover { border-color: var(--bege); color: var(--text1); }
+
+.saldo-alvo-box { display: flex; align-items: center; gap: 8px; background: var(--bg3); padding: 6px 12px; border-radius: 6px; border: 0.5px solid var(--border2); }
+.saldo-alvo-label { font-size: 11px; color: var(--text4); text-transform: uppercase; }
+.saldo-alvo-input { background: none; border: none; color: var(--bege-claro); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; width: 120px; outline: none; }
+
+.cards-resumo { display: none; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.card-resumo { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 10px; padding: 1rem; position: relative; }
+.card-resumo-label { font-size: 10px; color: var(--text4); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+.card-resumo-valor { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500; }
+.card-resumo-sub { font-size: 10px; color: var(--text4); margin-top: 3px; }
+.val-d { color: var(--vermelho-text); }
+.val-c { color: var(--verde-text); }
+.val-s { color: var(--amarelo-text); }
+.val-diff { color: #fff; font-weight: 700; }
+
+.lanc-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.lanc-table th { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text4); font-weight: 500; padding: 10px 12px; text-align: left; border-bottom: 0.5px solid var(--border); background: var(--bg3); }
+.lanc-table td { font-size: 12px; color: var(--text2); padding: 8px 12px; border-bottom: 0.5px solid rgba(184,153,106,0.05); cursor: pointer; }
+.lanc-table tr.conciliado { opacity: 0.3; background: rgba(74,124,89,0.05); }
+.lanc-table tr.selecionado { background: rgba(184,153,106,0.15) !important; }
+.lanc-table tr:hover { background: rgba(184,153,106,0.05); }
+
+.check-box { width: 16px; height: 16px; border: 1px solid var(--border2); border-radius: 3px; display: inline-block; vertical-align: middle; position: relative; }
+tr.conciliado .check-box::after { content: '✓'; position: absolute; top: -2px; left: 2px; color: var(--verde-text); font-size: 12px; }
+tr.selecionado .check-box { background: var(--bege); border-color: var(--bege); }
+
+.badge-filial { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: var(--bg3); border: 0.5px solid var(--border2); color: var(--text3); }
+
+.selection-info { position: fixed; bottom: 20px; right: 20px; background: var(--bege); color: #2a1f15; padding: 12px 20px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: none; z-index: 100; }
+.selection-info-title { font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+.selection-info-val { font-size: 18px; font-weight: 700; }
+
+.hidden { display: none; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <a class="btn-back" href="../index.html">← Painel</a>
-  <span class="topbar-divider">/</span>
-  <span class="topbar-title">Conciliação de Razão Contábil</span>
-  <span class="topbar-sector">Contábil</span>
+  <span class="topbar-div">/</span>
+  <span class="topbar-title">Conciliação Inteligente</span>
+  <span class="topbar-badge">Contábil</span>
 </div>
 
 <div class="main">
   <div class="tool-header">
     <div class="tool-label">Setor Contábil</div>
-    <div class="tool-title">Conciliação de Razão Contábil</div>
-    <div class="tool-desc">Cruzamento entre razão analítico e lançamentos contábeis por conta. Identifica diferenças, duplicidades e saldos divergentes.</div>
+    <div class="tool-title">Conciliação de <em>Razão</em></div>
+    <div class="tool-desc">Importe o Excel do Questor. A ferramenta identifica automaticamente provisões e baixas por valor, competência e histórico.</div>
   </div>
 
-  <!-- ================================================
-       FERRAMENTA SERÁ DESENVOLVIDA AQUI
-       Me envie o formato dos seus arquivos (CSV, Excel?)
-       e como funciona o processo atual para começarmos.
-       ================================================ -->
-
-  <div class="placeholder">
-    <strong>Conciliação de Razão Contábil</strong>
-    Esta ferramenta será desenvolvida na próxima etapa.<br>
-    Envie o formato dos seus arquivos e explicação do processo para começar.
+  <div class="upload-section" id="uploadSection">
+    <div class="upload-top">
+      <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">📊</div>
+        <div class="upload-title">Importar Excel (.xlsx)</div>
+        <div class="upload-hint">Arraste o arquivo do Questor aqui</div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+      </div>
+      <div class="natureza-box">
+        <div class="natureza-title">Natureza da Conta</div>
+        <div class="natureza-options">
+          <div class="natureza-opt active" id="optCredora" onclick="setNatureza('C')">Credora (Passivo)</div>
+          <div class="natureza-opt" id="optDevedora" onclick="setNatureza('D')">Devedora (Ativo)</div>
+        </div>
+        <div style="font-size: 10px; color: var(--text4); margin-top: 10px; line-height: 1.4;">
+          * Contas de impostos a pagar (FGTS, INSS) são <strong>Credoras</strong>.
+        </div>
+      </div>
+      <div class="filtro-conta-box" id="filtroContaBox" style="display:none;">
+        <div class="filtro-conta-title">Buscar Conta</div>
+        <input type="text" id="contaInput" class="filtro-conta-input" placeholder="Digite o número da conta..." oninput="filtrarListaContas()">
+        <select id="contaSelect" class="filtro-conta-select" size="5" onchange="selecionarConta()">
+          <option value="">Aguardando arquivo...</option>
+        </select>
+      </div>
+    </div>
+    <div id="uploadStatus" class="upload-status"></div>
   </div>
 
+  <div class="actions-bar" id="actionsBar">
+    <div class="action-group">
+      <button class="btn-primary" onclick="sugerirConciliacao()">✨ Sugerir Conciliação</button>
+      <button class="btn-secondary" onclick="toggleCruzamentoFiliais()" id="btnFiliais">Permitir Cruzar Filiais: Não</button>
+    </div>
+    <div class="action-group" style="margin-left: auto;">
+      <div class="saldo-alvo-box">
+        <span class="saldo-alvo-label">Saldo da Conta:</span>
+        <input type="text" id="saldoAlvo" class="saldo-alvo-input" value="0,00" readonly>
+      </div>
+      <button class="btn-secondary" onclick="exportarNaoConciliados()">↓ Exportar Pendências</button>
+    </div>
+  </div>
+
+  <div class="cards-resumo" id="cardsResumo">
+    <div class="card-resumo">
+      <div class="card-resumo-label">Total Pendente</div>
+      <div class="card-resumo-valor val-s" id="resumoPendente">R$ 0,00</div>
+      <div class="card-resumo-sub" id="qtdPendente">0 lançamentos</div>
+    </div>
+    <div class="card-resumo">
+      <div class="card-resumo-label">Diferença p/ Saldo da Conta</div>
+      <div class="card-resumo-valor val-diff" id="resumoDiferenca">R$ 0,00</div>
+      <div class="card-resumo-sub">O ideal é chegar a R$ 0,00</div>
+    </div>
+    <div class="card-resumo">
+      <div class="card-resumo-label">Já Conciliado</div>
+      <div class="card-resumo-valor val-c" id="resumoConciliado">R$ 0,00</div>
+      <div class="card-resumo-sub" id="qtdConciliado">0 lançamentos</div>
+    </div>
+  </div>
+
+  <div id="tabelaContainer"></div>
 </div>
+
+<div class="selection-info" id="selectionInfo">
+  <div class="selection-info-title">Soma Selecionada</div>
+  <div class="selection-info-val" id="selectionVal">R$ 0,00</div>
+  <button class="btn-primary" style="margin-top: 8px; width: 100%;" onclick="conciliarSelecionados()">Conciliar Seleção</button>
+</div>
+
+<script>
+let todosOsDados = [];
+let dadosFiltrados = [];
+let listaContasUnicas = [];
+let cruzarFiliais = false;
+let naturezaConta = 'C'; // C = Credora, D = Devedora
+let selecionados = new Set();
+let saldoContaSelecionada = 0;
+
+function setNatureza(n) {
+  naturezaConta = n;
+  document.getElementById('optCredora').classList.toggle('active', n === 'C');
+  document.getElementById('optDevedora').classList.toggle('active', n === 'D');
+  if (dadosFiltrados.length > 0) {
+    calcularSaldoConta();
+    atualizarResumo();
+  }
+}
+
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(firstSheet, { raw: false });
+    
+    todosOsDados = json.map((row, index) => {
+      const debito = parseMoeda(row['Débito']);
+      const credito = parseMoeda(row['Crédito']);
+      const conta = String(row['Conta'] || row['Código Conta'] || row['CONTA'] || row['CODIGO'] || '');
+      return {
+        id: index,
+        conta: conta,
+        data: row['Data'] || '',
+        historico: String(row['Histórico'] || row['HISTORICO'] || ''),
+        debito: debito,
+        credito: credito,
+        filial: String(row['Filial'] || row['FILIAL'] || '1'),
+        conciliado: false,
+        competencia: extrairCompetencia(String(row['Histórico'] || row['HISTORICO'] || ''))
+      };
+    });
+
+    listaContasUnicas = [...new Set(todosOsDados.map(d => d.conta).filter(c => c))].sort();
+    popularContas(listaContasUnicas);
+    
+    document.getElementById('uploadStatus').className = 'upload-status ok';
+    document.getElementById('uploadStatus').textContent = `✓ ${todosOsDados.length} lançamentos carregados!`;
+    document.getElementById('filtroContaBox').style.display = 'block';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function popularContas(contas) {
+  const select = document.getElementById('contaSelect');
+  select.innerHTML = '';
+  contas.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    select.appendChild(opt);
+  });
+}
+
+function filtrarListaContas() {
+  const busca = document.getElementById('contaInput').value.toLowerCase();
+  const filtradas = listaContasUnicas.filter(c => c.toLowerCase().includes(busca));
+  popularContas(filtradas);
+}
+
+function selecionarConta() {
+  const conta = document.getElementById('contaSelect').value;
+  if (!conta) return;
+
+  dadosFiltrados = todosOsDados.filter(d => d.conta === conta);
+  calcularSaldoConta();
+  
+  // GARANTIR QUE OS BOTÕES E CARDS APAREÇAM
+  document.getElementById('actionsBar').style.display = 'flex';
+  document.getElementById('cardsResumo').style.display = 'grid';
+  renderTabela();
+}
+
+function calcularSaldoConta() {
+  const totalDeb = dadosFiltrados.reduce((acc, cur) => acc + cur.debito, 0);
+  const totalCred = dadosFiltrados.reduce((acc, cur) => acc + cur.credito, 0);
+  
+  saldoContaSelecionada = naturezaConta === 'C' ? (totalCred - totalDeb) : (totalDeb - totalCred);
+  document.getElementById('saldoAlvo').value = fmtMoeda(saldoContaSelecionada).replace('R$', '').trim();
+}
+
+function extrairCompetencia(texto) {
+  const regex = /(\d{2}\/\d{2,4})|(JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)[^\d]*\d{2,4}/i;
+  const match = texto.match(regex);
+  return match ? match[0].toUpperCase() : null;
+}
+
+function toggleCruzamentoFiliais() {
+  cruzarFiliais = !cruzarFiliais;
+  document.getElementById('btnFiliais').textContent = `Permitir Cruzar Filiais: ${cruzarFiliais ? 'Sim' : 'Não'}`;
+}
+
+function sugerirConciliacao() {
+  dadosFiltrados.forEach(d => d.conciliado = false);
+
+  const debitos = dadosFiltrados.filter(d => d.debito > 0);
+  const creditos = dadosFiltrados.filter(d => d.credito > 0);
+
+  creditos.forEach(c => {
+    const par = debitos.find(d => 
+      !d.conciliado && 
+      Math.abs(d.debito - c.credito) < 0.01 && 
+      (cruzarFiliais || d.filial === c.filial) &&
+      (d.competencia === c.competencia || calcularSimilaridade(d.historico, c.historico) > 0.6)
+    );
+    if (par) {
+      c.conciliado = true;
+      par.conciliado = true;
+    }
+  });
+
+  const comps = [...new Set(dadosFiltrados.map(d => d.competencia).filter(c => c))];
+  comps.forEach(comp => {
+    const provisoes = dadosFiltrados.filter(d => !d.conciliado && d.competencia === comp && (naturezaConta === 'C' ? d.credito > 0 : d.debito > 0));
+    const pagamentos = dadosFiltrados.filter(d => !d.conciliado && d.competencia === comp && (naturezaConta === 'C' ? d.debito > 0 : d.credito > 0));
+
+    if (provisoes.length > 1 && pagamentos.length === 1) {
+      const somaProv = provisoes.reduce((acc, cur) => acc + (naturezaConta === 'C' ? cur.credito : cur.debito), 0);
+      const valPag = naturezaConta === 'C' ? pagamentos[0].debito : pagamentos[0].credito;
+      
+      if (Math.abs(somaProv - valPag) < 0.01) {
+        provisoes.forEach(p => p.conciliado = true);
+        pagamentos[0].conciliado = true;
+      }
+    }
+  });
+
+  renderTabela();
+  alert("Sugestão de conciliação concluída!");
+}
+
+function calcularSimilaridade(s1, s2) {
+  const words1 = s1.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+  const words2 = s2.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+  if (words1.length === 0 || words2.length === 0) return 0;
+  const intersection = words1.filter(w => words2.includes(w));
+  return intersection.length / Math.max(words1.length, words2.length);
+}
+
+function toggleSelecao(id, event) {
+  if (event.target.closest('.check-box') || event.ctrlKey) {
+    if (selecionados.has(id)) selecionados.delete(id);
+    else selecionados.add(id);
+    renderTabela();
+  } else {
+    const item = dadosFiltrados.find(d => d.id === id);
+    if (item) {
+      item.conciliado = !item.conciliado;
+      renderTabela();
+    }
+  }
+}
+
+function conciliarSelecionados() {
+  selecionados.forEach(id => {
+    const item = dadosFiltrados.find(d => d.id === id);
+    if (item) item.conciliado = true;
+  });
+  selecionados.clear();
+  renderTabela();
+}
+
+function parseMoeda(valor) {
+  if (valor === undefined || valor === null) return 0;
+  if (typeof valor === 'number') return valor;
+  let s = String(valor).replace(/[R$\s]/g, '');
+  if (s.includes(',') && s.includes('.')) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (s.includes(',')) {
+    s = s.replace(',', '.');
+  }
+  return parseFloat(s) || 0;
+}
+
+function fmtMoeda(valor) {
+  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function atualizarResumo() {
+  const pendentes = dadosFiltrados.filter(d => !d.conciliado);
+  const conciliados = dadosFiltrados.filter(d => d.conciliado);
+  
+  const totalDeb = pendentes.reduce((acc, cur) => acc + cur.debito, 0);
+  const totalCred = pendentes.reduce((acc, cur) => acc + cur.credito, 0);
+  
+  const saldoPendente = naturezaConta === 'C' ? (totalCred - totalDeb) : (totalDeb - totalCred);
+  const diferenca = saldoPendente - saldoContaSelecionada;
+
+  document.getElementById('resumoPendente').textContent = fmtMoeda(saldoPendente);
+  document.getElementById('qtdPendente').textContent = `${pendentes.length} lançamentos`;
+  
+  document.getElementById('resumoConciliado').textContent = fmtMoeda(conciliados.reduce((acc, cur) => acc + (cur.debito || cur.credito), 0));
+  document.getElementById('qtdConciliado').textContent = `${conciliados.length} lançamentos`;
+
+  const diffElem = document.getElementById('resumoDiferenca');
+  diffElem.textContent = fmtMoeda(diferenca);
+  diffElem.style.color = Math.abs(diferenca) < 0.05 ? 'var(--verde-text)' : 'var(--vermelho-text)';
+
+  const infoBox = document.getElementById('selectionInfo');
+  if (selecionados.size > 0) {
+    let somaSel = 0;
+    selecionados.forEach(id => {
+      const item = dadosFiltrados.find(d => d.id === id);
+      somaSel += (item.debito - item.credito);
+    });
+    document.getElementById('selectionVal').textContent = fmtMoeda(Math.abs(somaSel));
+    infoBox.style.display = 'block';
+  } else {
+    infoBox.style.display = 'none';
+  }
+}
+
+function renderTabela() {
+  const container = document.getElementById('tabelaContainer');
+  let html = `
+    <table class="lanc-table">
+      <thead>
+        <tr>
+          <th width="30"></th>
+          <th>Data</th>
+          <th>Filial</th>
+          <th>Histórico</th>
+          <th style="text-align:right">Débito</th>
+          <th style="text-align:right">Crédito</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  dadosFiltrados.forEach(d => {
+    const isSel = selecionados.has(d.id);
+    html += `
+      <tr class="${d.conciliado ? 'conciliado' : ''} ${isSel ? 'selecionado' : ''}" onclick="toggleSelecao(${d.id}, event)">
+        <td><div class="check-box"></div></td>
+        <td style="color:var(--text3)">${d.data}</td>
+        <td><span class="badge-filial">${d.filial}</span></td>
+        <td style="color:var(--text2)">${d.historico}</td>
+        <td class="val-d" style="text-align:right">${d.debito > 0 ? fmtMoeda(d.debito) : '-'}</td>
+        <td class="val-c" style="text-align:right">${d.credito > 0 ? fmtMoeda(d.credito) : '-'}</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+  atualizarResumo();
+}
+
+function exportarNaoConciliados() {
+  const pendentes = dadosFiltrados.filter(d => !d.conciliado);
+  if (pendentes.length === 0) {
+    alert("Não há lançamentos pendentes para exportar.");
+    return;
+  }
+
+  const dataExport = pendentes.map(p => ({
+    'Conta': p.conta,
+    'Data': p.data,
+    'Filial': p.filial,
+    'Histórico': p.historico,
+    'Débito': p.debito,
+    'Crédito': p.credito,
+    'Competência': p.competencia || ''
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(dataExport);
+  ws['!cols'] = [{wch:15}, {wch:12}, {wch:8}, {wch:50}, {wch:15}, {wch:15}, {wch:12}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Pendências");
+  XLSX.writeFile(wb, `pendencias_conta_${document.getElementById('contaSelect').value}.xlsx`);
+}
+</script>
 </body>
 </html>
