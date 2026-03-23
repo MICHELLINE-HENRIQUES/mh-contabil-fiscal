@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cruzamento de Duplicatas — MH Consultoria</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bege: #b8996a; --bege-cl: #d4bc96; --bege-bg: rgba(184,153,106,0.10); --bege-bd: rgba(184,153,106,0.25);
+  --bg: #f5f0e8; --bg2: #ffffff; --bg3: #ede7d9; --bg4: #e4dccb;
+  --bd: rgba(184,153,106,0.18); --bd2: rgba(184,153,106,0.30);
+  --t1: #2c1f0e; --t2: #5a4228; --t3: #9a7d5a; --t4: #c4aa88;
+  --verde: #3d7a52; --verde-bg: rgba(61,122,82,0.08); --verde-bd: rgba(61,122,82,0.20);
+  --verm: #a03030; --verm-bg: rgba(160,48,48,0.08); --verm-bd: rgba(160,48,48,0.20);
+  --azul: #2a5fa0; --azul-bg: rgba(42,95,160,0.08); --azul-bd: rgba(42,95,160,0.20);
+  --amar: #8a6200; --amar-bg: rgba(138,98,0,0.08); --amar-bd: rgba(138,98,0,0.20);
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t1); min-height: 100vh; }
+
+/* TOPBAR */
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0.85rem 2rem; border-bottom: 0.5px solid var(--bd2);
+  background: #fff; position: sticky; top: 0; z-index: 10;
+}
+.btn-back {
+  background: none; border: 0.5px solid var(--bd2); color: var(--t3);
+  padding: 5px 12px; border-radius: 2px; font-size: 12px;
+  text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+  transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+}
+.btn-back:hover { color: var(--t1); border-color: var(--bege); }
+.topbar-div { color: var(--t4); }
+.topbar-title { font-size: 13px; color: var(--t2); font-weight: 500; }
+.topbar-badge {
+  margin-left: auto; font-size: 9px; font-weight: 500;
+  background: var(--bege-bg); color: var(--bege-cl);
+  border: 0.5px solid var(--bege-bd);
+  padding: 3px 9px; border-radius: 20px; letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+.main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+.tool-header { margin-bottom: 2rem; }
+.tool-label { font-size: 10px; color: var(--t4); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+.tool-title { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 400; color: var(--t1); }
+.tool-title em { font-style: italic; color: var(--bege-cl); }
+.tool-desc { font-size: 13px; color: var(--t3); margin-top: 6px; line-height: 1.6; }
+
+/* UPLOAD GRID */
+.upload-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.upload-card {
+  background: var(--bg2); border: 0.5px dashed var(--bd2);
+  border-radius: 2px; padding: 1.5rem;
+  display: flex; flex-direction: column; gap: 10px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.upload-card.loaded { border-color: var(--verde); border-style: solid; background: var(--verde-bg); }
+.upload-card-num {
+  font-size: 10px; font-weight: 600; color: var(--bege);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 8px;
+}
+.upload-card-num::after { content: ''; flex: 1; height: 0.5px; background: var(--bd); }
+.upload-card-title { font-size: 14px; font-weight: 500; color: var(--t2); }
+.upload-card-desc { font-size: 11px; color: var(--t4); line-height: 1.6; }
+.upload-box {
+  border: 0.5px dashed var(--bd2); border-radius: 2px;
+  padding: 1.25rem; text-align: center; cursor: pointer;
+  background: var(--bg3); transition: all 0.2s;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.upload-box:hover { border-color: var(--bege); background: var(--bege-bg); }
+.upload-box input { display: none; }
+.upload-box-icon { font-size: 20px; }
+.upload-box-label { font-size: 12px; color: var(--t3); }
+.upload-status-ok {
+  font-size: 11px; color: var(--verde); background: var(--verde-bg);
+  border: 0.5px solid var(--verde-bd); border-radius: 2px;
+  padding: 6px 10px; display: none;
+}
+.upload-status-ok.show { display: block; }
+
+/* BOTÃO CRUZAR */
+.btn-cruzar {
+  width: 100%; padding: 13px; margin-bottom: 1.5rem;
+  background: var(--bege); color: #fff; border: none; border-radius: 2px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  display: none;
+}
+.btn-cruzar:hover { background: var(--bege-cl); }
+.btn-cruzar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* CARDS RESUMO */
+.cards-resumo {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+  gap: 10px; margin-bottom: 1.5rem; display: none;
+}
+.card-r { background: var(--bg2); border: 0.5px solid var(--bd); border-radius: 2px; padding: 1rem; }
+.card-r-label { font-size: 10px; color: var(--t4); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+.card-r-val { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 500; }
+.card-r-sub { font-size: 10px; color: var(--t4); margin-top: 3px; }
+.cv { color: var(--verm); } .cg { color: var(--verde); }
+.ca { color: var(--amar); } .cb { color: var(--azul); }
+
+/* FILTROS */
+.filtros-bar {
+  display: none; gap: 8px; flex-wrap: wrap;
+  align-items: center; margin-bottom: 1rem;
+  background: var(--bg2); border: 0.5px solid var(--bd);
+  padding: 0.85rem 1rem; border-radius: 2px;
+}
+.ftog-group { display: flex; }
+.ftog {
+  background: none; border: 0.5px solid var(--bd2);
+  color: var(--t3); padding: 5px 12px; font-size: 11px;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.ftog:first-child { border-radius: 2px 0 0 2px; }
+.ftog:last-child  { border-radius: 0 2px 2px 0; }
+.ftog:not(:first-child) { border-left: none; }
+.ftog.active { background: var(--bege); color: #fff; border-color: var(--bege); }
+.filtro-input {
+  background: var(--bg3); border: 0.5px solid var(--bd2); color: var(--t2);
+  padding: 6px 10px; border-radius: 2px; font-size: 12px;
+  font-family: 'DM Sans', sans-serif; min-width: 200px; outline: none;
+}
+.filtro-input:focus { border-color: var(--bege); }
+.btn-exportar {
+  margin-left: auto; background: none; border: 0.5px solid var(--bd2);
+  color: var(--t3); padding: 6px 14px; border-radius: 2px;
+  font-size: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.btn-exportar:hover { color: var(--bege-cl); border-color: var(--bege); }
+
+/* TABELA */
+.tabela-wrap { display: none; background: var(--bg2); border: 0.5px solid var(--bd); border-radius: 2px; overflow: hidden; }
+.cruz-table { width: 100%; border-collapse: collapse; }
+.cruz-table th {
+  font-size: 9px; letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--t3); font-weight: 500; padding: 10px 12px; text-align: left;
+  border-bottom: 0.5px solid var(--bd2); background: var(--bg3);
+  white-space: nowrap;
+}
+.cruz-table td {
+  font-size: 12px; color: var(--t2); padding: 8px 12px;
+  border-bottom: 0.5px solid rgba(184,153,106,0.08);
+  vertical-align: middle;
+}
+.cruz-table tr:last-child td { border-bottom: none; }
+.cruz-table tr:hover td { background: var(--bege-bg); }
+
+.td-nf { font-weight: 600; color: var(--t1); font-size: 13px; }
+.td-num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.td-diff-pos { text-align: right; color: var(--verde); font-weight: 600; }
+.td-diff-neg { text-align: right; color: var(--verm); font-weight: 600; }
+.td-diff-zero { text-align: right; color: var(--t4); }
+
+.badge {
+  font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 20px;
+  white-space: nowrap; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.badge-diff    { background: var(--verm-bg); color: var(--verm); border: 0.5px solid var(--verm-bd); }
+.badge-razao   { background: var(--amar-bg); color: var(--amar); border: 0.5px solid var(--amar-bd); }
+.badge-dup     { background: var(--azul-bg); color: var(--azul); border: 0.5px solid var(--azul-bd); }
+.badge-ok      { background: var(--verde-bg); color: var(--verde); border: 0.5px solid var(--verde-bd); }
+
+.sem-div {
+  text-align: center; padding: 3rem; color: var(--t4);
+  font-size: 13px; display: none;
+}
+.sem-div .icon { font-size: 32px; margin-bottom: 8px; }
+
+/* TOTAIS */
+.totais-bar {
+  display: flex; gap: 2rem; padding: 0.85rem 1rem;
+  border-top: 0.5px solid var(--bd2); background: var(--bg3);
+  font-size: 11px; color: var(--t3); flex-wrap: wrap;
+}
+.totais-item strong { color: var(--t1); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="btn-back" href="../index.html">← Painel</a>
+  <span class="topbar-div">/</span>
+  <span class="topbar-title">Cruzamento de Duplicatas</span>
+  <span class="topbar-badge">Contábil</span>
+</div>
+
+<div class="main">
+
+  <div class="tool-header">
+    <div class="tool-label">Setor Contábil</div>
+    <div class="tool-title">Cruzamento de <em>Duplicatas</em></div>
+    <div class="tool-desc">
+      Importe o Resumo por Nota (exportado pela Conciliação de Razão) e o relatório de Duplicatas a Pagar.
+      A ferramenta identifica divergências de saldo entre os dois relatórios por número de NF.
+    </div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="upload-grid">
+
+    <div class="upload-card" id="card1">
+      <div class="upload-card-num">Arquivo 1</div>
+      <div class="upload-card-title">Resumo por Nota</div>
+      <div class="upload-card-desc">
+        Planilha exportada pela Conciliação de Razão.<br>
+        Aba: <strong>Resumo por Nota</strong> — colunas: Nº, Saldo, Situação.
+      </div>
+      <div class="upload-box" onclick="document.getElementById('file1').click()">
+        <div class="upload-box-icon">📊</div>
+        <div class="upload-box-label">Clique ou arraste o arquivo (.xlsx)</div>
+        <input type="file" id="file1" accept=".xlsx,.xls" onchange="carregarArquivo1(this.files[0])">
+      </div>
+      <div class="upload-status-ok" id="status1">✓ Arquivo carregado</div>
+    </div>
+
+    <div class="upload-card" id="card2">
+      <div class="upload-card-num">Arquivo 2</div>
+      <div class="upload-card-title">Duplicatas a Pagar Pendentes</div>
+      <div class="upload-card-desc">
+        Relatório do sistema de contas a pagar.<br>
+        Colunas: Fornecedor, Data Vcto, Documento (ex: 59393/1-001), Saldo.
+      </div>
+      <div class="upload-box" onclick="document.getElementById('file2').click()">
+        <div class="upload-box-icon">📋</div>
+        <div class="upload-box-label">Clique ou arraste o arquivo (.xlsx)</div>
+        <input type="file" id="file2" accept=".xlsx,.xls" onchange="carregarArquivo2(this.files[0])">
+      </div>
+      <div class="upload-status-ok" id="status2">✓ Arquivo carregado</div>
+    </div>
+
+  </div>
+
+  <button class="btn-cruzar" id="btnCruzar" onclick="executarCruzamento()">
+    🔍 Executar Cruzamento
+  </button>
+
+  <!-- CARDS RESUMO -->
+  <div class="cards-resumo" id="cardsResumo">
+    <div class="card-r">
+      <div class="card-r-label">Saldo diferente</div>
+      <div class="card-r-val cv" id="cntDiff">0</div>
+      <div class="card-r-sub" id="valDiff">R$ 0,00</div>
+    </div>
+    <div class="card-r">
+      <div class="card-r-label">Só no Razão</div>
+      <div class="card-r-val ca" id="cntRazao">0</div>
+      <div class="card-r-sub">Não encontrada nas Duplicatas</div>
+    </div>
+    <div class="card-r">
+      <div class="card-r-label">Só nas Duplicatas</div>
+      <div class="card-r-val cb" id="cntDup">0</div>
+      <div class="card-r-sub">Não encontrada no Razão</div>
+    </div>
+    <div class="card-r">
+      <div class="card-r-label">Notas iguais</div>
+      <div class="card-r-val cg" id="cntOk">0</div>
+      <div class="card-r-sub">Saldo conferido ✓</div>
+    </div>
+    <div class="card-r">
+      <div class="card-r-label">Total divergência</div>
+      <div class="card-r-val cv" id="totalDiverg">R$ 0,00</div>
+      <div class="card-r-sub">Soma das diferenças</div>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filtros-bar" id="filtrosBar">
+    <div class="ftog-group">
+      <button class="ftog active" onclick="setFiltro('todos', this)">Todos</button>
+      <button class="ftog" onclick="setFiltro('diff', this)">Saldo diferente</button>
+      <button class="ftog" onclick="setFiltro('razao', this)">Só no Razão</button>
+      <button class="ftog" onclick="setFiltro('dup', this)">Só nas Duplicatas</button>
+      <button class="ftog" onclick="setFiltro('ok', this)">Iguais</button>
+    </div>
+    <input type="text" class="filtro-input" id="filtroTexto"
+      placeholder="Filtrar por NF ou histórico..." oninput="renderTabela()">
+    <button class="btn-exportar" onclick="exportarDivergencias()">↓ Exportar Excel</button>
+  </div>
+
+  <!-- TABELA -->
+  <div class="tabela-wrap" id="tabelaWrap">
+    <table class="cruz-table">
+      <thead>
+        <tr>
+          <th>Nº NF</th>
+          <th>Histórico / Fornecedor</th>
+          <th>Vcto</th>
+          <th style="text-align:right">Saldo Razão</th>
+          <th style="text-align:right">Saldo Duplicata</th>
+          <th style="text-align:right">Diferença</th>
+          <th>Situação</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaBody"></tbody>
+    </table>
+    <div class="totais-bar" id="totaisBar"></div>
+  </div>
+
+  <div class="sem-div" id="semDiv">
+    <div class="icon">✅</div>
+    Nenhuma divergência encontrada — todos os saldos conferem!
+  </div>
+
+</div>
+
+<script>
+let dadosRazao = {};      // { nf: { saldo, historico, situacao } }
+let dadosDup   = {};      // { nf: { saldo, documento, fornecedor, vcto } }
+let resultados = [];      // array de linhas cruzadas
+let filtroAtual = 'todos';
+
+// ── Leitura Arquivo 1 (Resumo por Nota) ──────────────────────────
+function carregarArquivo1(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      // Busca aba "Resumo por Nota" ou usa a primeira
+      const sheetName = wb.SheetNames.find(n => n.toLowerCase().includes('resumo')) || wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true });
+
+      dadosRazao = {};
+      let count = 0;
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const nf  = String(row[0] || '').trim();
+        if (!nf || nf === 'TOTAL') continue;
+        const saldo = parsNum(row[6]);
+        dadosRazao[nf] = {
+          saldo,
+          historico: String(row[1] || '').substring(0, 80),
+          situacao:  String(row[7] || '')
+        };
+        count++;
+      }
+
+      const s1 = document.getElementById('status1');
+      s1.textContent = `✓ ${count} notas carregadas — aba "${sheetName}"`;
+      s1.classList.add('show');
+      document.getElementById('card1').classList.add('loaded');
+      verificarPronto();
+    } catch(err) {
+      alert('Erro ao ler Arquivo 1: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── Leitura Arquivo 2 (Duplicatas a Pagar) ───────────────────────
+function carregarArquivo2(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true });
+
+      dadosDup = {};
+      let count = 0;
+      let fornAtual = '';
+
+      // Detecta linha do cabeçalho
+      let headerRow = -1;
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        if (r.some(c => String(c || '').toLowerCase().includes('documento'))) {
+          headerRow = i; break;
+        }
+      }
+
+      for (let i = headerRow + 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row[2]) continue;
+        const doc = String(row[2]).trim();
+
+        // Atualiza fornecedor atual (col 0 só aparece na primeira linha do fornecedor)
+        if (row[0] && !String(row[0]).startsWith('***') && !String(row[0]).startsWith('___') && !String(row[0]).startsWith('Total')) {
+          fornAtual = String(row[0]).replace(/^\d+\s+/, '').trim();
+        }
+
+        // Pula linhas de total e separadores
+        if (!doc || doc.startsWith('_') || String(row[0] || '').startsWith('***') || String(row[0] || '').startsWith('Total')) continue;
+
+        // Extrai NF base do documento (ex: 59393/1-001 -> 59393)
+        const nfBase = doc.split('/')[0].replace(/\D/g, '').replace(/^0+/, '') || doc;
+        const saldo  = parsNum(row[7]);
+
+        // Agrupa parcelas da mesma NF
+        if (!dadosDup[nfBase]) {
+          dadosDup[nfBase] = {
+            saldo:      0,
+            documentos: [],
+            fornecedor: fornAtual,
+            vcto:       formatarData(row[1])
+          };
+        }
+        dadosDup[nfBase].saldo += saldo;
+        dadosDup[nfBase].documentos.push(doc);
+        count++;
+      }
+
+      const s2 = document.getElementById('status2');
+      s2.textContent = `✓ ${Object.keys(dadosDup).length} notas carregadas (${count} parcelas)`;
+      s2.classList.add('show');
+      document.getElementById('card2').classList.add('loaded');
+      verificarPronto();
+    } catch(err) {
+      alert('Erro ao ler Arquivo 2: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function verificarPronto() {
+  if (Object.keys(dadosRazao).length > 0 && Object.keys(dadosDup).length > 0) {
+    document.getElementById('btnCruzar').style.display = 'block';
+  }
+}
+
+// ── Cruzamento ───────────────────────────────────────────────────
+function executarCruzamento() {
+  resultados = [];
+  const todasNFs = new Set([...Object.keys(dadosRazao), ...Object.keys(dadosDup)]);
+
+  todasNFs.forEach(nf => {
+    const r  = dadosRazao[nf];
+    const d  = dadosDup[nf];
+    const sR = r ? r.saldo : null;
+    const sD = d ? d.saldo : null;
+
+    let tipo, diff;
+    if (sR !== null && sD !== null) {
+      diff = sR - sD;
+      tipo = Math.abs(diff) < 0.03 ? 'ok' : 'diff';
+    } else if (sR !== null) {
+      diff = sR;
+      tipo = 'razao';
+    } else {
+      diff = sD;
+      tipo = 'dup';
+    }
+
+    resultados.push({
+      nf,
+      historico:  r ? r.historico : (d ? d.fornecedor : ''),
+      vcto:       d ? d.vcto : '',
+      saldoRazao: sR,
+      saldoDup:   sD,
+      diff,
+      tipo
+    });
+  });
+
+  // Ordena: divergências primeiro, depois por NF
+  const ordem = { diff: 0, razao: 1, dup: 2, ok: 3 };
+  resultados.sort((a, b) => {
+    if (ordem[a.tipo] !== ordem[b.tipo]) return ordem[a.tipo] - ordem[b.tipo];
+    return String(a.nf).localeCompare(String(b.nf), undefined, { numeric: true });
+  });
+
+  atualizarCards();
+  document.getElementById('cardsResumo').style.display = 'grid';
+  document.getElementById('filtrosBar').style.display = 'flex';
+  document.getElementById('tabelaWrap').style.display = 'block';
+  renderTabela();
+}
+
+function atualizarCards() {
+  const diff  = resultados.filter(r => r.tipo === 'diff');
+  const razao = resultados.filter(r => r.tipo === 'razao');
+  const dup   = resultados.filter(r => r.tipo === 'dup');
+  const ok    = resultados.filter(r => r.tipo === 'ok');
+  const totalDiverg = diff.reduce((s, r) => s + Math.abs(r.diff), 0) +
+                      razao.reduce((s, r) => s + Math.abs(r.diff), 0) +
+                      dup.reduce((s, r) => s + Math.abs(r.diff), 0);
+
+  document.getElementById('cntDiff').textContent  = diff.length;
+  document.getElementById('valDiff').textContent  = diff.length + ' nota(s)';
+  document.getElementById('cntRazao').textContent = razao.length;
+  document.getElementById('cntDup').textContent   = dup.length;
+  document.getElementById('cntOk').textContent    = ok.length;
+  document.getElementById('totalDiverg').textContent = fmt(totalDiverg);
+}
+
+// ── Render tabela ─────────────────────────────────────────────────
+function renderTabela() {
+  const filtro = filtroAtual;
+  const busca  = document.getElementById('filtroTexto').value.toLowerCase();
+
+  const dados = resultados.filter(r => {
+    if (filtro !== 'todos' && r.tipo !== filtro) return false;
+    if (busca && !String(r.nf).includes(busca) && !r.historico.toLowerCase().includes(busca)) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('tabelaBody');
+
+  if (!dados.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--t4);">Nenhum resultado com os filtros selecionados.</td></tr>`;
+    document.getElementById('totaisBar').innerHTML = '';
+    return;
+  }
+
+  let totalR = 0, totalD = 0, totalDiff = 0;
+
+  tbody.innerHTML = dados.map(r => {
+    const sR = r.saldoRazao;
+    const sD = r.saldoDup;
+    const df = r.diff;
+    if (sR !== null) totalR += sR;
+    if (sD !== null) totalD += sD;
+    totalDiff += df;
+
+    const badge = r.tipo === 'diff'  ? `<span class="badge badge-diff">Divergência</span>` :
+                  r.tipo === 'razao' ? `<span class="badge badge-razao">Só no Razão</span>` :
+                  r.tipo === 'dup'   ? `<span class="badge badge-dup">Só Duplicata</span>` :
+                                       `<span class="badge badge-ok">Conferido ✓</span>`;
+
+    const diffClass = Math.abs(df) < 0.03 ? 'td-diff-zero' :
+                      df > 0 ? 'td-diff-neg' : 'td-diff-pos';
+
+    return `<tr>
+      <td class="td-nf">${r.nf}</td>
+      <td style="font-size:11px;color:var(--t3);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.historico}">${r.historico}</td>
+      <td style="font-size:11px;color:var(--t4);white-space:nowrap">${r.vcto || '—'}</td>
+      <td class="td-num">${sR !== null ? fmt(sR) : '<span style="color:var(--t4)">—</span>'}</td>
+      <td class="td-num">${sD !== null ? fmt(sD) : '<span style="color:var(--t4)">—</span>'}</td>
+      <td class="${diffClass}">${Math.abs(df) < 0.03 ? '—' : fmt(Math.abs(df))}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('totaisBar').innerHTML =
+    `<span>Exibindo <strong>${dados.length}</strong> nota(s)</span>
+     <span>Saldo Razão: <strong>${fmt(totalR)}</strong></span>
+     <span>Saldo Duplicata: <strong>${fmt(totalD)}</strong></span>
+     <span>Total divergência: <strong>${fmt(Math.abs(totalDiff))}</strong></span>`;
+}
+
+function setFiltro(f, btn) {
+  filtroAtual = f;
+  document.querySelectorAll('.ftog').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTabela();
+}
+
+// ── Exportar ──────────────────────────────────────────────────────
+function exportarDivergencias() {
+  if (!resultados.length) { alert('Execute o cruzamento primeiro.'); return; }
+
+  try {
+    // Aba 1: todos os resultados
+    const rows1 = resultados.map(r => ({
+      'Nº NF':             r.nf,
+      'Histórico':         r.historico,
+      'Vencimento':        r.vcto || '',
+      'Saldo Razão':       r.saldoRazao !== null ? r.saldoRazao : '',
+      'Saldo Duplicata':   r.saldoDup   !== null ? r.saldoDup   : '',
+      'Diferença':         Math.abs(r.diff) < 0.03 ? 0 : r.diff,
+      'Situação':          r.tipo === 'diff'  ? 'Saldo Divergente' :
+                           r.tipo === 'razao' ? 'Só no Razão' :
+                           r.tipo === 'dup'   ? 'Só nas Duplicatas' : 'Conferido'
+    }));
+
+    // Aba 2: só divergências
+    const diverg = resultados.filter(r => r.tipo !== 'ok');
+    const rows2 = diverg.map(r => ({
+      'Nº NF':           r.nf,
+      'Histórico':       r.historico,
+      'Vencimento':      r.vcto || '',
+      'Saldo Razão':     r.saldoRazao !== null ? r.saldoRazao : '',
+      'Saldo Duplicata': r.saldoDup   !== null ? r.saldoDup   : '',
+      'Diferença':       r.diff,
+      'Tipo':            r.tipo === 'diff'  ? 'Saldo Divergente' :
+                         r.tipo === 'razao' ? 'Só no Razão' : 'Só nas Duplicatas'
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws1 = XLSX.utils.json_to_sheet(rows1);
+    ws1['!cols'] = [{wch:12},{wch:50},{wch:14},{wch:16},{wch:16},{wch:16},{wch:20}];
+    XLSX.utils.book_append_sheet(wb, ws1, 'Cruzamento Completo');
+
+    if (rows2.length) {
+      const ws2 = XLSX.utils.json_to_sheet(rows2);
+      ws2['!cols'] = [{wch:12},{wch:50},{wch:14},{wch:16},{wch:16},{wch:16},{wch:20}];
+      XLSX.utils.book_append_sheet(wb, ws2, 'Divergências');
+    }
+
+    XLSX.writeFile(wb, 'cruzamento_duplicatas.xlsx');
+  } catch(err) {
+    alert('Erro ao exportar: ' + err.message);
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function parsNum(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  if (typeof v === 'number') return v;
+  const s = String(v).replace(/[R$\s]/g, '');
+  if (s.includes(',') && s.includes('.')) return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
+  if (s.includes(',')) return parseFloat(s.replace(',','.')) || 0;
+  return parseFloat(s) || 0;
+}
+
+function fmt(v) {
+  return Math.abs(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function formatarData(v) {
+  if (!v) return '';
+  if (v instanceof Date) {
+    return String(v.getDate()).padStart(2,'0') + '/' + String(v.getMonth()+1).padStart(2,'0') + '/' + v.getFullYear();
+  }
+  if (typeof v === 'number') {
+    const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+    return String(d.getUTCDate()).padStart(2,'0') + '/' + String(d.getUTCMonth()+1).padStart(2,'0') + '/' + d.getUTCFullYear();
+  }
+  return String(v);
+}
+
+// Drag & drop nos dois cards
+['card1','card2'].forEach((id, idx) => {
+  const el = document.getElementById(id);
+  el.addEventListener('dragover', e => { e.preventDefault(); el.style.borderColor = 'var(--bege)'; });
+  el.addEventListener('dragleave', () => el.style.borderColor = '');
+  el.addEventListener('drop', e => {
+    e.preventDefault(); el.style.borderColor = '';
+    const f = e.dataTransfer.files[0];
+    if (f) idx === 0 ? carregarArquivo1(f) : carregarArquivo2(f);
+  });
+});
+</script>
+</body>
+</html>
