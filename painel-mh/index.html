@@ -485,56 +485,18 @@ body {
   </div>
 </div>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-const CLIENT_ID = '1006601701923-vkobn7e3507gobo6sqb1a71m6gm1cvu6.apps.googleusercontent.com';
-const ALLOWED_DOMAIN = 'henriquesconsultoria.com.br';
-
-function initGoogleLogin() {
-  google.accounts.id.initialize({
-    client_id: CLIENT_ID,
-    callback: handleCredentialResponse,
-    hosted_domain: ALLOWED_DOMAIN
-  });
-}
-
-function handleCredentialResponse(response) {
-  const payload = parseJwt(response.credential);
-  const email = payload.email || '';
-  const domain = email.split('@')[1] || '';
-
-  if (domain !== ALLOWED_DOMAIN) {
-    alert('Acesso negado. Apenas contas @' + ALLOWED_DOMAIN + ' têm acesso.');
-    return;
-  }
-
-  const name = payload.name || email;
-  const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-
+function doLogin() {
   document.getElementById('login-screen').style.display = 'none';
   const app = document.getElementById('app-screen');
   app.style.display = 'flex';
   app.style.flexDirection = 'column';
-  document.getElementById('uname').textContent = name;
-  document.getElementById('uemail').textContent = email;
-  document.getElementById('uavatar').textContent = initials;
-
-  sessionStorage.setItem('mh_user', JSON.stringify({ name, email, initials }));
-}
-
-function parseJwt(token) {
-  const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-  return JSON.parse(decodeURIComponent(atob(base64).split('').map(c =>
-    '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-}
-
-function doLogin() {
-  google.accounts.id.prompt();
+  document.getElementById('uname').textContent = 'Maria H.';
+  document.getElementById('uemail').textContent = 'maria@henriquesconsultoria.com.br';
+  document.getElementById('uavatar').textContent = 'MH';
 }
 
 function doLogout() {
-  sessionStorage.removeItem('mh_user');
-  google.accounts.id.disableAutoSelect();
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app-screen').style.display = 'none';
 }
@@ -545,21 +507,6 @@ function switchTab(id, btn) {
   document.getElementById('tab-' + id).classList.add('active');
   btn.classList.add('active');
 }
-
-window.onload = function() {
-  initGoogleLogin();
-  const saved = sessionStorage.getItem('mh_user');
-  if (saved) {
-    const u = JSON.parse(saved);
-    document.getElementById('login-screen').style.display = 'none';
-    const app = document.getElementById('app-screen');
-    app.style.display = 'flex';
-    app.style.flexDirection = 'column';
-    document.getElementById('uname').textContent = u.name;
-    document.getElementById('uemail').textContent = u.email;
-    document.getElementById('uavatar').textContent = u.initials;
-  }
-};
 </script>
 </body>
 </html>
