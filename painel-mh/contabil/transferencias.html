@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transferência entre Filiais — Mercadorias · MH Consultoria</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --cream:#f5f0e8; --cream2:#ede7d9; --cream3:#e4dccb;
+  --gold:#a8895a; --gold2:#c4a870; --gold3:#d4bc8e;
+  --brown:#6b4f2e; --brown2:#8a6640;
+  --bege:#a8895a; --bege-claro:#c4a870;
+  --bege-bg:rgba(168,137,90,0.10); --bege-border:rgba(168,137,90,0.25);
+  --bg:#f5f0e8; --bg2:#fff; --bg3:#ede7d9;
+  --border:rgba(168,137,90,0.15); --border2:rgba(168,137,90,0.28);
+  --text1:#2c1f0e; --text2:#5a4228; --text3:#9a7d5a; --text4:#c4aa88;
+  --verde-bg:rgba(74,124,89,0.08); --verde-text:#3d7a52; --verde-border:rgba(74,124,89,0.28);
+  --vermelho-bg:rgba(180,60,60,0.08); --vermelho-text:#a03030; --vermelho-border:rgba(180,60,60,0.28);
+  --amarelo-text:#8a6200; --amarelo-bg:rgba(138,98,0,0.08); --amarelo-border:rgba(138,98,0,0.25);
+  --azul-text:#1a5f8a; --azul-bg:rgba(26,95,138,0.08); --azul-border:rgba(26,95,138,0.28);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);min-height:100vh;}
+
+/* ── Topbar ── */
+.topbar{display:flex;align-items:center;gap:12px;padding:.85rem 2rem;border-bottom:.5px solid var(--border2);background:#fff;position:sticky;top:0;z-index:10;}
+.btn-back{background:none;border:.5px solid var(--border2);color:var(--text3);padding:5px 12px;border-radius:2px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:all .2s;}
+.btn-back:hover{color:var(--text1);border-color:var(--bege);}
+.topbar-div{color:var(--text4);}
+.topbar-title{font-size:13px;color:var(--text2);font-weight:500;}
+.topbar-badge{margin-left:auto;font-size:9px;font-weight:500;background:var(--bege-bg);color:var(--bege-claro);border:.5px solid var(--bege-border);padding:3px 9px;border-radius:20px;letter-spacing:.06em;text-transform:uppercase;}
+
+.main{max-width:1280px;margin:0 auto;padding:2rem;}
+.tool-header{margin-bottom:2rem;}
+.tool-label{font-size:10px;color:var(--text4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
+.tool-title{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;color:var(--text1);}
+.tool-title em{font-style:italic;color:var(--bege-claro);}
+.tool-desc{font-size:13px;color:var(--text3);margin-top:6px;line-height:1.6;max-width:720px;}
+
+/* ── Steps ── */
+.steps-bar{display:flex;gap:0;margin-bottom:2rem;background:var(--bg2);border:.5px solid var(--border2);border-radius:2px;overflow:hidden;}
+.step{flex:1;padding:.85rem 1rem;display:flex;align-items:center;gap:10px;border-right:.5px solid var(--border2);cursor:default;transition:background .2s;position:relative;}
+.step:last-child{border-right:none;}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--bg3);border:.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--text4);flex-shrink:0;transition:all .2s;}
+.step-text{display:flex;flex-direction:column;gap:2px;}
+.step-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
+.step-sub{font-size:10px;color:var(--text4);}
+.step.done .step-num{background:var(--verde-text);border-color:var(--verde-text);color:#fff;}
+.step.done .step-title{color:var(--verde-text);}
+.step.active .step-num{background:var(--gold);border-color:var(--gold);color:#fff;}
+.step.active .step-title{color:var(--text1);}
+.step.blocked .step-num{opacity:.4;}
+.step.blocked .step-title{opacity:.4;}
+
+/* ── Sections ── */
+.section{background:var(--bg2);border:.5px solid var(--border2);border-radius:2px;margin-bottom:1.25rem;}
+.section-header{padding:1rem 1.5rem;border-bottom:.5px solid var(--border);display:flex;align-items:center;gap:10px;}
+.section-icon{font-size:16px;}
+.section-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;}
+.section-sub{font-size:11px;color:var(--text4);margin-left:auto;}
+.section-body{padding:1.25rem 1.5rem;}
+
+/* ── Upload boxes ── */
+.upload-row{display:flex;gap:1rem;flex-wrap:wrap;align-items:stretch;}
+.upload-box{flex:1;min-width:200px;border:.5px dashed var(--border2);border-radius:2px;padding:1.25rem 1.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3);display:flex;flex-direction:column;align-items:center;gap:8px;}
+.upload-box:hover{border-color:var(--bege);background:var(--bege-bg);}
+.upload-box.loaded{border-color:var(--verde-border);background:var(--verde-bg);cursor:default;}
+.upload-box.required-missing{border-color:var(--vermelho-border);background:var(--vermelho-bg);}
+.upload-box input{display:none;}
+.ub-icon{font-size:22px;}
+.ub-title{font-size:12px;font-weight:600;color:var(--text2);}
+.ub-hint{font-size:10px;color:var(--text4);}
+.ub-status{font-size:11px;font-weight:500;}
+.ub-status.ok{color:var(--verde-text);}
+.ub-status.err{color:var(--vermelho-text);}
+.ub-detail{font-size:10px;color:var(--text3);}
+
+/* ── Saldo anterior toggle ── */
+.saldo-ant-toggle{display:flex;gap:0;margin-bottom:1rem;}
+.sat-btn{flex:1;padding:9px 16px;border:.5px solid var(--border2);background:var(--bg3);color:var(--text3);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;transition:all .2s;text-align:center;}
+.sat-btn:first-child{border-radius:2px 0 0 2px;}
+.sat-btn:last-child{border-radius:0 2px 2px 0;border-left:none;}
+.sat-btn.active-nao{background:var(--verde-text);color:#fff;border-color:var(--verde-text);}
+.sat-btn.active-sim{background:var(--amarelo-text);color:#fff;border-color:var(--amarelo-text);}
+
+.saldo-ant-fields{display:none;gap:1rem;flex-wrap:wrap;align-items:flex-end;background:var(--amarelo-bg);border:.5px solid var(--amarelo-border);border-radius:2px;padding:1rem 1.25rem;margin-bottom:1rem;}
+.field-group{display:flex;flex-direction:column;gap:5px;}
+.field-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text4);}
+.field-input{background:#fff;border:.5px solid var(--border2);color:var(--text2);padding:7px 10px;border-radius:2px;font-size:13px;outline:none;font-family:'DM Sans',sans-serif;font-weight:500;}
+.field-input:focus{border-color:var(--gold);}
+.field-hint{font-size:10px;color:var(--text4);}
+.field-input.config-input.vazio{border-color:var(--vermelho-border)!important;background:var(--vermelho-bg);}
+
+/* Validação saldo anterior */
+.val-saldo-box{display:none;border-radius:2px;padding:.85rem 1.25rem;margin-top:.75rem;font-size:12px;line-height:1.6;}
+.val-saldo-box.ok{background:var(--verde-bg);border:.5px solid var(--verde-border);color:var(--verde-text);}
+.val-saldo-box.err{background:var(--vermelho-bg);border:.5px solid var(--vermelho-border);color:var(--vermelho-text);}
+.val-saldo-box.warn{background:var(--amarelo-bg);border:.5px solid var(--amarelo-border);color:var(--amarelo-text);}
+.val-saldo-box strong{font-weight:700;}
+
+/* ── Config diagram ── */
+.config-diagram{background:var(--bg3);border:.5px solid var(--border);border-radius:2px;padding:1rem 1.25rem;display:flex;align-items:center;overflow-x:auto;margin-bottom:1rem;}
+.diag-box{flex:0 0 auto;background:var(--bg2);border:.5px solid var(--border2);border-radius:2px;padding:8px 14px;text-align:center;min-width:90px;}
+.diag-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--text4);margin-bottom:4px;}
+.diag-val{font-size:13px;font-weight:700;}
+.diag-val.estoque{color:var(--brown2);}
+.diag-val.trans{color:var(--amarelo-text);}
+.diag-arrow{flex:1;display:flex;flex-direction:column;align-items:center;padding:0 8px;min-width:72px;}
+.diag-arrow-sym{font-size:18px;color:var(--gold3);line-height:1;}
+.diag-arrow-txt{font-size:9px;color:var(--text4);text-align:center;margin-top:3px;white-space:nowrap;line-height:1.4;}
+.config-fields-row{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;}
+.config-input{background:var(--cream);border:.5px solid var(--border2);color:var(--text2);padding:7px 10px;border-radius:2px;font-size:13px;outline:none;font-family:'DM Sans',sans-serif;font-weight:500;}
+.config-input:focus{border-color:var(--gold);}
+.config-input.vazio{border-color:var(--vermelho-border)!important;background:var(--vermelho-bg);}
+
+/* ── Saldo cards (topo após carregar) ── */
+.saldo-cards-row{display:none;gap:10px;flex-wrap:wrap;margin-bottom:1.25rem;}
+.saldo-mini{background:var(--bg2);border:.5px solid var(--border);border-radius:2px;padding:.85rem 1.25rem;flex:1;min-width:150px;}
+.saldo-mini.destaque{border-color:var(--amarelo-border);background:var(--amarelo-bg);}
+.sm-label{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text4);margin-bottom:5px;}
+.sm-val{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;}
+.sm-val.ok{color:var(--verde-text);}
+.sm-val.warn{color:var(--amarelo-text);}
+.sm-val.err{color:var(--vermelho-text);}
+.sm-sub{font-size:10px;color:var(--text4);margin-top:3px;}
+.saldo-final-box-top{background:var(--bg3);border:.5px solid var(--border2);border-radius:2px;padding:.65rem 1.1rem;flex:0 0 auto;}
+.sfbt-label{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--text4);margin-bottom:3px;}
+.sfbt-val{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;}
+
+/* ── Actions ── */
+.actions-bar{display:none;gap:10px;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center;background:var(--bg2);padding:1rem 1.25rem;border-radius:2px;border:.5px solid var(--border);}
+.btn-primary{background:var(--bege);color:#fff;border:none;border-radius:2px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.btn-primary:hover{background:var(--bege-claro);}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.btn-secondary{background:none;border:.5px solid var(--border2);color:var(--text2);border-radius:2px;padding:8px 16px;font-size:13px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.btn-secondary:hover{border-color:var(--bege);color:var(--text1);}
+.btn-export{background:var(--verde-text);color:#fff;border:none;border-radius:2px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.btn-export:hover{filter:brightness(1.1);}
+.action-sep{width:.5px;height:24px;background:var(--border2);margin:0 2px;}
+
+/* ── Cards resumo ── */
+.cards-resumo{display:none;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px;margin-bottom:1.5rem;}
+.card-resumo{background:var(--bg2);border:.5px solid var(--border);border-radius:2px;padding:1rem 1.25rem;}
+.card-resumo.destaque-ok{border-color:var(--verde-border);background:var(--verde-bg);}
+.card-resumo.destaque-pend{border-color:var(--vermelho-border);background:var(--vermelho-bg);}
+.card-resumo.destaque-inc{border-color:var(--amarelo-border);background:var(--amarelo-bg);}
+.card-resumo.destaque-conf{border-color:var(--azul-border);background:var(--azul-bg);}
+.cr-label{font-size:10px;color:var(--text4);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
+.cr-valor{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500;}
+.cr-sub{font-size:10px;color:var(--text4);margin-top:3px;}
+.val-ok{color:var(--verde-text);}.val-pend{color:var(--vermelho-text);}.val-inc{color:var(--amarelo-text);}.val-n{color:var(--text2);}.val-azul{color:var(--azul-text);}
+
+/* ── Tabs resultado ── */
+.result-tabs{display:none;}
+.rtab-bar{display:flex;border-bottom:.5px solid var(--border2);background:var(--bg2);flex-wrap:wrap;}
+.rtab{padding:10px 18px;font-size:12px;font-weight:500;color:var(--text3);border:none;background:none;cursor:pointer;font-family:'DM Sans',sans-serif;border-bottom:2px solid transparent;margin-bottom:-.5px;transition:all .2s;display:flex;align-items:center;gap:7px;}
+.rtab:hover{color:var(--text2);}
+.rtab.active{color:var(--text1);border-bottom-color:var(--gold);}
+.rtab-count{font-size:10px;padding:1px 6px;border-radius:20px;font-weight:600;}
+.rtab-count.pend{background:var(--vermelho-bg);color:var(--vermelho-text);}
+.rtab-count.inc{background:var(--amarelo-bg);color:var(--amarelo-text);}
+.rtab-count.ok{background:var(--verde-bg);color:var(--verde-text);}
+.rtab-count.all{background:var(--bg3);color:var(--text3);}
+.rtab-count.conf{background:var(--azul-bg);color:var(--azul-text);}
+
+/* ── Filtros ── */
+.filter-bar{display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end;background:var(--bg3);padding:.85rem 1.25rem;border:.5px solid var(--border);border-top:none;margin-bottom:1rem;}
+.filter-group{display:flex;flex-direction:column;gap:4px;}
+.filter-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text4);}
+.filter-input{background:var(--bg2);border:.5px solid var(--border2);color:var(--text2);padding:5px 9px;border-radius:2px;font-size:12px;outline:none;font-family:'DM Sans',sans-serif;}
+.filter-input:focus{border-color:var(--gold);}
+.filter-select{background:var(--bg2);border:.5px solid var(--border2);color:var(--text2);padding:5px 9px;border-radius:2px;font-size:12px;outline:none;font-family:'DM Sans',sans-serif;min-width:135px;}
+.btn-clear-f{background:none;border:.5px solid var(--border2);color:var(--text4);padding:5px 10px;border-radius:2px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;align-self:flex-end;transition:all .2s;}
+.btn-clear-f:hover{color:var(--text2);border-color:var(--bege);}
+
+/* ── Tabela ── */
+.table-wrap{background:var(--bg2);border:.5px solid var(--border);border-radius:2px;overflow:auto;}
+.result-table{width:100%;border-collapse:collapse;min-width:800px;}
+.result-table th{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-weight:500;padding:10px 14px;text-align:left;border-bottom:.5px solid var(--border2);background:var(--cream2);white-space:nowrap;cursor:pointer;user-select:none;}
+.result-table th:hover{color:var(--text1);}
+.result-table td{font-size:12px;color:var(--text2);padding:8px 14px;border-bottom:.5px solid rgba(184,153,106,0.06);white-space:nowrap;}
+.result-table tr:last-child td{border-bottom:none;}
+.result-table tr:hover td{background:rgba(168,137,90,0.04);}
+.row-ok td{opacity:.5;}.row-pend{background:rgba(180,60,60,0.025);}.row-pend td{color:var(--vermelho-text)!important;}
+.row-inc{background:rgba(138,98,0,0.025);}.row-inc td{color:var(--amarelo-text)!important;}
+.row-ant{background:rgba(26,95,138,0.04);}.row-ant td{color:var(--azul-text)!important;}
+
+.badge-status{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;}
+.badge-ok{background:var(--verde-bg);color:var(--verde-text);border:.5px solid var(--verde-border);}
+.badge-pend{background:var(--vermelho-bg);color:var(--vermelho-text);border:.5px solid var(--vermelho-border);}
+.badge-inc{background:var(--amarelo-bg);color:var(--amarelo-text);border:.5px solid var(--amarelo-border);}
+.badge-ant{background:var(--azul-bg);color:var(--azul-text);border:.5px solid var(--azul-border);}
+
+.badge-filial{font-size:9px;padding:2px 6px;border-radius:4px;background:var(--bg3);border:.5px solid var(--border2);color:var(--text3);}
+.val-cell{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:500;}
+.empty-state{padding:3rem;text-align:center;color:var(--text4);font-size:13px;}
+.empty-state strong{display:block;color:var(--text3);font-size:14px;margin-bottom:6px;font-weight:500;}
+.table-footer{display:none;padding:.6rem 1.25rem;font-size:11px;color:var(--text4);background:var(--cream2);border-top:.5px solid var(--border);flex-wrap:wrap;gap:14px;align-items:center;}
+.tf-sep{color:var(--border2);}
+
+/* ── Conferência ── */
+.conf-section{display:none;margin-bottom:1.5rem;}
+.conf-header{background:var(--azul-bg);border:.5px solid var(--azul-border);border-radius:2px 2px 0 0;padding:1rem 1.5rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.conf-title{font-size:13px;font-weight:700;color:var(--azul-text);text-transform:uppercase;letter-spacing:.05em;}
+.conf-bate-badge{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;}
+.conf-bate-badge.bate{background:var(--verde-text);color:#fff;}
+.conf-bate-badge.nao-bate{background:var(--vermelho-text);color:#fff;}
+.conf-cards{display:flex;gap:10px;flex-wrap:wrap;padding:1rem 1.5rem;background:var(--bg2);border:.5px solid var(--azul-border);border-top:none;}
+.conf-card{background:var(--bg3);border:.5px solid var(--border2);border-radius:2px;padding:.85rem 1.25rem;flex:1;min-width:150px;}
+.conf-card.destaque{background:var(--azul-bg);border-color:var(--azul-border);}
+.cc-label{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text4);margin-bottom:5px;}
+.cc-val{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;}
+.conf-table-wrap{background:var(--bg2);border:.5px solid var(--azul-border);border-top:none;border-radius:0 0 2px 2px;overflow:auto;}
+.conf-total-row{padding:.85rem 1.5rem;background:var(--azul-bg);border-top:.5px solid var(--azul-border);display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.conf-total-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--azul-text);}
+.conf-total-val{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--azul-text);}
+.conf-saldo-contab{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap;}
+.conf-saldo-label{font-size:11px;color:var(--text4);}
+.conf-saldo-input{background:#fff;border:.5px solid var(--azul-border);color:var(--azul-text);padding:6px 10px;border-radius:2px;font-size:14px;outline:none;font-family:'Cormorant Garamond',serif;font-weight:700;width:160px;}
+.conf-diff{font-size:12px;font-weight:700;padding:4px 10px;border-radius:2px;}
+.conf-diff.zero{background:var(--verde-bg);color:var(--verde-text);}
+.conf-diff.nonzero{background:var(--vermelho-bg);color:var(--vermelho-text);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="btn-back" href="razao.html">← Conciliação de Razão</a>
+  <span class="topbar-div">/</span>
+  <span class="topbar-title">Transferência entre Filiais &#8212; Mercadorias</span>
+  <span class="topbar-badge">Contábil</span>
+</div>
+
+<div class="main">
+  <div class="tool-header">
+    <div class="tool-label">Setor Contábil</div>
+    <div class="tool-title">Transferência entre Filiais &#8212; <em>Mercadorias</em></div>
+    <div class="tool-desc">Conciliação da conta transitória de transferências entre filiais. O sistema valida o saldo anterior, cruza as notas do período e gera o arquivo de pendências para o mês seguinte.</div>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps-bar" id="stepsBar">
+    <div class="step active" id="step1"><div class="step-num">1</div><div class="step-text"><div class="step-title">Configurar</div><div class="step-sub">Contas e saldo anterior</div></div></div>
+    <div class="step blocked" id="step2"><div class="step-num">2</div><div class="step-text"><div class="step-title">Importar</div><div class="step-sub">Razão do período</div></div></div>
+    <div class="step blocked" id="step3"><div class="step-num">3</div><div class="step-text"><div class="step-title">Cruzar</div><div class="step-sub">Conciliar notas</div></div></div>
+    <div class="step blocked" id="step4"><div class="step-num">4</div><div class="step-text"><div class="step-title">Conferir</div><div class="step-sub">Validar saldo final</div></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       STEP 1 — Configuração
+  ══════════════════════════════════════════ -->
+  <div class="section" id="secConfig">
+    <div class="section-header">
+      <span class="section-icon">⚙️</span>
+      <span class="section-title">Passo 1 — Contas e Saldo Anterior</span>
+    </div>
+    <div class="section-body">
+
+      <!-- Diagrama -->
+      <div class="config-diagram">
+        <div class="diag-box"><div class="diag-lbl">Estoque (saída)</div><div class="diag-val estoque" id="diagE1">___</div></div>
+        <div class="diag-arrow"><div class="diag-arrow-sym">&#8592;</div><div class="diag-arrow-txt">SAÍDA<br>Créd. Estoque<br>Déb. Transitória</div></div>
+        <div class="diag-box"><div class="diag-lbl">Conta Transitória</div><div class="diag-val trans" id="diagT">___</div></div>
+        <div class="diag-arrow"><div class="diag-arrow-sym">&#8594;</div><div class="diag-arrow-txt">ENTRADA<br>Déb. Estoque<br>Créd. Transitória</div></div>
+        <div class="diag-box"><div class="diag-lbl">Estoque (entrada)</div><div class="diag-val estoque" id="diagE2">___</div></div>
+      </div>
+
+      <div class="config-fields-row" style="margin-bottom:1.25rem;">
+        <div class="field-group">
+          <div class="field-label">Conta de Estoque</div>
+          <input type="text" class="config-input vazio" id="ctaEstoque" placeholder="ex: 511" style="width:110px" oninput="onCtaChange(this,'diagE1','diagE2')">
+          <div class="field-hint">Créd. saída / Déb. entrada</div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Conta Transitória</div>
+          <input type="text" class="config-input vazio" id="ctaTransitoria" placeholder="ex: 4860" style="width:110px" oninput="onCtaChange(this,'diagT')">
+          <div class="field-hint">Déb. saída / Créd. entrada</div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Tolerância R$</div>
+          <input type="number" class="config-input" id="tolerancia" value="0.01" step="0.01" min="0" style="width:90px">
+          <div class="field-hint">Diferença máx. p/ conciliar</div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Regex Nº NF</div>
+          <input type="text" class="config-input" id="regexNF" value="NF\s+(\d+)" style="width:160px">
+          <div class="field-hint">Padrão no histórico</div>
+        </div>
+      </div>
+
+      <!-- Saldo anterior toggle -->
+      <div class="field-label" style="margin-bottom:.5rem;">Este período possui saldo anterior na conta transitória?</div>
+      <div class="saldo-ant-toggle">
+        <button class="sat-btn active-nao" id="btnNao" onclick="setSaldoAnterior(false)">&#10004; Não — primeira conciliação ou conta zerada</button>
+        <button class="sat-btn" id="btnSim" onclick="setSaldoAnterior(true)">&#9888; Sim — há saldo do período anterior</button>
+      </div>
+
+      <!-- Campos do saldo anterior (aparece quando SIM) -->
+      <div class="saldo-ant-fields" id="saldoAntFields">
+        <div class="field-group">
+          <div class="field-label">Valor do Saldo Anterior (R$)</div>
+          <input type="text" class="field-input" id="vlrSaldoAnterior" placeholder="ex: 1.234,56" oninput="validarSaldoAnterior()">
+          <div class="field-hint">Saldo devedor da conta transitória no início do período</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:260px;">
+          <div class="field-label">Arquivo de Pendências do Período Anterior</div>
+          <label class="upload-box required-missing" id="uploadPendBox" style="flex-direction:row;align-items:center;text-align:left;padding:.75rem 1rem;gap:10px;">
+            <input type="file" id="filePend" accept=".xlsx">
+            <span class="ub-icon" style="font-size:18px;">📋</span>
+            <span>
+              <div class="ub-title" id="pendBoxTitle">Selecione o Excel de Pendências</div>
+              <div class="ub-hint">Gerado no mês anterior por este mesmo sistema</div>
+            </span>
+          </label>
+        </div>
+        <div class="val-saldo-box" id="valSaldoBox"></div>
+      </div>
+
+      <div style="margin-top:1rem;">
+        <button class="btn-primary" onclick="confirmarConfig()">Confirmar configuração &#8594;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       STEP 2 — Importar Razão
+  ══════════════════════════════════════════ -->
+  <div class="section" id="secImport" style="opacity:.5;pointer-events:none;">
+    <div class="section-header">
+      <span class="section-icon">📂</span>
+      <span class="section-title">Passo 2 — Importar Razão do Período</span>
+      <span class="section-sub" id="importSub">Configure o passo 1 primeiro</span>
+    </div>
+    <div class="section-body">
+      <div class="upload-row">
+        <label class="upload-box" id="uploadRazaoBox">
+          <input type="file" id="fileRazao" accept=".xlsx,.xls">
+          <div class="ub-icon">📂</div>
+          <div class="ub-title">Importar Razão Consolidado</div>
+          <div class="ub-hint">Excel com todas as filiais do período</div>
+          <div class="ub-status" id="razaoStatus"></div>
+          <div class="ub-detail" id="razaoDetail"></div>
+        </label>
+      </div>
+
+      <!-- Saldo cards (aparecem ao carregar) -->
+      <div class="saldo-cards-row" id="saldoCardsRow">
+        <div class="saldo-mini">
+          <div class="sm-label">Débitos do Período (Saídas)</div>
+          <div class="sm-val warn" id="smDeb">—</div>
+          <div class="sm-sub" id="smDebQt">—</div>
+        </div>
+        <div class="saldo-mini">
+          <div class="sm-label">Créditos do Período (Entradas)</div>
+          <div class="sm-val ok" id="smCred">—</div>
+          <div class="sm-sub" id="smCredQt">—</div>
+        </div>
+        <div class="saldo-mini destaque">
+          <div class="sm-label">Saldo Líquido do Período</div>
+          <div class="sm-val" id="smLiq" style="color:var(--text2)">—</div>
+          <div class="sm-sub">Déb − Créd do período</div>
+        </div>
+        <div class="saldo-final-box-top">
+          <div class="sfbt-label">Saldo Final Apurado</div>
+          <div class="sfbt-val" id="smFinal" style="color:var(--text2)">—</div>
+          <div class="sm-sub" style="margin-top:2px">Saldo ant. + líquido do período</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       STEP 3 — Cruzar / Resultado
+  ══════════════════════════════════════════ -->
+  <div class="actions-bar" id="actionsBar">
+    <button class="btn-primary" id="btnCruzar" onclick="executarCruzamento()">&#9889; Cruzar Notas</button>
+    <div class="action-sep"></div>
+    <button class="btn-export" onclick="exportarPendencias()">&#8595; Exportar Pendências (próximo mês)</button>
+    <div class="action-sep"></div>
+    <button class="btn-secondary" onclick="exportarCompleto()">&#8595; Exportar Resultado Completo</button>
+    <button class="btn-secondary" onclick="limparTudo()">&#10005; Limpar tudo</button>
+  </div>
+
+  <div class="cards-resumo" id="cardsResumo">
+    <div class="card-resumo"><div class="cr-label">Total de Notas</div><div class="cr-valor val-n" id="resTotalNotas">—</div><div class="cr-sub" id="resTotalVal">—</div></div>
+    <div class="card-resumo destaque-ok"><div class="cr-label">&#10004; Conciliadas</div><div class="cr-valor val-ok" id="resConciliadas">—</div><div class="cr-sub" id="resConciliadosVal">—</div></div>
+    <div class="card-resumo destaque-pend"><div class="cr-label">&#9888; Saíram sem Entrar</div><div class="cr-valor val-pend" id="resPendentes">—</div><div class="cr-sub" id="resPendentesVal">—</div></div>
+    <div class="card-resumo destaque-inc"><div class="cr-label">&#8617; Entraram sem Sair</div><div class="cr-valor val-inc" id="resInconsistentes">—</div><div class="cr-sub" id="resInconsistentesVal">—</div></div>
+  </div>
+
+  <!-- Saldo por filial -->
+  <div id="saldoFiliaisWrap" style="display:none;margin-bottom:1.5rem;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text4);margin-bottom:.75rem;">Saldo da Conta Transitória por Filial</div>
+    <div id="saldoFiliaisGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:8px;"></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="result-tabs" id="resultTabs">
+    <div class="rtab-bar">
+      <button class="rtab active" onclick="switchTab('pendentes',this)">&#9888; Saíram sem Entrar <span class="rtab-count pend" id="cntPend">0</span></button>
+      <button class="rtab" onclick="switchTab('inconsistentes',this)">&#8617; Entraram sem Sair <span class="rtab-count inc" id="cntInc">0</span></button>
+      <button class="rtab" onclick="switchTab('conciliadas',this)">&#10004; Conciliadas <span class="rtab-count ok" id="cntOk">0</span></button>
+      <button class="rtab" onclick="switchTab('todas',this)">&#8801; Todas <span class="rtab-count all" id="cntTodas">0</span></button>
+    </div>
+    <div class="filter-bar">
+      <div class="filter-group"><div class="filter-label">Nº NF</div><input type="text" class="filter-input" id="filtroNF" placeholder="ex: 106" oninput="aplicarFiltros()" style="width:90px"></div>
+      <div class="filter-group"><div class="filter-label">Filial Saída</div><select class="filter-select" id="filtroFilialSaida" onchange="aplicarFiltros()"><option value="">Todas</option></select></div>
+      <div class="filter-group"><div class="filter-label">Filial Entrada</div><select class="filter-select" id="filtroFilialEntrada" onchange="aplicarFiltros()"><option value="">Todas</option></select></div>
+      <div class="filter-group"><div class="filter-label">Data De</div><input type="date" class="filter-input" id="filtroDataDe" onchange="aplicarFiltros()"></div>
+      <div class="filter-group"><div class="filter-label">Data Até</div><input type="date" class="filter-input" id="filtroDataAte" onchange="aplicarFiltros()"></div>
+      <div class="filter-group"><div class="filter-label">Valor Mín</div><input type="number" class="filter-input" id="filtroValMin" placeholder="0,00" oninput="aplicarFiltros()" style="width:90px"></div>
+      <div class="filter-group"><div class="filter-label">Valor Máx</div><input type="number" class="filter-input" id="filtroValMax" placeholder="—" oninput="aplicarFiltros()" style="width:90px"></div>
+      <div class="filter-group"><div class="filter-label">Histórico</div><input type="text" class="filter-input" id="filtroHist" placeholder="buscar..." oninput="aplicarFiltros()" style="width:175px"></div>
+      <button class="btn-clear-f" onclick="limparFiltros()">&#10005; Limpar</button>
+    </div>
+    <div class="table-wrap">
+      <table class="result-table">
+        <thead><tr>
+          <th onclick="ordenar('status')">Status <span id="si-status">&#8597;</span></th>
+          <th onclick="ordenar('nf')">N&#186; NF <span id="si-nf">&#8597;</span></th>
+          <th onclick="ordenar('valor')">Valor <span id="si-valor">&#8597;</span></th>
+          <th>Filial Saída</th>
+          <th onclick="ordenar('dataSaida')">Data Saída <span id="si-dataSaida">&#8597;</span></th>
+          <th>Doc Saída</th>
+          <th>Filial Entrada</th>
+          <th onclick="ordenar('dataEntrada')">Data Entrada <span id="si-dataEntrada">&#8597;</span></th>
+          <th>Doc Entrada</th>
+          <th>Histórico</th>
+        </tr></thead>
+        <tbody id="resultBody"><tr><td colspan="10" class="empty-state"><strong>Aguardando cruzamento</strong>Complete os passos 1 e 2 e clique em Cruzar Notas.</td></tr></tbody>
+      </table>
+      <div class="table-footer" id="tableFooter">
+        <span id="tfShowing">—</span><span class="tf-sep">|</span>
+        <span id="tfTotal">—</span><span class="tf-sep">|</span>
+        <span id="tfPend">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       STEP 4 — Conferência Final
+  ══════════════════════════════════════════ -->
+  <div class="conf-section" id="confSection">
+    <div class="conf-header">
+      <span style="font-size:18px">🔍</span>
+      <span class="conf-title">Passo 4 — Conferência Final do Saldo</span>
+      <span class="conf-bate-badge" id="confBateBadge" style="display:none"></span>
+    </div>
+
+    <!-- Cards resumo da conferência -->
+    <div class="conf-cards">
+      <div class="conf-card">
+        <div class="cc-label">Saldo Anterior Informado</div>
+        <div class="cc-val" id="confSaldoAnt" style="color:var(--azul-text)">—</div>
+      </div>
+      <div class="conf-card">
+        <div class="cc-label">&#9888; Saíram sem Entrar (devedoras)</div>
+        <div class="cc-val val-pend" id="confPendQt">—</div>
+        <div style="font-size:11px;color:var(--text4);margin-top:3px" id="confPendVal">—</div>
+      </div>
+      <div class="conf-card">
+        <div class="cc-label">&#8617; Entraram sem Sair (credoras)</div>
+        <div class="cc-val val-inc" id="confIncQt">—</div>
+        <div style="font-size:11px;color:var(--text4);margin-top:3px" id="confIncVal">—</div>
+      </div>
+      <div class="conf-card destaque">
+        <div class="cc-label">Saldo Líquido Apurado</div>
+        <div class="cc-val val-azul" id="confSaldoLiq">—</div>
+        <div style="font-size:10px;color:var(--azul-text);margin-top:3px">Saíram − Entraram (sem conciliar)</div>
+      </div>
+    </div>
+
+    <!-- Tabela detalhada: GRUPO 1 — Saíram sem entrar -->
+    <div class="conf-table-wrap">
+
+      <!-- Subtítulo grupo 1 -->
+      <div style="padding:.65rem 1.25rem;background:var(--vermelho-bg);border-top:.5px solid var(--vermelho-border);border-bottom:.5px solid var(--vermelho-border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--vermelho-text)">&#9888; Saíram sem Entrar — geram saldo devedor</span>
+        <span style="font-size:11px;color:var(--vermelho-text);margin-left:auto" id="confGrp1Tot">—</span>
+      </div>
+      <table class="result-table">
+        <thead><tr>
+          <th>Período</th>
+          <th>N&#186; NF</th>
+          <th>Valor</th>
+          <th>Filial que Saiu</th>
+          <th>Data Saída</th>
+          <th>Doc</th>
+          <th>Histórico</th>
+        </tr></thead>
+        <tbody id="confBodyPend"></tbody>
+      </table>
+
+      <!-- Subtítulo grupo 2 -->
+      <div style="padding:.65rem 1.25rem;background:var(--amarelo-bg);border-top:.5px solid var(--amarelo-border);border-bottom:.5px solid var(--amarelo-border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--amarelo-text)">&#8617; Entraram sem Sair — geram saldo credor</span>
+        <span style="font-size:11px;color:var(--amarelo-text);margin-left:auto" id="confGrp2Tot">—</span>
+      </div>
+      <table class="result-table">
+        <thead><tr>
+          <th>Período</th>
+          <th>N&#186; NF</th>
+          <th>Valor</th>
+          <th>Filial que Entrou</th>
+          <th>Data Entrada</th>
+          <th>Doc</th>
+          <th>Histórico</th>
+        </tr></thead>
+        <tbody id="confBodyInc"></tbody>
+      </table>
+
+      <!-- Rodapé com saldo líquido e conferência -->
+      <div class="conf-total-row">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:baseline;gap:10px;">
+            <span class="conf-total-label">Saíram sem Entrar:</span>
+            <span class="conf-total-val val-pend" id="confRodapePend">—</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:10px;">
+            <span class="conf-total-label">Entraram sem Sair:</span>
+            <span class="conf-total-val val-inc" id="confRodapeInc">—</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:10px;border-top:.5px solid var(--azul-border);padding-top:6px;margin-top:2px;">
+            <span class="conf-total-label" style="color:var(--azul-text)">Saldo Líquido da Conta:</span>
+            <span class="conf-total-val" id="confRodapeLiq" style="color:var(--azul-text)">—</span>
+          </div>
+        </div>
+        <div class="conf-saldo-contab">
+          <span class="conf-saldo-label">Saldo na contabilidade (para conferir):</span>
+          <input type="text" class="conf-saldo-input" id="confSaldoContab" placeholder="informe o saldo R$" oninput="conferirSaldo()">
+          <span class="conf-diff" id="confDiff" style="display:none"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ──────────────────────────────────────────────
+// UTILS
+// ──────────────────────────────────────────────
+function normalizar(s){
+  return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/gi,'').toLowerCase();
+}
+function detectCol(header,chaves){
+  for(const c of chaves){const i=header.findIndex(h=>normalizar(h).includes(normalizar(c)));if(i>=0)return i;}
+  return -1;
+}
+function parseBRL(s){
+  const str=String(s||'').trim();if(!str)return 0;
+  if(/^\d{1,3}(\.\d{3})*(,\d+)?$/.test(str))return parseFloat(str.replace(/\./g,'').replace(',','.'))||0;
+  return parseFloat(String(str).replace(',','.'))||0;
+}
+const fmtBRL=v=>Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+
+// ──────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────
+let temSaldoAnterior = false;
+let vlrSaldoAnt      = 0;
+let pendenciasAnt    = [];   // notas pendentes importadas do mês anterior
+let pendAntValor     = 0;    // soma das pendências anteriores
+let configOk         = false;
+
+let lancamentos      = [];
+let resultado        = [];
+let abaAtiva         = 'pendentes';
+let rowsFiltradas    = [];
+let sortCol=null, sortDir=1;
+let totDeb=0, totCred=0;
+
+// ──────────────────────────────────────────────
+// STEP 1 — CONFIG
+// ──────────────────────────────────────────────
+function onCtaChange(input,...ids){
+  const v=input.value.trim()||'___';
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=v;});
+  input.classList.toggle('vazio',!input.value.trim());
+}
+
+function setSaldoAnterior(sim){
+  temSaldoAnterior=sim;
+  document.getElementById('btnSim').className='sat-btn'+(sim?' active-sim':'');
+  document.getElementById('btnNao').className='sat-btn'+(!sim?' active-nao':'');
+  document.getElementById('saldoAntFields').style.display=sim?'flex':'none';
+  if(!sim){ pendenciasAnt=[]; pendAntValor=0; document.getElementById('valSaldoBox').style.display='none'; }
+}
+
+// Upload pendências anteriores
+document.getElementById('filePend').addEventListener('change',function(e){
+  if(e.target.files[0])lerPendencias(e.target.files[0]);this.value='';
+});
+
+function lerPendencias(file){
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      // Procura a aba "Pendências" ou "Saíram sem Entrar" ou a primeira
+      const sheetName=wb.SheetNames.find(s=>normalizar(s).includes('pend')||normalizar(s).includes('sairam'))||wb.SheetNames[0];
+      const ws=wb.Sheets[sheetName];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true});
+      if(rows.length<2){alert('Arquivo de pendências vazio ou inválido.');return;}
+      const header=rows[0].map(h=>String(h||''));
+      const iNF   =detectCol(header,['NF','Nº NF','Numero NF']);
+      const iValor=detectCol(header,['Valor']);
+      const iTipo =detectCol(header,['Tipo','Status','Origem']);
+      const iHist =detectCol(header,['Histórico','Historico']);
+      const iFilSai=detectCol(header,['Filial Saída','FilialSaida']);
+      const iFilEnt=detectCol(header,['Filial Entrada','FilialEntrada']);
+      const iData =detectCol(header,['Data Saída','DataSaida','Data']);
+      const iDoc  =detectCol(header,['Doc Saída','DocSaida','Doc']);
+
+      pendenciasAnt=[];
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i];
+        if(!r||r.every(c=>c==null||c===''))continue;
+        const rawV=iValor>=0?r[iValor]:null;
+        let val=0;
+        if(typeof rawV==='number')val=rawV;else val=parseBRL(rawV);
+        if(!val||val<=0)continue;
+        const tipo=String(iTipo>=0?r[iTipo]:'Saiu sem Entrar').trim();
+        // status: "Saiu sem Entrar" = pendente (devedor +), "Entrou sem Sair" = inconsistente (credor -)
+        const status = normalizar(tipo).includes('entrou') ? 'inconsistente' : 'pendente';
+        pendenciasAnt.push({
+          nf:    String(iNF>=0?r[iNF]:'').trim(),
+          valor: val,
+          status,
+          tipo,
+          historico: String(iHist>=0?r[iHist]:'').trim(),
+          filialSaida:  String(iFilSai>=0?r[iFilSai]:'').trim(),
+          filialEntrada:String(iFilEnt>=0?r[iFilEnt]:'').trim(),
+          dataSaida: String(iData>=0?r[iData]:'').trim(),
+          docSaida:  String(iDoc>=0?r[iDoc]:'').trim(),
+          origem:'anterior',
+        });
+      }
+      // Saldo líquido = Saíram sem Entrar (devedores) MENOS Entraram sem Sair (credores)
+      const pendAntDev = pendenciasAnt.filter(p=>p.status==='pendente').reduce((s,p)=>s+p.valor,0);
+      const pendAntCred= pendenciasAnt.filter(p=>p.status==='inconsistente').reduce((s,p)=>s+p.valor,0);
+      pendAntValor = pendAntDev - pendAntCred;
+
+      const box=document.getElementById('uploadPendBox');
+      box.className='upload-box loaded';
+      const pendQtDev=pendenciasAnt.filter(p=>p.status==='pendente').length;
+      const pendQtCred=pendenciasAnt.filter(p=>p.status==='inconsistente').length;
+      document.getElementById('pendBoxTitle').textContent=
+        `✔ ${file.name} — ${pendenciasAnt.length} nota${pendenciasAnt.length!==1?'s':''} | `+
+        `Saldo líquido: ${fmtBRL(pendAntValor)} `+
+        `(${pendQtDev} saída${pendQtDev!==1?'s':''} − ${pendQtCred} entrada${pendQtCred!==1?'s':''})`;
+      validarSaldoAnterior();
+    }catch(err){alert('Erro ao ler pendências:\n'+err.message);console.error(err);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function validarSaldoAnterior(){
+  if(!temSaldoAnterior)return;
+  vlrSaldoAnt=parseBRL(document.getElementById('vlrSaldoAnterior').value)||0;
+  const box=document.getElementById('valSaldoBox');
+  box.style.display='block';
+
+  if(!pendenciasAnt.length){
+    box.className='val-saldo-box warn';
+    box.innerHTML='&#9888; Importe o arquivo de pendências do período anterior para validar o saldo.';
+    return;
+  }
+  // pendAntValor já é o saldo líquido (Saíram sem Entrar MENOS Entraram sem Sair)
+  const diff=Math.abs(vlrSaldoAnt-pendAntValor);
+  if(diff<0.02){
+    box.className='val-saldo-box ok';
+    box.innerHTML=`&#10004; <strong>Saldo validado!</strong> O valor informado (${fmtBRL(vlrSaldoAnt)}) bate com o saldo líquido das pendências (${fmtBRL(pendAntValor)}).`;
+  }else{
+    box.className='val-saldo-box err';
+    box.innerHTML=`&#10008; <strong>Saldo não confere!</strong><br>`+
+      `Valor informado: <strong>${fmtBRL(vlrSaldoAnt)}</strong><br>`+
+      `Saldo líquido das pendências (Saíram − Entraram): <strong>${fmtBRL(pendAntValor)}</strong><br>`+
+      `Diferença: <strong>${fmtBRL(diff)}</strong><br>`+
+      `<em>Lembre-se: o saldo é calculado como "Saíram sem Entrar" MENOS "Entraram sem Sair".</em>`;
+  }
+}
+
+function confirmarConfig(){
+  const ctaE=document.getElementById('ctaEstoque').value.trim();
+  const ctaT=document.getElementById('ctaTransitoria').value.trim();
+  if(!ctaE){alert('Preencha a Conta de Estoque.');document.getElementById('ctaEstoque').focus();return;}
+  if(!ctaT){alert('Preencha a Conta Transitória.');document.getElementById('ctaTransitoria').focus();return;}
+
+  if(temSaldoAnterior){
+    if(!vlrSaldoAnt){alert('Informe o valor do saldo anterior.');document.getElementById('vlrSaldoAnterior').focus();return;}
+    if(!pendenciasAnt.length){alert('Importe o arquivo de pendências do período anterior.');return;}
+    const diff=Math.abs(vlrSaldoAnt-pendAntValor);
+    if(diff>=0.02){
+      const pendDev =pendenciasAnt.filter(p=>p.status==='pendente').reduce((s,p)=>s+p.valor,0);
+      const pendCred=pendenciasAnt.filter(p=>p.status==='inconsistente').reduce((s,p)=>s+p.valor,0);
+      alert(
+        `O saldo anterior informado não confere com as pendências importadas.\n\n`+
+        `Valor informado: ${fmtBRL(vlrSaldoAnt)}\n`+
+        `Saldo líquido das pendências: ${fmtBRL(pendAntValor)}\n`+
+        `  (Saíram sem Entrar: ${fmtBRL(pendDev)} − Entraram sem Sair: ${fmtBRL(pendCred)})\n`+
+        `Diferença: ${fmtBRL(diff)}\n\n`+
+        `Corrija o valor ou importe o arquivo correto de pendências.`
+      );
+      return;
+    }
+  }
+
+  configOk=true;
+  // Libera step 2
+  document.getElementById('secImport').style.opacity='1';
+  document.getElementById('secImport').style.pointerEvents='auto';
+  document.getElementById('importSub').textContent='Arraste ou clique para importar';
+  setStep(2);
+}
+
+// ──────────────────────────────────────────────
+// STEP 2 — UPLOAD RAZÃO
+// ──────────────────────────────────────────────
+document.getElementById('fileRazao').addEventListener('change',function(e){
+  if(e.target.files[0])lerRazao(e.target.files[0]);this.value='';
+});
+const upBox=document.getElementById('uploadRazaoBox');
+document.getElementById('secImport').addEventListener('dragover',e=>{e.preventDefault();upBox.classList.add('loaded');});
+document.getElementById('secImport').addEventListener('dragleave',()=>upBox.classList.remove('loaded'));
+document.getElementById('secImport').addEventListener('drop',e=>{
+  e.preventDefault();if(e.dataTransfer.files[0])lerRazao(e.dataTransfer.files[0]);
+});
+
+function lerRazao(file){
+  if(!configOk){alert('Complete a configuração (Passo 1) antes de importar.');return;}
+  if(!file.name.match(/\.(xlsx|xls)$/i)){alert('Use um arquivo Excel (.xlsx ou .xls).');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      lancamentos=[];
+      wb.SheetNames.forEach(sheet=>{
+        const ws=wb.Sheets[sheet];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,dateNF:'yyyy-mm-dd'});
+        if(rows.length<2)return;
+        const header=rows[0].map(h=>String(h||''));
+        const idx={
+          data:     detectCol(header,['Data']),
+          ndoc:     detectCol(header,['Numero Documento','Número Documento','NDoc','Documento']),
+          debito:   detectCol(header,['Débito','Debito','Deb']),
+          credito:  detectCol(header,['Crédito','Credito','Cred']),
+          valor:    detectCol(header,['Valor']),
+          historico:detectCol(header,['Histórico','Historico']),
+          seq:      detectCol(header,['Sequência','Sequencia','Seq']),
+          filial:   detectCol(header,['Filial']),
+        };
+        for(let i=1;i<rows.length;i++){
+          const r=rows[i];
+          if(!r||r.every(c=>c==null||c===''))continue;
+          const rawV=idx.valor>=0?r[idx.valor]:null;
+          let val=0;
+          if(typeof rawV==='number')val=rawV;else val=parseBRL(rawV);
+          if(!val||isNaN(val)||val<=0)continue;
+          let dataStr='';
+          const rawD=idx.data>=0?r[idx.data]:null;
+          if(rawD instanceof Date)dataStr=rawD.toISOString().slice(0,10);
+          else if(typeof rawD==='number'){try{const d=XLSX.SSF.parse_date_code(rawD);if(d)dataStr=`${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;}catch(x){}}
+          else if(typeof rawD==='string')dataStr=rawD.slice(0,10);
+          lancamentos.push({
+            data:dataStr,ndoc:String(idx.ndoc>=0?r[idx.ndoc]:'').trim(),
+            debito:String(idx.debito>=0?r[idx.debito]:'').trim(),
+            credito:String(idx.credito>=0?r[idx.credito]:'').trim(),
+            valor:val,historico:String(idx.historico>=0?r[idx.historico]:'').trim(),
+            seq:idx.seq>=0?r[idx.seq]:'',
+            filial:String(idx.filial>=0?r[idx.filial]:sheet).trim()||sheet,
+          });
+        }
+      });
+      if(!lancamentos.length){alert('Nenhum lançamento encontrado. Verifique o formato do arquivo.');return;}
+
+      const filiais=[...new Set(lancamentos.map(l=>l.filial))].sort();
+      const box=document.getElementById('uploadRazaoBox');
+      box.className='upload-box loaded';
+      document.getElementById('razaoStatus').className='ub-status ok';
+      document.getElementById('razaoStatus').textContent='✔ Arquivo carregado';
+      document.getElementById('razaoDetail').textContent=`${lancamentos.length} lançamentos · ${filiais.length} filial(is): ${filiais.join(', ')}`;
+
+      // Saldo cards
+      const ctaT=document.getElementById('ctaTransitoria').value.trim();
+      const ctaE=document.getElementById('ctaEstoque').value.trim();
+      const debs =lancamentos.filter(l=>l.debito===ctaT);
+      const creds=lancamentos.filter(l=>l.credito===ctaT);
+      totDeb =debs.reduce((s,l)=>s+l.valor,0);
+      totCred=creds.reduce((s,l)=>s+l.valor,0);
+      const liq=totDeb-totCred;
+      const final=vlrSaldoAnt+liq;
+
+      document.getElementById('smDeb').textContent   =fmtBRL(totDeb);
+      document.getElementById('smDebQt').textContent =`${debs.length} lançamento${debs.length!==1?'s':''}`;
+      document.getElementById('smCred').textContent  =fmtBRL(totCred);
+      document.getElementById('smCredQt').textContent=`${creds.length} lançamento${creds.length!==1?'s':''}`;
+      const smL=document.getElementById('smLiq');
+      smL.textContent=fmtBRL(liq);
+      smL.className='sm-val '+(Math.abs(liq)<0.02?'ok':'warn');
+      const smF=document.getElementById('smFinal');
+      smF.textContent=fmtBRL(final);
+      smF.style.color=Math.abs(final)<0.02?'var(--verde-text)':'var(--amarelo-text)';
+      document.getElementById('saldoCardsRow').style.display='flex';
+
+      document.getElementById('actionsBar').style.display='flex';
+      setStep(3);
+    }catch(err){alert('Erro ao ler o arquivo:\n'+err.message);console.error(err);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ──────────────────────────────────────────────
+// STEP INDICATOR
+// ──────────────────────────────────────────────
+function setStep(n){
+  for(let i=1;i<=4;i++){
+    const el=document.getElementById(`step${i}`);
+    if(i<n)el.className='step done';
+    else if(i===n)el.className='step active';
+    else el.className='step blocked';
+  }
+}
+
+// ──────────────────────────────────────────────
+// STEP 3 — CRUZAMENTO
+// ──────────────────────────────────────────────
+function executarCruzamento(){
+  const ctaE=document.getElementById('ctaEstoque').value.trim();
+  const ctaT=document.getElementById('ctaTransitoria').value.trim();
+  const tol=parseFloat(document.getElementById('tolerancia').value)||0.01;
+  const reStr=document.getElementById('regexNF').value.trim()||'NF\\s+(\\d+)';
+  const regex=new RegExp(reStr,'i');
+  if(!lancamentos.length){alert('Importe o razão primeiro.');return;}
+
+  // SAÍDA = Deb.Transitória + Cred.Estoque
+  // ENTRADA = Deb.Estoque + Cred.Transitória
+  let saidas=[],entradas=[];
+  lancamentos.forEach(l=>{
+    const m=regex.exec(l.historico);const nf=m?m[1]:'';
+    if(l.debito===ctaT&&l.credito===ctaE)saidas.push({...l,nf,origem:'mes'});
+    else if(l.debito===ctaE&&l.credito===ctaT)entradas.push({...l,nf,origem:'mes'});
+  });
+
+  // Se há saldo anterior, as pendências antigas também tentam encontrar entradas no período atual
+  if(temSaldoAnterior&&pendenciasAnt.length){
+    pendenciasAnt.forEach(p=>{
+      if(p.status==='pendente'){
+        // "Saiu sem Entrar" do período anterior → entra como saída para tentar conciliar com entradas novas
+        saidas.push({...p, nf:p.nf, debito:ctaT, credito:ctaE,
+          data:p.dataSaida, ndoc:p.docSaida,
+          filial:p.filialSaida||p.filialEntrada, origem:'anterior'});
+      } else {
+        // "Entrou sem Sair" do período anterior → entra como entrada para tentar conciliar com saídas novas
+        entradas.push({...p, nf:p.nf, debito:ctaE, credito:ctaT,
+          data:p.dataEntrada||p.dataSaida, ndoc:p.docEntrada||p.docSaida,
+          filial:p.filialEntrada||p.filialSaida, origem:'anterior'});
+      }
+    });
+  }
+
+  const usada=new Array(entradas.length).fill(false);
+  resultado=[];
+
+  saidas.forEach(s=>{
+    let best=-1;
+    for(let ei=0;ei<entradas.length;ei++){
+      if(usada[ei])continue;
+      const e=entradas[ei];
+      if(s.nf&&e.nf&&s.nf===e.nf&&Math.abs(s.valor-e.valor)<=tol){best=ei;break;}
+    }
+    if(best>=0){
+      const e=entradas[best];usada[best]=true;
+      resultado.push({status:'ok',nf:s.nf,valor:s.valor,origem:s.origem,
+        filialSaida:s.filial,dataSaida:s.data,docSaida:s.ndoc,
+        filialEntrada:e.filial,dataEntrada:e.data,docEntrada:e.ndoc,historico:s.historico});
+    }else{
+      resultado.push({status:'pendente',nf:s.nf,valor:s.valor,origem:s.origem,
+        filialSaida:s.filial,dataSaida:s.data,docSaida:s.ndoc,
+        filialEntrada:'',dataEntrada:'',docEntrada:'',historico:s.historico});
+    }
+  });
+  entradas.forEach((e,ei)=>{
+    if(usada[ei])return;
+    resultado.push({status:'inconsistente',nf:e.nf,valor:e.valor,origem:'mes',
+      filialSaida:'',dataSaida:'',docSaida:'',
+      filialEntrada:e.filial,dataEntrada:e.data,docEntrada:e.ndoc,historico:e.historico});
+  });
+
+  resultado.sort((a,b)=>{const o={pendente:0,inconsistente:1,ok:2};return o[a.status]-o[b.status]||b.valor-a.valor;});
+  atualizarResumo();
+  atualizarSaldoPorFilial(ctaE,ctaT);
+  popularFiltros();
+  switchTab('pendentes',document.querySelector('.rtab'));
+  document.getElementById('cardsResumo').style.display    ='grid';
+  document.getElementById('saldoFiliaisWrap').style.display='block';
+  document.getElementById('resultTabs').style.display      ='block';
+  montarConferencia();
+  setStep(4);
+}
+
+function atualizarResumo(){
+  const pend=resultado.filter(r=>r.status==='pendente');
+  const inc =resultado.filter(r=>r.status==='inconsistente');
+  const ok  =resultado.filter(r=>r.status==='ok');
+  const sum =arr=>arr.reduce((s,r)=>s+r.valor,0);
+  document.getElementById('resTotalNotas').textContent    =resultado.length;
+  document.getElementById('resTotalVal').textContent      =fmtBRL(sum(resultado));
+  document.getElementById('resConciliadas').textContent   =ok.length;
+  document.getElementById('resConciliadosVal').textContent=fmtBRL(sum(ok));
+  document.getElementById('resPendentes').textContent     =pend.length;
+  document.getElementById('resPendentesVal').textContent  =fmtBRL(sum(pend));
+  document.getElementById('resInconsistentes').textContent    =inc.length;
+  document.getElementById('resInconsistentesVal').textContent =fmtBRL(sum(inc));
+  document.getElementById('cntPend').textContent =pend.length;
+  document.getElementById('cntInc').textContent  =inc.length;
+  document.getElementById('cntOk').textContent   =ok.length;
+  document.getElementById('cntTodas').textContent=resultado.length;
+}
+
+function atualizarSaldoPorFilial(ctaE,ctaT){
+  const grid=document.getElementById('saldoFiliaisGrid');grid.innerHTML='';
+  const filiais=[...new Set(lancamentos.map(l=>l.filial))].sort();
+  filiais.forEach(f=>{
+    const ls=lancamentos.filter(l=>l.filial===f);
+    const tD=ls.filter(l=>l.debito===ctaT&&l.credito===ctaE).reduce((s,l)=>s+l.valor,0);
+    const tC=ls.filter(l=>l.debito===ctaE&&l.credito===ctaT).reduce((s,l)=>s+l.valor,0);
+    const s=tD-tC;const absS=Math.abs(s);
+    const cor=absS<0.02?'var(--verde-text)':s>0?'var(--vermelho-text)':'var(--amarelo-text)';
+    const cls=absS<0.02?'szero':s>0?'sdev':'scred';
+    const card=document.createElement('div');
+    card.className=`saldo-filial-card ${cls}`;
+    card.style.cssText='background:var(--bg2);border:.5px solid var(--border);border-radius:2px;padding:.85rem 1rem;';
+    if(cls==='szero')card.style.borderColor='var(--verde-border)';
+    if(cls==='sdev') card.style.borderColor='var(--vermelho-border)';
+    if(cls==='scred')card.style.borderColor='var(--amarelo-border)';
+    card.innerHTML=`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:6px;">${f}</div>`+
+      `<div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:${cor};margin-bottom:4px;">${fmtBRL(absS)}</div>`+
+      `<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0;"><span style="color:var(--text4)">Débitos</span><span>${fmtBRL(tD)}</span></div>`+
+      `<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0;"><span style="color:var(--text4)">Créditos</span><span>${fmtBRL(tC)}</span></div>`+
+      `<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0;"><span style="color:var(--text4)">Saldo</span><span style="color:${cor}">${s>=0?'+':''}${fmtBRL(s)}</span></div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ──────────────────────────────────────────────
+// STEP 4 — CONFERÊNCIA
+// ──────────────────────────────────────────────
+function montarConferencia(){
+  const pend = resultado.filter(r=>r.status==='pendente');
+  const inc  = resultado.filter(r=>r.status==='inconsistente');
+  const sumPend = pend.reduce((s,r)=>s+r.valor,0);
+  const sumInc  = inc.reduce((s,r)=>s+r.valor,0);
+  // Saldo líquido = Saíram sem Entrar (devedor) MENOS Entraram sem Sair (credor)
+  // Mais o saldo anterior que já estava na conta
+  const saldoLiq = vlrSaldoAnt + sumPend - sumInc;
+
+  // Cards
+  document.getElementById('confSaldoAnt').textContent = fmtBRL(vlrSaldoAnt);
+  document.getElementById('confPendQt').textContent   = `${pend.length} nota${pend.length!==1?'s':''}`;
+  document.getElementById('confPendVal').textContent  = fmtBRL(sumPend);
+  document.getElementById('confIncQt').textContent    = `${inc.length} nota${inc.length!==1?'s':''}`;
+  document.getElementById('confIncVal').textContent   = fmtBRL(sumInc);
+  const elLiq = document.getElementById('confSaldoLiq');
+  elLiq.textContent = fmtBRL(saldoLiq);
+  elLiq.className   = 'cc-val '+(Math.abs(saldoLiq)<0.02?'val-ok':'val-azul');
+
+  // Rodapé
+  document.getElementById('confRodapePend').textContent = fmtBRL(sumPend);
+  document.getElementById('confRodapeInc').textContent  = fmtBRL(sumInc);
+  document.getElementById('confRodapeLiq').textContent  = fmtBRL(saldoLiq);
+
+  // Grupo 1 — Saíram sem Entrar (devedoras)
+  document.getElementById('confGrp1Tot').textContent = `${pend.length} nota${pend.length!==1?'s':''} · ${fmtBRL(sumPend)}`;
+  const tbodyPend = document.getElementById('confBodyPend');
+  if(!pend.length){
+    tbodyPend.innerHTML=`<tr><td colspan="7" class="empty-state" style="padding:1rem"><strong>Nenhuma nota nesta categoria</strong></td></tr>`;
+  }else{
+    tbodyPend.innerHTML = pend.map(r=>{
+      const origBadge = r.origem==='anterior'
+        ? '<span class="badge-status badge-ant">Período ant.</span>'
+        : '<span class="badge-status badge-pend">Este mês</span>';
+      const rowCls = r.origem==='anterior'?'row-ant':'row-pend';
+      return `<tr class="${rowCls}">
+        <td>${origBadge}</td>
+        <td><strong>${r.nf||'—'}</strong></td>
+        <td class="val-cell">${fmtBRL(r.valor)}</td>
+        <td>${r.filialSaida?`<span class="badge-filial">${r.filialSaida}</span>`:'<span style="color:var(--text4)">—</span>'}</td>
+        <td>${r.dataSaida||'<span style="color:var(--text4)">—</span>'}</td>
+        <td style="font-size:11px;color:var(--text4)">${r.docSaida||'—'}</td>
+        <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;font-size:11px;color:var(--text3)" title="${r.historico}">${r.historico}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Grupo 2 — Entraram sem Sair (credoras)
+  document.getElementById('confGrp2Tot').textContent = `${inc.length} nota${inc.length!==1?'s':''} · ${fmtBRL(sumInc)}`;
+  const tbodyInc = document.getElementById('confBodyInc');
+  if(!inc.length){
+    tbodyInc.innerHTML=`<tr><td colspan="7" class="empty-state" style="padding:1rem"><strong>Nenhuma nota nesta categoria</strong></td></tr>`;
+  }else{
+    tbodyInc.innerHTML = inc.map(r=>{
+      const origBadge = r.origem==='anterior'
+        ? '<span class="badge-status badge-ant">Período ant.</span>'
+        : '<span class="badge-status badge-inc">Este mês</span>';
+      return `<tr class="row-inc">
+        <td>${origBadge}</td>
+        <td><strong>${r.nf||'—'}</strong></td>
+        <td class="val-cell">${fmtBRL(r.valor)}</td>
+        <td>${r.filialEntrada?`<span class="badge-filial">${r.filialEntrada}</span>`:'<span style="color:var(--text4)">—</span>'}</td>
+        <td>${r.dataEntrada||'<span style="color:var(--text4)">—</span>'}</td>
+        <td style="font-size:11px;color:var(--text4)">${r.docEntrada||'—'}</td>
+        <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;font-size:11px;color:var(--text3)" title="${r.historico}">${r.historico}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('confSection').style.display='block';
+  document.getElementById('confDiff').style.display='none';
+  document.getElementById('confBateBadge').style.display='none';
+}
+
+function conferirSaldo(){
+  const pend    = resultado.filter(r=>r.status==='pendente');
+  const inc     = resultado.filter(r=>r.status==='inconsistente');
+  const sumPend = pend.reduce((s,r)=>s+r.valor,0);
+  const sumInc  = inc.reduce((s,r)=>s+r.valor,0);
+  const saldoLiq = vlrSaldoAnt + sumPend - sumInc;
+  const vlrContab = parseBRL(document.getElementById('confSaldoContab').value);
+  if(!vlrContab && vlrContab!==0){document.getElementById('confDiff').style.display='none';return;}
+  const diff = Math.abs(saldoLiq - vlrContab);
+  const el=document.getElementById('confDiff');
+  el.style.display='inline-block';
+  const badge=document.getElementById('confBateBadge');
+  badge.style.display='inline-block';
+  if(diff<0.02){
+    el.className='conf-diff zero';el.textContent='✔ Bate!';
+    badge.className='conf-bate-badge bate';badge.textContent='✔ Saldo Conferido';
+  }else{
+    el.className='conf-diff nonzero';el.textContent=`Diferença: ${fmtBRL(diff)}`;
+    badge.className='conf-bate-badge nao-bate';badge.textContent=`✘ Diferença de ${fmtBRL(diff)}`;
+  }
+}
+
+// ──────────────────────────────────────────────
+// TABS + FILTROS
+// ──────────────────────────────────────────────
+function switchTab(tab,btn){
+  abaAtiva=tab;
+  document.querySelectorAll('.rtab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  else document.querySelectorAll('.rtab').forEach(b=>{if((b.getAttribute('onclick')||'').includes(`'${tab}'`))b.classList.add('active');});
+  aplicarFiltros();
+}
+function popularFiltros(){
+  const filiais=[...new Set(lancamentos.map(l=>l.filial))].sort();
+  ['filtroFilialSaida','filtroFilialEntrada'].forEach(id=>{
+    const sel=document.getElementById(id);const cur=sel.value;
+    sel.innerHTML='<option value="">Todas</option>';
+    filiais.forEach(f=>{const o=document.createElement('option');o.value=o.textContent=f;if(f===cur)o.selected=true;sel.appendChild(o);});
+  });
+}
+function limparFiltros(){
+  ['filtroNF','filtroHist','filtroDataDe','filtroDataAte','filtroValMin','filtroValMax'].forEach(id=>document.getElementById(id).value='');
+  ['filtroFilialSaida','filtroFilialEntrada'].forEach(id=>document.getElementById(id).value='');
+  aplicarFiltros();
+}
+function aplicarFiltros(){
+  const nf  =document.getElementById('filtroNF').value.trim().toLowerCase();
+  const fSai=document.getElementById('filtroFilialSaida').value;
+  const fEnt=document.getElementById('filtroFilialEntrada').value;
+  const dDe =document.getElementById('filtroDataDe').value;
+  const dAte=document.getElementById('filtroDataAte').value;
+  const vMin=parseFloat(document.getElementById('filtroValMin').value)||null;
+  const vMax=parseFloat(document.getElementById('filtroValMax').value)||null;
+  const hist=document.getElementById('filtroHist').value.trim().toLowerCase();
+  let base=resultado;
+  if(abaAtiva==='pendentes')base=resultado.filter(r=>r.status==='pendente');
+  else if(abaAtiva==='inconsistentes')base=resultado.filter(r=>r.status==='inconsistente');
+  else if(abaAtiva==='conciliadas')base=resultado.filter(r=>r.status==='ok');
+  rowsFiltradas=base.filter(r=>{
+    if(nf&&!r.nf.toLowerCase().includes(nf))return false;
+    if(fSai&&r.filialSaida!==fSai)return false;
+    if(fEnt&&r.filialEntrada!==fEnt)return false;
+    if(dDe&&r.dataSaida&&r.dataSaida<dDe)return false;
+    if(dAte&&r.dataSaida&&r.dataSaida>dAte)return false;
+    if(vMin!==null&&r.valor<vMin)return false;
+    if(vMax!==null&&r.valor>vMax)return false;
+    if(hist&&!r.historico.toLowerCase().includes(hist))return false;
+    return true;
+  });
+  if(sortCol)aplicarOrdenacao();else renderTable();
+}
+function ordenar(col){
+  if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=1;}
+  document.querySelectorAll('[id^="si-"]').forEach(el=>el.textContent='↕');
+  const el=document.getElementById(`si-${col}`);if(el)el.textContent=sortDir===1?'↑':'↓';
+  aplicarOrdenacao();
+}
+function aplicarOrdenacao(){
+  rowsFiltradas=[...rowsFiltradas].sort((a,b)=>{
+    let va=a[sortCol]??'',vb=b[sortCol]??'';
+    if(sortCol==='valor'){va=a.valor;vb=b.valor;}
+    return va<vb?-sortDir:va>vb?sortDir:0;
+  });
+  renderTable();
+}
+
+const lblS={ok:'Conciliada',pendente:'S/ Entrada',inconsistente:'S/ Saída'};
+const badgeM={ok:'badge-ok',pendente:'badge-pend',inconsistente:'badge-inc'};
+const rowM={ok:'row-ok',pendente:'row-pend',inconsistente:'row-inc'};
+
+function renderTable(){
+  const tbody=document.getElementById('resultBody');
+  const dash=s=>s?s:'<span style="color:var(--text4)">—</span>';
+  const fil=s=>s?`<span class="badge-filial">${s}</span>`:'<span style="color:var(--text4)">—</span>';
+  if(!rowsFiltradas.length){
+    tbody.innerHTML=`<tr><td colspan="10" class="empty-state"><strong>Nenhum resultado</strong>Ajuste os filtros ou execute o cruzamento.</td></tr>`;
+    document.getElementById('tableFooter').style.display='none';return;
+  }
+  const origBadge=o=>o==='anterior'?'<span class="badge-status badge-ant" style="margin-left:4px;font-size:8px">ant.</span>':'';
+  tbody.innerHTML=rowsFiltradas.map(r=>`
+    <tr class="${rowM[r.status]}">
+      <td><span class="badge-status ${badgeM[r.status]}">${lblS[r.status]}</span>${origBadge(r.origem)}</td>
+      <td><strong>${r.nf||'—'}</strong></td>
+      <td class="val-cell">${fmtBRL(r.valor)}</td>
+      <td>${fil(r.filialSaida)}</td>
+      <td>${dash(r.dataSaida)}</td>
+      <td style="font-size:11px;color:var(--text4)">${dash(r.docSaida)}</td>
+      <td>${fil(r.filialEntrada)}</td>
+      <td>${dash(r.dataEntrada)}</td>
+      <td style="font-size:11px;color:var(--text4)">${dash(r.docEntrada)}</td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;color:var(--text3);font-size:11px" title="${r.historico}">${r.historico}</td>
+    </tr>`).join('');
+  const totV=rowsFiltradas.reduce((s,r)=>s+r.valor,0);
+  const nP=rowsFiltradas.filter(r=>r.status==='pendente').length;
+  document.getElementById('tfShowing').textContent=`${rowsFiltradas.length} nota${rowsFiltradas.length!==1?'s':''} exibida${rowsFiltradas.length!==1?'s':''}`;
+  document.getElementById('tfTotal').textContent=`Total: ${fmtBRL(totV)}`;
+  document.getElementById('tfPend').textContent=nP>0?`⚠ ${nP} pendente${nP!==1?'s':''}`:'✔ Nenhuma pendência';
+  document.getElementById('tfPend').style.color=nP>0?'var(--vermelho-text)':'var(--verde-text)';
+  document.getElementById('tableFooter').style.display='flex';
+}
+
+// ──────────────────────────────────────────────
+// EXPORTAR PENDÊNCIAS (para próximo mês)
+// ──────────────────────────────────────────────
+function exportarPendencias(){
+  if(!resultado.length){alert('Execute o cruzamento antes de exportar.');return;}
+  const pend = resultado.filter(r=>r.status==='pendente');
+  const inc  = resultado.filter(r=>r.status==='inconsistente');
+  if(!pend.length && !inc.length){
+    alert('Não há pendências para exportar. A conta transitória está zerada!'); return;
+  }
+
+  // Estrutura FIXA — reconhecida pelo sistema na próxima importação
+  // IMPORTANTE: manter exatamente estes nomes de coluna
+  // "Saiu sem Entrar" = devedor (+saldo), "Entrou sem Sair" = credor (-saldo)
+  const toRow = r => ({
+    'Nº NF':          r.nf,
+    'Tipo':           r.status==='pendente' ? 'Saiu sem Entrar' : 'Entrou sem Sair',
+    'Valor':          r.valor,
+    // Valor com sinal: positivo para devedor (saiu), negativo para credor (entrou)
+    'Valor com Sinal': r.status==='pendente' ? r.valor : -r.valor,
+    'Filial Saída':   r.filialSaida  || '',
+    'Data Saída':     r.dataSaida    || '',
+    'Doc Saída':      r.docSaida     || '',
+    'Filial Entrada': r.filialEntrada|| '',
+    'Data Entrada':   r.dataEntrada  || '',
+    'Doc Entrada':    r.docEntrada   || '',
+    'Histórico':      r.historico,
+    'Origem':         r.origem==='anterior' ? 'Período Anterior' : 'Este Período',
+  });
+
+  const allPend = [...pend, ...inc];
+  const sumPend = pend.reduce((s,r)=>s+r.valor,0);
+  const sumInc  = inc.reduce((s,r)=>s+r.valor,0);
+  const saldoLiq = vlrSaldoAnt + sumPend - sumInc;
+
+  const wb = XLSX.utils.book_new();
+
+  // Aba principal — Pendências (lida pelo sistema no próximo mês)
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(allPend.map(toRow)), 'Pendências');
+
+  // Aba separada: só saíram sem entrar
+  if(pend.length)
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pend.map(toRow)), 'Saíram sem Entrar');
+
+  // Aba separada: só entraram sem sair
+  if(inc.length)
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(inc.map(toRow)), 'Entraram sem Sair');
+
+  // Aba resumo com o saldo líquido correto (para conferência visual no próximo mês)
+  const resumo = [
+    {'Descrição':'Saíram sem Entrar — qtd.',          'Valor': pend.length,  'Observação':'Saldo devedor (+)'},
+    {'Descrição':'Saíram sem Entrar — total valor',    'Valor': sumPend,      'Observação':'Aumenta o saldo da conta'},
+    {'Descrição':'Entraram sem Sair — qtd.',           'Valor': inc.length,   'Observação':'Saldo credor (−)'},
+    {'Descrição':'Entraram sem Sair — total valor',    'Valor': sumInc,       'Observação':'Reduz o saldo da conta'},
+    {'Descrição':'─────────────────────────────',      'Valor': '',           'Observação':''},
+    {'Descrição':'SALDO LÍQUIDO (Saíram − Entraram)',  'Valor': saldoLiq,     'Observação':'Use este valor como Saldo Anterior no próximo mês'},
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumo), 'Resumo Saldo');
+
+  const mes = new Date().toISOString().slice(0,7);
+  XLSX.writeFile(wb, `pendencias-transferencias-${mes}.xlsx`);
+}
+
+// ──────────────────────────────────────────────
+// EXPORTAR COMPLETO
+// ──────────────────────────────────────────────
+function exportarCompleto(){
+  if(!resultado.length){alert('Execute o cruzamento antes de exportar.');return;}
+  const toRow=r=>({'Status':r.status==='ok'?'Conciliada':r.status==='pendente'?'Saiu sem Entrar':'Entrou sem Sair',
+    'Origem':r.origem==='anterior'?'Período Anterior':'Este Período',
+    'Nº NF':r.nf,'Valor':r.valor,'Filial Saída':r.filialSaida,'Data Saída':r.dataSaida,'Doc Saída':r.docSaida,
+    'Filial Entrada':r.filialEntrada,'Data Entrada':r.dataEntrada,'Doc Entrada':r.docEntrada,'Histórico':r.historico});
+  const wb=XLSX.utils.book_new();
+  const app=(arr,nome)=>{if(arr.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(arr.map(toRow)),nome);};
+  app(resultado.filter(r=>r.status==='pendente'),'Saíram sem Entrar');
+  app(resultado.filter(r=>r.status==='inconsistente'),'Entraram sem Sair');
+  app(resultado.filter(r=>r.status==='ok'),'Conciliadas');
+  app(resultado,'Todas');
+  XLSX.writeFile(wb,`transferencias-completo-${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// ──────────────────────────────────────────────
+// LIMPAR
+// ──────────────────────────────────────────────
+function limparTudo(){
+  lancamentos=[];resultado=[];pendenciasAnt=[];pendAntValor=0;vlrSaldoAnt=0;configOk=false;temSaldoAnterior=false;
+  totDeb=0;totCred=0;sortCol=null;sortDir=1;
+  document.getElementById('ctaEstoque').value='';document.getElementById('ctaTransitoria').value='';
+  document.getElementById('ctaEstoque').classList.add('vazio');document.getElementById('ctaTransitoria').classList.add('vazio');
+  ['diagE1','diagE2'].forEach(id=>document.getElementById(id).textContent='___');
+  document.getElementById('diagT').textContent='___';
+  setSaldoAnterior(false);
+  document.getElementById('secImport').style.opacity='.5';document.getElementById('secImport').style.pointerEvents='none';
+  document.getElementById('importSub').textContent='Configure o passo 1 primeiro';
+  const rBox=document.getElementById('uploadRazaoBox');rBox.className='upload-box';
+  document.getElementById('razaoStatus').textContent='';document.getElementById('razaoDetail').textContent='';
+  document.getElementById('saldoCardsRow').style.display='none';
+  ['actionsBar','cardsResumo','saldoFiliaisWrap','resultTabs','confSection'].forEach(id=>document.getElementById(id).style.display='none');
+  setStep(1);
+}
+</script>
+</body>
+</html>
