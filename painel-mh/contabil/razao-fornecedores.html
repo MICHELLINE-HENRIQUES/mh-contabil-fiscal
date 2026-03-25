@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fornecedores / Duplicatas — MH Consultoria</title>
+<title>Fornecedores e Duplicatas — MH Consultoria</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -326,7 +327,6 @@ tr.conciliado-saldo-ant td { color: var(--brown2) !important; font-weight: 400 !
 }
 .grupo-tag.fornecedor { background: rgba(107,79,46,0.08); color: var(--brown2); border-color: rgba(107,79,46,0.2); }
 
-
 </style>
 </head>
 <body>
@@ -334,15 +334,15 @@ tr.conciliado-saldo-ant td { color: var(--brown2) !important; font-weight: 400 !
 <div class="topbar">
   <a class="btn-back" href="razao.html">← Conciliação de Razão</a>
   <span class="topbar-div">/</span>
-  <span class="topbar-title">Fornecedores / Duplicatas</span>
+  <span class="topbar-title">Fornecedores e Duplicatas</span>
   <span class="topbar-badge">Contábil</span>
 </div>
 
 <div class="main">
   <div class="tool-header">
     <div class="tool-label">Setor Contábil · Conciliação de Razão</div>
-    <div class="tool-title">Fornecedores e <em>Duplicatas</em></div>
-    <div class="tool-desc">Concilia por <strong>número de NF ou duplicata</strong> extraído do histórico. Agrupa todos os lançamentos com o mesmo número e verifica se débitos = créditos.</div>
+    <div class="tool-title">Conciliação de <em>Duplicatas</em></div>
+    <div class="tool-desc">Concilia por <strong>número de NF ou duplicata</strong> extraído do histórico. Agrupa lançamentos com o mesmo número e verifica se débitos = créditos.</div>
   </div>
 
   <div class="upload-section" id="uploadSection">
@@ -493,8 +493,7 @@ tr.conciliado-saldo-ant td { color: var(--brown2) !important; font-weight: 400 !
 
   <div id="tabelaContainer"></div>
 
-    </div><!-- /modo-content -->
-  </div><!-- /concil-layout -->
+  <div id="tabelaContainer"></div>
 </div>
 
 <div class="selection-info" id="selectionInfo">
@@ -512,7 +511,7 @@ let naturezaConta   = 'C';
 let selecionados    = new Set();
 let saldoContaSelecionada = 0;
 let filtroVisibilidade    = 'todos';
-let modoAtual = 'fornecedor'; // fixed for fornecedores page
+let modoAtual = 'fornecedor'; // 'impostos' | 'fornecedor'
 
 // ── Meses PT-BR ────────────────────────────────────────────────
 const MESES = {
@@ -546,7 +545,7 @@ function setModo(modo) {
   if (modo === 'impostos') {
     desc.innerHTML = '<strong>Modo Impostos:</strong> concilia por <strong>competência</strong> extraída do histórico '
       + '(set/24, 09/2024, setembro/2024…). Agrupa N provisões e N pagamentos cuja soma fecha para a mesma competência.';
-    if (pgGroup) pgGroup.style.display = 'none';
+    if (pgGroup) pgGroup.style.display = 'flex';
   } else if (modo === 'fornecedor') {
     desc.innerHTML = '<strong>Modo Fornecedores:</strong> concilia por <strong>número</strong> extraído do histórico '
       + '(NF, duplicata, etc.). Agrupa todos os lançamentos com o mesmo número e verifica se débitos = créditos.';
@@ -823,67 +822,6 @@ function executarEtapa2() { conciliarPorSaldoAnterior(); }
 
 
 
-// ── MODO IMPOSTOS ───────────────────────────────────────────────
-function conciliarImpostos(conta) {
-  const credora   = naturezaConta === 'C';
-  const provisoes = dadosFiltrados.filter(d => credora ? d.contaCred === conta : d.contaDeb === conta);
-  const pagamentos= dadosFiltrados.filter(d => credora ? d.contaDeb  === conta : d.contaCred === conta);
-
-  // Agrupa por competência
-  const todasComps = [
-    ...new Set([
-      ...provisoes.map(d => d.competencia),
-      ...pagamentos.map(d => d.competencia)
-    ].filter(Boolean))
-  ];
-
-  let grupoSeq = 1;
-
-  todasComps.forEach(comp => {
-    const provGrupo = provisoes.filter(d => !d.conciliado && d.competencia === comp);
-    const pagGrupo  = pagamentos.filter(d => !d.conciliado && d.competencia === comp);
-    if (!provGrupo.length || !pagGrupo.length) return;
-
-    const somaP = provGrupo.reduce((s,d) => s + d.valor, 0);
-    const somaG = pagGrupo.reduce((s,d)  => s + d.valor, 0);
-
-    if (Math.abs(somaP - somaG) < 0.05) {
-      const gid = 'IMP-' + String(grupoSeq++).padStart(3,'0');
-      [...provGrupo, ...pagGrupo].forEach(d => { d.conciliado = true; d.grupoId = gid; });
-      return;
-    }
-
-    // Tenta subconjuntos: 1 provisão ↔ 1 pagamento com valor igual
-    provGrupo.forEach(prov => {
-      if (prov.conciliado) return;
-      const par = pagGrupo.find(pag =>
-        !pag.conciliado && Math.abs(pag.valor - prov.valor) < 0.05
-      );
-      if (par) {
-        const gid = 'IMP-' + String(grupoSeq++).padStart(3,'0');
-        prov.conciliado = true; prov.grupoId = gid;
-        par.conciliado  = true; par.grupoId  = gid;
-      }
-    });
-  });
-
-  // Fallback: sem competência → tenta por valor exato + mesma filial
-  if (!cruzarFiliais) return;
-  provisoes.forEach(prov => {
-    if (prov.conciliado || prov.competencia) return;
-    const par = pagamentos.find(pag =>
-      !pag.conciliado && !pag.competencia &&
-      Math.abs(pag.valor - prov.valor) < 0.05 &&
-      pag.filial === prov.filial
-    );
-    if (par) {
-      const gid = 'IMP-' + String(grupoSeq++).padStart(3,'0');
-      prov.conciliado = true; prov.grupoId = gid;
-      par.conciliado  = true; par.grupoId  = gid;
-    }
-  });
-}
-
 // ── MODO FORNECEDORES ───────────────────────────────────────────
 function conciliarFornecedores(conta) {
   const credora   = naturezaConta === 'C';
@@ -987,7 +925,7 @@ function renderTabela() {
     if (filtroVisibilidade === 'conciliados' && (!d.conciliado || d.ehSaldoAnt)) return false;
     if (filtroVisibilidade === 'saldoant'    && !d.ehSaldoAnt) return false;
     if (busca && !d.historico.toLowerCase().includes(busca)) return false;
-    if (periodo && false) { // fornecedores mode: never filter by period
+    if (false) {
       const [anoF, mesF] = periodo.split('-');
       const dataStr = String(d.data);
       if (!dataStr.includes(`${mesF}/${anoF}`) && !dataStr.includes(`${anoF}-${mesF}`)) return false;
@@ -995,7 +933,7 @@ function renderTabela() {
     return true;
   });
 
-  const isFornecedor = true; // always fornecedor mode
+  const isFornecedor = true;
 
   let html = `
     <table class="lanc-table">
@@ -1047,15 +985,366 @@ function renderTabela() {
 
   html += '</tbody></table>';
   document.getElementById('tabelaContainer').innerHTML = html;
+  atualizarResumo();
+}
 
-  <div id="tabelaContainer"></div>
-</div>
+// ── Resumo ───────────────────────────────────────────────────────
+function atualizarResumo() {
+  const conta     = document.getElementById('contaSelect').value;
+  const pendentes   = dadosFiltrados.filter(d => !d.conciliado);
+  const conciliados = dadosFiltrados.filter(d =>  d.conciliado);
 
-<div class="selection-info" id="selectionInfo">
-  <div class="selection-info-title">Soma Selecionada</div>
-  <div class="selection-info-val" id="selectionVal">R$ 0,00</div>
-  <button class="btn-primary" style="margin-top: 8px; width: 100%;" onclick="conciliarSelecionados()">Conciliar Seleção</button>
-</div>
+  let deb = 0, cred = 0;
+  pendentes.forEach(d => {
+    if (d.contaDeb  === conta) deb  += d.valor;
+    if (d.contaCred === conta) cred += d.valor;
+  });
 
+  const saldoPend = naturezaConta === 'C' ? (cred - deb) : (deb - cred);
+  const diferenca = saldoPend - saldoContaSelecionada;
+
+  document.getElementById('resumoPendente').textContent   = fmtMoeda(saldoPend);
+  document.getElementById('qtdPendente').textContent      = `${pendentes.length} lançamentos`;
+  document.getElementById('resumoConciliado').textContent =
+    fmtMoeda(conciliados.reduce((s,d) => s + d.valor, 0));
+  document.getElementById('qtdConciliado').textContent    = `${conciliados.length} lançamentos`;
+
+  const diffElem = document.getElementById('resumoDiferenca');
+  diffElem.textContent = fmtMoeda(diferenca);
+  diffElem.style.color = Math.abs(diferenca) < 0.05
+    ? 'var(--verde-text)' : 'var(--vermelho-text)';
+
+  const infoBox = document.getElementById('selectionInfo');
+  if (selecionados.size > 0) {
+    let soma = 0;
+    selecionados.forEach(id => {
+      const item = dadosFiltrados.find(d => d.id === id);
+      if (item) soma += item.valor;
+    });
+    document.getElementById('selectionVal').textContent = fmtMoeda(soma);
+    infoBox.style.display = 'block';
+  } else {
+    infoBox.style.display = 'none';
+  }
+}
+
+// ── Exportar ─────────────────────────────────────────────────────
+function exportarNaoConciliados() {
+  try {
+    const conta     = document.getElementById('contaSelect').value;
+    const pendentes = dadosFiltrados.filter(d => !d.conciliado);
+    if (!pendentes.length) { alert('Não há lançamentos pendentes para exportar.'); return; }
+    if (!conta) { alert('Selecione uma conta antes de exportar.'); return; }
+
+    // ── ABA 1: Lançamentos ─────────────────────────────────────────
+    const dataExport = pendentes.map(p => {
+      const nums = p.numeros instanceof Set ? [...p.numeros] : (Array.isArray(p.numeros) ? p.numeros : []);
+      return {
+        'Conta Débito':        p.contaDeb  || '',
+        'Conta Crédito':       p.contaCred || '',
+        'Data':                p.data      || '',
+        'Filial':              p.filial    || '',
+        'Histórico':           p.historico || '',
+        'Competência':         p.competencia || '',
+        'Nºs Identificados':   nums.join(', '),
+        'Débito':              p.contaDeb  === conta ? (p.valor || 0) : '',
+        'Crédito':             p.contaCred === conta ? (p.valor || 0) : ''
+      };
+    });
+
+    const ws1 = XLSX.utils.json_to_sheet(dataExport);
+    ws1['!cols'] = [{wch:15},{wch:15},{wch:12},{wch:8},{wch:55},{wch:12},{wch:20},{wch:15},{wch:15}];
+
+    // ── ABA 2: Resumo por Nota/Duplicata ──────────────────────────
+    const mapaNotas = new Map();
+
+    pendentes.forEach(p => {
+      const nums   = p.numeros instanceof Set ? [...p.numeros] : (Array.isArray(p.numeros) ? p.numeros : []);
+      const chaves = nums.length > 0 ? nums : ['(sem número)'];
+      const deb    = p.contaDeb  === conta ? (p.valor || 0) : 0;
+      const cred   = p.contaCred === conta ? (p.valor || 0) : 0;
+
+      chaves.forEach(num => {
+        if (!mapaNotas.has(num)) {
+          mapaNotas.set(num, {
+            numero:      String(num),
+            historico:   (p.historico || '').substring(0, 80),
+            datas:       new Set(),
+            totalDeb:    0,
+            totalCred:   0,
+            lancamentos: 0
+          });
+        }
+        const nota = mapaNotas.get(num);
+        nota.totalDeb  += deb;
+        nota.totalCred += cred;
+        nota.lancamentos++;
+        if (p.data) nota.datas.add(p.data);
+      });
+    });
+
+    const credora = naturezaConta === 'C';
+    let totalGeralDeb = 0, totalGeralCred = 0, totalGeralSaldo = 0;
+    const resumoRows = [];
+
+    mapaNotas.forEach(nota => {
+      const saldo = credora
+        ? (nota.totalCred - nota.totalDeb)
+        : (nota.totalDeb  - nota.totalCred);
+      totalGeralDeb   += nota.totalDeb;
+      totalGeralCred  += nota.totalCred;
+      totalGeralSaldo += saldo;
+      resumoRows.push({
+        'Nº / Identificador': nota.numero,
+        'Histórico (resumo)': nota.historico,
+        'Datas':              [...nota.datas].join(', '),
+        'Qtd Lançamentos':    nota.lancamentos,
+        'Total Débito':       nota.totalDeb  > 0 ? nota.totalDeb  : '',
+        'Total Crédito':      nota.totalCred > 0 ? nota.totalCred : '',
+        'Saldo':              saldo,
+        'Situação':           saldo > 0.01  ? (credora ? 'A pagar' : 'A receber') :
+                              saldo < -0.01 ? 'Saldo negativo' : 'Zerado'
+      });
+    });
+
+    resumoRows.sort((a, b) => Math.abs(b['Saldo']) - Math.abs(a['Saldo']));
+    resumoRows.push({
+      'Nº / Identificador': 'TOTAL',
+      'Histórico (resumo)': '',
+      'Datas':              '',
+      'Qtd Lançamentos':    pendentes.length,
+      'Total Débito':       totalGeralDeb,
+      'Total Crédito':      totalGeralCred,
+      'Saldo':              totalGeralSaldo,
+      'Situação':           Math.abs(totalGeralSaldo) < 0.05 ? 'Zerado' :
+                            `Saldo ${credora ? (totalGeralSaldo>0?'C':'D') : (totalGeralSaldo>0?'D':'C')}`
+    });
+
+    const ws2 = XLSX.utils.json_to_sheet(resumoRows);
+    ws2['!cols'] = [{wch:20},{wch:50},{wch:25},{wch:12},{wch:15},{wch:15},{wch:15},{wch:20}];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws1, 'Lançamentos Pendentes');
+    XLSX.utils.book_append_sheet(wb, ws2, 'Resumo por Nota');
+
+    // ── ABA 3: Saldo Anterior (se houver) ─────────────────────────
+    const saldoAntLancs = dadosFiltrados.filter(d => d.ehSaldoAnt);
+    if (saldoAntLancs.length > 0) {
+      const refLabel      = document.getElementById('saldoAntRef').value || 'período anterior';
+      const valorSaldoAnt = document.getElementById('saldoAntValor').value || '';
+      const saldoAntRows  = [];
+
+      saldoAntRows.push({
+        'Data': 'Saldo Anterior: ' + refLabel,
+        'Seq': '', 'Conta Débito': '', 'Conta Crédito': '', 'Filial': '',
+        'Histórico': 'Valor: ' + valorSaldoAnt, 'Débito': '', 'Crédito': ''
+      });
+
+      let totalD = 0, totalC = 0;
+      saldoAntLancs.forEach(p => {
+        const deb  = p.contaDeb  === conta ? (p.valor || 0) : 0;
+        const cred = p.contaCred === conta ? (p.valor || 0) : 0;
+        totalD += deb; totalC += cred;
+        saldoAntRows.push({
+          'Data': p.data || '', 'Seq': p.seq || '',
+          'Conta Débito': p.contaDeb || '', 'Conta Crédito': p.contaCred || '',
+          'Filial': p.filial || '', 'Histórico': p.historico || '',
+          'Débito':  deb  > 0 ? deb  : '',
+          'Crédito': cred > 0 ? cred : ''
+        });
+      });
+
+      saldoAntRows.push({
+        'Data': 'TOTAL', 'Seq': '',
+        'Conta Débito': '', 'Conta Crédito': '',
+        'Filial': saldoAntLancs.length + ' lançamentos',
+        'Histórico': '',
+        'Débito':  totalD > 0 ? totalD : '',
+        'Crédito': totalC > 0 ? totalC : ''
+      });
+
+      const ws3 = XLSX.utils.json_to_sheet(saldoAntRows);
+      ws3['!cols'] = [{wch:14},{wch:10},{wch:12},{wch:12},{wch:10},{wch:60},{wch:15},{wch:15}];
+      const sheetName = ('Saldo Ant. ' + refLabel).substring(0, 31).replace(/[:\\\/\?\*\[\]]/g, '-');
+      XLSX.utils.book_append_sheet(wb, ws3, sheetName);
+    }
+
+    XLSX.writeFile(wb, `pendencias_${modoAtual}_${conta}.xlsx`);
+
+  } catch(err) {
+    alert('Erro ao exportar: ' + err.message + '\n\nAbra o console do navegador (F12) para mais detalhes.');
+    console.error('Erro exportarNaoConciliados:', err);
+  }
+}
+
+// ── Máscaras de entrada ──────────────────────────────────────────
+function mascaraValor(input) {
+  // Remove tudo que não é dígito
+  let digits = input.value.replace(/\D/g, '');
+  if (!digits) { input.value = ''; return; }
+  // Trata como centavos: últimos 2 dígitos = centavos
+  digits = digits.replace(/^0+/, '') || '0';
+  while (digits.length < 3) digits = '0' + digits;
+  const cents  = digits.slice(-2);
+  const reais  = digits.slice(0, -2);
+  // Formata milhar
+  const reaisFormatado = reais.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  input.value = reaisFormatado + ',' + cents;
+}
+
+function mascaraData(input) {
+  let v = input.value.replace(/\D/g, '');
+  if (v.length > 8) v = v.slice(0, 8);
+  if (v.length >= 5)      v = v.slice(0,2) + '/' + v.slice(2,4) + '/' + v.slice(4);
+  else if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2);
+  input.value = v;
+}
+
+function ddmmyyyyToYYYYMMDD(str) {
+  // Converte DD/MM/AAAA para YYYY-MM-DD (para comparação com converterData)
+  if (!str || str.length < 10) return null;
+  const p = str.split('/');
+  if (p.length !== 3 || p[2].length !== 4) return null;
+  return p[2] + p[1].padStart(2,'0') + p[0].padStart(2,'0'); // yyyymmdd
+}
+
+// ── Saldo Anterior ───────────────────────────────────────────────
+function conciliarPorSaldoAnterior() {
+  const conta    = document.getElementById('contaSelect').value;
+  const valorStr = document.getElementById('saldoAntValor').value;
+  const natureza = document.getElementById('saldoAntNatureza').value;
+  const ref      = document.getElementById('saldoAntRef').value || 'período anterior';
+  const ateDataStr = document.getElementById('saldoAntAteData').value; // DD/MM/AAAA
+  const resultado = document.getElementById('saldoAntResultado');
+  resultado.style.display = 'block';
+
+  const saldoAlvo = parseMoeda(valorStr);
+  if (!saldoAlvo || saldoAlvo <= 0) {
+    resultado.className = 'saldo-ant-resultado err';
+    resultado.textContent = '⚠ Informe um valor de saldo anterior válido.';
+    return;
+  }
+
+  const pendentes = dadosFiltrados.filter(d => !d.conciliado);
+  const debitos   = pendentes.filter(d => d.contaDeb  === conta);
+  const creditos  = pendentes.filter(d => d.contaCred === conta);
+  const somaD     = debitos.reduce((s,d)  => s + d.valor, 0);
+  const somaC     = creditos.reduce((s,d) => s + d.valor, 0);
+
+  // Filtra por "até data" se informado (agora em DD/MM/AAAA)
+  const ateDataYMD = ddmmyyyyToYYYYMMDD(ateDataStr); // yyyymmdd or null
+
+  const filtrarPorData = (lista) => {
+    if (!ateDataYMD) return lista;
+    return lista.filter(d => {
+      const dc = converterData(d.data); // retorna yyyymmdd
+      return !dc || dc <= ateDataYMD;
+    });
+  };
+
+  // Saldo final calculado = anterior ± movimento do período
+  const saldoFinal = natureza === 'C'
+    ? saldoAlvo + somaC - somaD
+    : saldoAlvo + somaD - somaC;
+  const saldoFinalNat = saldoFinal >= 0 ? natureza : (natureza==='C'?'D':'C');
+
+  // Débitos dentro do filtro de data (pagamentos que podem liquidar o saldo anterior)
+  const debitosDisponiveis = filtrarPorData(debitos).sort((a,b) =>
+    converterData(a.data).localeCompare(converterData(b.data)));
+
+  // Estratégia A: débitos mais antigos liquidam o saldo anterior
+  let saldoRestante = saldoAlvo;
+  const usados = [];
+  for (const d of debitosDisponiveis) {
+    if (saldoRestante <= 0.05) break;
+    if (d.valor <= saldoRestante + 0.05) {
+      usados.push(d);
+      saldoRestante -= d.valor;
+    }
+  }
+
+  if (Math.abs(saldoRestante) < 0.05 && usados.length > 0) {
+    usados.forEach(d => { d.conciliado = true; d.grupoId = `SALD-${ref}`; d.ehSaldoAnt = true; });
+
+    // Marcar etapa 2 como concluída
+    document.getElementById('etapa2Box').classList.add('etapa-concluida');
+    document.getElementById('etapa2Num').classList.add('etapa-num-done');
+    document.getElementById('etapa2Num').classList.remove('etapa-num-locked');
+
+    resultado.className = 'saldo-ant-resultado ok';
+    const pendFinal = dadosFiltrados.filter(d => !d.conciliado).length;
+    resultado.innerHTML =
+      `✓ <strong>${usados.length} pagamentos</strong> identificados como liquidação do Saldo Anterior de
+       ${fmtMoeda(saldoAlvo)} (${ref})${ateDataStr ? ' até '+ateDataStr : ''}.<br>
+       Saldo final calculado: <strong>${fmtMoeda(Math.abs(saldoFinal))} ${saldoFinalNat}</strong> &nbsp;|&nbsp;
+       <strong>${pendFinal} lançamentos</strong> permanecem pendentes (em vermelho) — são as NFs/duplicatas do período atual sem baixa.`;
+    renderTabela();
+    return;
+  }
+
+  // Estratégia B: tenta com créditos (conta devedora)
+  const creditosDisponiveis = filtrarPorData(creditos).sort((a,b) =>
+    converterData(a.data).localeCompare(converterData(b.data)));
+
+  saldoRestante = saldoAlvo;
+  const usadosC = [];
+  for (const c of creditosDisponiveis) {
+    if (saldoRestante <= 0.05) break;
+    if (c.valor <= saldoRestante + 0.05) { usadosC.push(c); saldoRestante -= c.valor; }
+  }
+
+  if (Math.abs(saldoRestante) < 0.05 && usadosC.length > 0) {
+    usadosC.forEach(d => { d.conciliado = true; d.grupoId = `SALD-${ref}`; d.ehSaldoAnt = true; });
+    resultado.className = 'saldo-ant-resultado ok';
+    resultado.innerHTML = `✓ <strong>${usadosC.length} lançamentos</strong> identificados como Saldo Anterior (${ref}). Saldo final: <strong>${fmtMoeda(Math.abs(saldoFinal))} ${saldoFinalNat}</strong>`;
+    renderTabela();
+    return;
+  }
+
+  // Não fechou — mostra diagnóstico detalhado
+  resultado.className = 'saldo-ant-resultado warn';
+  const dispQtd = debitosDisponiveis.length;
+  const dispSum = debitosDisponiveis.reduce((s,d) => s+d.valor, 0);
+  resultado.innerHTML =
+    `⚠ Não foi possível fechar automaticamente com ${fmtMoeda(saldoAlvo)} (${ref}).<br>
+     ${ateDataStr ? `Pagamentos disponíveis até ${ateDataStr}: <strong>${dispQtd} lançamentos = ${fmtMoeda(dispSum)}</strong><br>` : ''}
+     Saldo calculado (anterior ± período): <strong>${fmtMoeda(Math.abs(saldoFinal))} ${saldoFinalNat}</strong><br>
+     <span style="font-size:11px">Tente ajustar a data limite, ou concilie manualmente clicando nas linhas.</span>`;
+}
+
+
+function converterData(data) {
+  // Converte dd/mm/yyyy → yyyymmdd para ordenação
+  if (!data) return '';
+  const p = String(data).split('/');
+  if (p.length === 3) return p[2] + p[1] + p[0];
+  return String(data).replace(/\D/g,'');
+}
+
+function desfazerSaldoAnt() {
+  dadosFiltrados.forEach(d => {
+    if (d.ehSaldoAnt) { d.conciliado = false; d.grupoId = null; d.ehSaldoAnt = false; }
+  });
+  const resultado = document.getElementById('saldoAntResultado');
+  resultado.style.display = 'none';
+  renderTabela();
+}
+
+// ── Helpers ──────────────────────────────────────────────────────
+function parseMoeda(valor) {
+  if (valor === undefined || valor === null) return 0;
+  if (typeof valor === 'number') return valor;
+  let s = String(valor).replace(/[R$\s]/g, '');
+  if (s.includes(',') && s.includes('.')) s = s.replace(/\./g, '').replace(',', '.');
+  else if (s.includes(',')) s = s.replace(',', '.');
+  return parseFloat(s) || 0;
+}
+
+function fmtMoeda(valor) {
+  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+
+</script>
 </body>
 </html>
