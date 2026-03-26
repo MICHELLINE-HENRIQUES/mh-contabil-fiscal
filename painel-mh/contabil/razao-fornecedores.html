@@ -489,7 +489,6 @@ tr.conciliado-saldo-ant td { color: var(--brown2) !important; font-weight: 400 !
           <input type="text" id="saldoAlvo" class="saldo-alvo-input" value="0,00" readonly>
         </div>
         <button class="btn-limpar" onclick="limparDados()">↺ Limpar e Reiniciar</button>
-        <button class="btn-limpar" onclick="limparDados()">↺ Limpar e Reiniciar</button>
         <button class="btn-secondary" onclick="exportarNaoConciliados()">↓ Exportar Pendências</button>
       </div>
     </div>
@@ -688,20 +687,60 @@ function handleFile(file) {
 
     if (json.length < 2) { alert('Arquivo vazio ou sem dados válidos.'); return; }
 
-    const header = json[0];
-    const ci = (re) => header.findIndex(c => re.test(String(c).trim()));
-    const colData  = ci(/^data$/i);
-    const colHist  = ci(/hist[oó]rico/i);
-    const colVal   = ci(/^valor$/i);
+    // Encontra a linha de cabeçalho — pula linhas vazias no início
+    let headerRowIdx = 0;
+    for (let i = 0; i < Math.min(10, json.length); i++) {
+      if (json[i] && json[i].some(c => c !== null && c !== undefined && c !== '')) {
+        headerRowIdx = i;
+        break;
+      }
+    }
+    const header = json[headerRowIdx].map(c => String(c == null ? '' : c).trim());
+    const dataRows = json.slice(headerRowIdx + 1);
+
+    const ci = (re) => header.findIndex(c => re.test(c));
+    // Data: aceita "Data", "DATA", "Dt", "DT Lançamento", etc.
+    let colData = ci(/^data$/i);
+    if (colData < 0) colData = ci(/^data\b/i);
+    if (colData < 0) colData = ci(/^dt\b/i);
+    if (colData < 0) colData = ci(/data/i);
+
+    // Histórico
+    const colHist = ci(/hist[oó]rico/i) >= 0 ? ci(/hist[oó]rico/i) : ci(/histor/i) >= 0 ? ci(/histor/i) : ci(/descri/i);
+
+    // Valor: aceita "Valor", "VALOR", "Valor R$", "Vlr", etc.
+    let colVal = ci(/^valor$/i);
+    if (colVal < 0) colVal = ci(/^valor\s/i);
+    if (colVal < 0) colVal = ci(/^vlr/i);
+    if (colVal < 0) colVal = ci(/valor/i);
+
     const colFil   = ci(/filial/i);
     let   colDeb   = ci(/^d[ée]bito$/i);
+    if (colDeb < 0) colDeb = ci(/d[ée]bito/i);
     let   colCred  = ci(/^cr[eé]dito$/i);
+    if (colCred < 0) colCred = ci(/cr[eé]dito/i);
     if (colDeb  < 0) colDeb  = 2;
     if (colCred < 0) colCred = 3;
 
+    // Diagnóstico — avisa se colunas essenciais não foram encontradas
+    const colNaoEncontradas = [];
+    if (colData  < 0) colNaoEncontradas.push('Data');
+    if (colVal   < 0) colNaoEncontradas.push('Valor');
+    if (colNaoEncontradas.length > 0) {
+      const cabecalho = header.filter(h => h).join(' | ');
+      alert(`Atenção: não encontrei as colunas [${colNaoEncontradas.join(', ')}] no arquivo.\n\nCabeçalhos detectados:\n${cabecalho}\n\nVerifique se o arquivo é do Questor e se a primeira linha contém os títulos.`);
+      return;
+    }
+
+    // Substitui json pelo slice a partir da linha de dados real
+    const jsonOriginal = json;
+    // Redefinir para usar dataRows abaixo
+    Object.defineProperty(json, '_headerIdx', { value: headerRowIdx });
+
     todosOsDados = [];
-    for (let i = 1; i < json.length; i++) {
-      const row = json[i];
+    for (let i = 0; i < dataRows.length; i++) {
+      const row = dataRows[i];
+      if (!row || row.every(c => c == null || c === '')) continue;
       if (!row[colData]) continue;
       const dataVal = row[colData];
       let dataFmt = '';
@@ -717,7 +756,7 @@ function handleFile(file) {
       }
       const historico = String(row[colHist] || '');
       todosOsDados.push({
-        id:           i,
+        id:           headerRowIdx + 1 + i,
         contaDeb:     normConta(row[colDeb]),
         contaCred:    normConta(row[colCred]),
         data:         dataFmt,
@@ -741,7 +780,7 @@ function handleFile(file) {
 
     document.getElementById('uploadStatus').className = 'upload-status ok';
     document.getElementById('uploadStatus').textContent =
-      `✓ ${todosOsDados.length} lançamentos carregados de ${file.name}`;
+      `✓ ${todosOsDados.length} lançamentos carregados de ${file.name} · Colunas: Data[${colData}] Valor[${colVal}] Déb[${colDeb}] Créd[${colCred}]`;
     document.getElementById('filtroContaBox').style.display = 'block';
   };
   reader.readAsArrayBuffer(file);
