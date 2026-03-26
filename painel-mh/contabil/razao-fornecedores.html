@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fornecedores e Duplicatas — MH Consultoria</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --cream:    #f5f0e8;
+  --cream2:   #ede7d9;
+  --cream3:   #e4dccb;
+  --gold:     #a8895a;
+  --gold2:    #c4a870;
+  --gold3:    #d4bc8e;
+  --brown:    #6b4f2e;
+  --brown2:   #8a6640;
+  --bege: #a8895a;
+  --bege-claro: #c4a870;
+  --bege-bg: rgba(168,137,90,0.10);
+  --bege-border: rgba(168,137,90,0.25);
+  --bg: #f5f0e8;
+  --bg2: #fff;
+  --bg3: #ede7d9;
+  --border: rgba(168,137,90,0.15);
+  --border2: rgba(168,137,90,0.28);
+  --text1: #2c1f0e;
+  --text2: #5a4228;
+  --text3: #9a7d5a;
+  --text4: #c4aa88;
+  --verde-bg: rgba(74,124,89,0.08);
+  --verde-text: #3d7a52;
+  --vermelho-bg: rgba(180,60,60,0.08);
+  --vermelho-text: #a03030;
+  --amarelo-text: #8a6200;
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text1); min-height: 100vh; }
+
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0.85rem 2rem; border-bottom: 0.5px solid var(--border);
+  background: #fff; border-bottom: 0.5px solid var(--border2); position: sticky; top: 0; z-index: 10;
+}
+.btn-back {
+  background: none; border: 0.5px solid var(--border2); color: var(--text3);
+  padding: 5px 12px; border-radius: 2px; font-size: 12px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;
+}
+.btn-back:hover { color: var(--text1); border-color: var(--bege); }
+.topbar-div { color: var(--text4); }
+.topbar-title { font-size: 13px; color: var(--text2); font-weight: 500; }
+.topbar-badge {
+  margin-left: auto; font-size: 9px; font-weight: 500;
+  background: var(--bege-bg); color: var(--bege-claro);
+  border: 0.5px solid var(--bege-border);
+  padding: 3px 9px; border-radius: 20px; letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+.main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+.tool-header { margin-bottom: 2rem; }
+.tool-label { font-size: 10px; color: var(--text4); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+.tool-title { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 400; color: var(--text1); }
+.tool-title em { font-style: italic; color: var(--bege-claro); }
+.tool-desc { font-size: 13px; color: var(--text3); margin-top: 6px; line-height: 1.6; }
+
+.upload-section {
+  background: var(--bg2); border: 0.5px dashed var(--border2);
+  border-radius: 2px; padding: 2rem; margin-bottom: 1.5rem;
+}
+.upload-top { display: flex; align-items: flex-start; gap: 1.5rem; flex-wrap: wrap; }
+.upload-box {
+  flex: 1; min-width: 200px; border: 0.5px dashed var(--border2);
+  border-radius: 2px; padding: 1.5rem; text-align: center;
+  cursor: pointer; transition: all 0.2s; background: var(--bg3);
+}
+.upload-box:hover { border-color: var(--bege); background: var(--bege-bg); }
+.upload-icon { font-size: 22px; margin-bottom: 8px; }
+.upload-title { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 4px; }
+.upload-hint { font-size: 11px; color: var(--text4); }
+.upload-box input { display: none; }
+
+.natureza-box {
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: 2px; padding: 1.5rem; flex: 1; min-width: 250px;
+}
+.natureza-title { font-size: 12px; font-weight: 600; color: var(--bege-claro); margin-bottom: 12px; text-transform: uppercase; }
+.natureza-options { display: flex; gap: 10px; }
+.natureza-opt {
+  flex: 1; padding: 10px; border: 0.5px solid var(--border2); border-radius: 6px;
+  text-align: center; cursor: pointer; font-size: 12px; transition: all 0.2s;
+}
+.natureza-opt.active { background: var(--gold); color: #fff; border-color: var(--gold); font-weight: 600; }
+
+.filtro-conta-box {
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: 2px; padding: 1.5rem; flex: 1; min-width: 250px;
+}
+.filtro-conta-title { font-size: 12px; font-weight: 600; color: var(--bege-claro); margin-bottom: 12px; text-transform: uppercase; }
+.filtro-conta-input {
+  width: 100%; background: var(--cream); border: 0.5px solid var(--border2); color: var(--text2);
+  padding: 10px; border-radius: 2px; font-size: 13px; outline: none; margin-bottom: 8px;
+}
+.filtro-conta-select {
+  width: 100%; background: var(--cream); border: 0.5px solid var(--border2); color: var(--text2);
+  padding: 10px; border-radius: 2px; font-size: 13px; outline: none; max-height: 150px;
+}
+
+.actions-bar { display: none; gap: 10px; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center; background: var(--bg2); padding: 1rem; border-radius: 2px; border: 0.5px solid var(--border); }
+.action-group { display: flex; align-items: center; gap: 10px; }
+.btn-primary { background: var(--bege); color: #fff; border: none; border-radius: 2px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-primary:hover { background: var(--bege-claro); }
+.btn-secondary { background: none; border: 0.5px solid var(--border2); color: var(--text2); border-radius: 2px; padding: 8px 16px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+.btn-secondary:hover { border-color: var(--bege); color: var(--text1); }
+
+.saldo-alvo-box { display: flex; align-items: center; gap: 8px; background: var(--bg3); padding: 6px 12px; border-radius: 2px; border: 0.5px solid var(--border2); }
+.saldo-alvo-label { font-size: 11px; color: var(--text4); text-transform: uppercase; }
+.saldo-alvo-input { background: none; border: none; color: var(--bege-claro); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; width: 120px; outline: none; }
+
+.cards-resumo { display: none; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.card-resumo { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 2px; padding: 1rem; position: relative; }
+.card-resumo-label { font-size: 10px; color: var(--text4); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+.card-resumo-valor { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500; }
+.card-resumo-sub { font-size: 10px; color: var(--text4); margin-top: 3px; }
+.val-d { color: var(--vermelho-text); }
+.val-c { color: var(--verde-text); }
+.val-s { color: var(--amarelo-text); }
+.val-diff { color: #fff; font-weight: 700; }
+
+.lanc-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.lanc-table th { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); font-weight: 500; padding: 10px 12px; text-align: left; border-bottom: 0.5px solid var(--border2); background: var(--cream2); }
+.lanc-table td { font-size: 12px; color: var(--text2); padding: 8px 12px; border-bottom: 0.5px solid rgba(184,153,106,0.05); cursor: pointer; }
+.lanc-table tr.nao-conciliado td { color: var(--vermelho-text) !important; font-weight: 700; }
+.lanc-table tr.nao-conciliado { background: rgba(180,60,60,0.04); }
+.lanc-table tr.conciliado { opacity: 0.35; background: rgba(74,124,89,0.06); }
+.lanc-table tr.conciliado td { color: var(--verde-text) !important; font-weight: 400 !important; }
+.lanc-table tr.selecionado { background: rgba(184,153,106,0.18) !important; }
+.lanc-table tr.selecionado td { color: var(--gold2) !important; font-weight: 700 !important; }
+.lanc-table tr:hover { background: rgba(184,153,106,0.07); }
+
+.check-box { width: 16px; height: 16px; border: 1px solid var(--border2); border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; font-size: 10px; font-weight: 700; transition: all 0.15s; }
+
+.badge-filial { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: var(--bg3); border: 0.5px solid var(--border2); color: var(--text3); }
+
+.selection-info { position: fixed; bottom: 20px; right: 20px; background: var(--gold); color: #fff; padding: 12px 20px; border-radius: 2px; box-shadow: 0 4px 20px rgba(107,79,46,0.18); display: none; z-index: 100; }
+.selection-info-title { font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+.selection-info-val { font-size: 18px; font-weight: 700; }
+
+.hidden { display: none; }
+
+/* ── Modo Conciliação ── */
+/* ── Layout principal com sidebar de modos ── */
+.concil-layout {
+  display: flex; gap: 1.5rem; align-items: flex-start;
+}
+.modo-sidebar {
+  flex: 0 0 220px; display: flex; flex-direction: column; gap: 8px;
+  position: sticky; top: 72px;
+}
+.modo-sidebar-title {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--text4); padding: 0 4px; margin-bottom: 4px;
+}
+.modo-card {
+  background: var(--bg2); border: 0.5px solid var(--border2);
+  border-radius: 2px; padding: 0.85rem 1rem; cursor: pointer;
+  transition: all 0.2s; display: flex; flex-direction: column; gap: 5px;
+  text-align: left; font-family: 'DM Sans', sans-serif;
+  position: relative; overflow: hidden;
+}
+.modo-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: transparent; transition: background 0.2s;
+}
+.modo-card:hover { border-color: var(--gold3); background: var(--bege-bg); }
+.modo-card:hover::before { background: var(--gold3); }
+.modo-card.active { border-color: var(--gold); background: rgba(168,137,90,0.08); }
+.modo-card.active::before { background: var(--gold); }
+.modo-card-icon { font-size: 18px; margin-bottom: 2px; }
+.modo-card-title {
+  font-size: 12px; font-weight: 600; color: var(--text2);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.modo-card.active .modo-card-title { color: var(--brown); }
+.modo-card-desc { font-size: 10px; color: var(--text4); line-height: 1.5; }
+.modo-card-badge {
+  font-size: 8px; padding: 1px 6px; border-radius: 20px;
+  background: var(--bege-bg); color: var(--bege-claro);
+  border: 0.5px solid var(--bege-border);
+  letter-spacing: 0.05em; text-transform: uppercase;
+  align-self: flex-start; margin-top: 2px;
+}
+.modo-card.active .modo-card-badge {
+  background: var(--gold); color: #fff; border-color: var(--gold);
+}
+.modo-divider {
+  height: .5px; background: var(--border); margin: 4px 0;
+}
+/* Área de conteúdo à direita */
+.modo-content { flex: 1; min-width: 0; }
+/* Descrição do modo ativo */
+.modo-desc {
+  font-size: 11px; color: var(--text3); line-height: 1.6;
+  background: rgba(168,137,90,0.05); border: 0.5px solid var(--border);
+  border-radius: 2px; padding: 0.75rem 1rem; margin-bottom: 1.5rem;
+}
+.modo-desc strong { color: var(--gold); }
+
+/* ── Filter bar ── */
+.filter-bar {
+  display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;
+  background: var(--bg2); border: 0.5px solid var(--border);
+  border-radius: 2px; padding: 1rem 1.25rem; margin-bottom: 1rem;
+}
+.filter-group { display: flex; flex-direction: column; gap: 5px; }
+.filter-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text4); }
+.filter-toggle { display: flex; }
+.ftog {
+  background: none; border: 0.5px solid var(--border2); color: var(--text3);
+  padding: 5px 12px; font-size: 11px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.ftog:first-child { border-radius: 2px 0 0 2px; }
+.ftog:last-child  { border-radius: 0 2px 2px 0; }
+.ftog:not(:first-child) { border-left: none; }
+.ftog.active { background: var(--gold); color: #fff; border-color: var(--gold); }
+.filter-input {
+  background: var(--cream); border: 0.5px solid var(--border2); color: var(--text2);
+  padding: 6px 10px; border-radius: 2px; font-size: 12px; outline: none;
+  font-family: 'DM Sans', sans-serif; min-width: 180px;
+}
+.filter-input:focus { border-color: var(--gold); }
+
+/* ── Etapas de Conciliação ── */
+.etapa-box {
+  background: var(--bg2); border: 0.5px solid var(--border2);
+  border-radius: 2px; margin-bottom: 1rem; overflow: hidden;
+}
+.etapa-box-locked { border-color: var(--border); }
+.etapa-box.etapa-concluida { border-color: var(--verde-text); }
+
+.etapa-header {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1rem 1.25rem; flex-wrap: wrap;
+}
+.etapa-num {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  background: var(--gold); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+}
+.etapa-num-locked { background: var(--border2); color: var(--text4); }
+.etapa-num-done { background: var(--verde-text); color: #fff; }
+
+.etapa-info { flex: 1; min-width: 200px; }
+.etapa-titulo { font-size: 14px; font-weight: 600; color: var(--text1); }
+.etapa-sub { font-size: 11px; color: var(--text4); margin-top: 2px; }
+
+.etapa-acoes { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.etapa-resultado {
+  padding: 0.75rem 1.25rem; border-top: 0.5px solid var(--border);
+  font-size: 12px; background: rgba(74,124,89,0.05);
+  color: var(--verde-text);
+}
+.etapa-resultado.aviso { background: rgba(140,98,0,0.06); color: var(--amarelo-text); }
+
+.etapa-campos {
+  display: flex; gap: 1.5rem; flex-wrap: wrap;
+  padding: 1rem 1.25rem; border-top: 0.5px solid var(--border);
+  background: var(--cream2);
+  transition: opacity 0.3s;
+}
+
+/* ── Saldo Anterior ── */
+.saldo-ant-panel {
+  display: none;
+  background: #fffbf4; border: 1px solid var(--gold2);
+  border-radius: 2px; padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.saldo-ant-title {
+  font-size: 11px; font-weight: 700; color: var(--brown);
+  text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 8px;
+}
+.saldo-ant-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+.saldo-ant-group { display: flex; flex-direction: column; gap: 4px; }
+.saldo-ant-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text4); }
+.saldo-ant-input {
+  background: #fff; border: 0.5px solid var(--border2); color: var(--text1);
+  padding: 7px 12px; border-radius: 2px; font-size: 14px; font-weight: 600;
+  width: 180px; outline: none; font-family: 'DM Sans', sans-serif;
+}
+.saldo-ant-input:focus { border-color: var(--gold); }
+.saldo-ant-select {
+  background: #fff; border: 0.5px solid var(--border2); color: var(--text1);
+  padding: 7px 12px; border-radius: 2px; font-size: 13px;
+  outline: none; font-family: 'DM Sans', sans-serif; cursor: pointer;
+}
+.btn-conciliar-saldo {
+  background: var(--brown); color: #fff; border: none; border-radius: 2px;
+  padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.btn-conciliar-saldo:hover { background: var(--brown2); }
+.saldo-ant-resultado {
+  margin-top: 0.75rem; font-size: 12px; padding: 8px 12px;
+  border-radius: 2px; display: none;
+}
+.saldo-ant-resultado.ok  { background: var(--verde-bg); color: var(--verde-text); border: 0.5px solid rgba(74,124,89,0.2); }
+.saldo-ant-resultado.err { background: var(--vermelho-bg); color: var(--vermelho-text); border: 0.5px solid rgba(180,60,60,0.2); }
+.saldo-ant-resultado.warn { background: rgba(140,98,0,0.08); color: var(--amarelo-text); border: 0.5px solid rgba(140,98,0,0.2); }
+/* Tag especial para lançamentos do saldo anterior */
+.grupo-tag.saldo-ant { background: rgba(107,79,46,0.12); color: var(--brown2); border-color: rgba(107,79,46,0.3); font-weight: 700; }
+tr.conciliado-saldo-ant { opacity: 0.4; background: rgba(107,79,46,0.06) !important; }
+tr.conciliado-saldo-ant td { color: var(--brown2) !important; font-weight: 400 !important; }
+
+.grupo-tag {
+  font-size: 9px; padding: 1px 7px; border-radius: 20px;
+  background: rgba(168,137,90,0.1); color: var(--gold);
+  border: 0.5px solid rgba(168,137,90,0.25); white-space: nowrap;
+}
+.grupo-tag.fornecedor { background: rgba(107,79,46,0.08); color: var(--brown2); border-color: rgba(107,79,46,0.2); }
+
+
+
+.btn-limpar{background:none;border:.5px solid rgba(180,60,60,0.35);color:#a03030;border-radius:2px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}
+.btn-limpar:hover{background:rgba(180,60,60,0.06);}
+.saldo-ant-toggle-row{display:flex;align-items:center;gap:12px;margin-bottom:1rem;padding:.75rem 1rem;background:var(--bg3);border:.5px solid var(--border2);border-radius:2px;flex-wrap:wrap;}
+.saldo-ant-toggle-label{font-size:12px;color:var(--text2);font-weight:500;}
+.sat-btn-grp{display:flex;gap:0;}
+.sat-btn-item{padding:6px 18px;border:.5px solid var(--border2);background:var(--bg2);color:var(--text3);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;transition:all .2s;}
+.sat-btn-item:first-child{border-radius:2px 0 0 2px;}
+.sat-btn-item:last-child{border-radius:0 2px 2px 0;border-left:none;}
+.sat-btn-item.nao-active{background:#3d7a52;color:#fff;border-color:#3d7a52;}
+.sat-btn-item.sim-active{background:#8a6200;color:#fff;border-color:#8a6200;}
+.sau-box{border:.5px dashed var(--border2);border-radius:2px;padding:.85rem 1rem;display:flex;align-items:flex-start;gap:10px;cursor:pointer;background:var(--bg3);transition:all .2s;margin-top:.5rem;}
+.sau-box:hover{border-color:var(--bege);background:var(--bege-bg);}
+.sau-box.loaded{border-color:rgba(74,124,89,0.4);background:rgba(74,124,89,0.06);}
+.sau-box.err{border-color:rgba(180,60,60,0.4);background:rgba(180,60,60,0.06);}
+.sau-box input{display:none;}
+.sau-icon{font-size:18px;flex-shrink:0;margin-top:2px;}
+.sau-title{font-size:12px;font-weight:500;color:var(--text2);}
+.sau-sub{font-size:10px;color:var(--text4);margin-top:2px;}
+.sau-valid{font-size:11px;margin-top:4px;font-weight:600;}
+.sau-valid.ok{color:#3d7a52;}
+.sau-valid.err{color:#a03030;}
+.saldo-ant-brl{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:#8a6200;margin-top:4px;min-height:28px;}
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="btn-back" href="razao.html">← Conciliação de Razão</a>
+  <span class="topbar-div">/</span>
+  <span class="topbar-title">Fornecedores e Duplicatas</span>
+  <span class="topbar-badge">Contábil</span>
+</div>
+
+<div class="main">
+  <div class="tool-header">
+    <div class="tool-label">Setor Contábil · Conciliação de Razão</div>
+    <div class="tool-title">Conciliação de <em>Fornecedores e Duplicatas</em></div>
+    <div class="tool-desc">Importe o Excel do Questor. A ferramenta identifica automaticamente provisões e baixas por valor, competência e histórico.</div>
+  </div>
+
+  <div class="upload-section" id="uploadSection">
+    <div class="upload-top">
+      <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">📊</div>
+        <div class="upload-title">Importar Excel (.xlsx)</div>
+        <div class="upload-hint">Arraste o arquivo do Questor aqui</div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+      </div>
+      <div class="natureza-box">
+        <div class="natureza-title">Natureza da Conta</div>
+        <div class="natureza-options">
+          <div class="natureza-opt active" id="optCredora" onclick="setNatureza('C')">Credora (Passivo)</div>
+          <div class="natureza-opt" id="optDevedora" onclick="setNatureza('D')">Devedora (Ativo)</div>
+        </div>
+        <div style="font-size: 10px; color: var(--text4); margin-top: 10px; line-height: 1.4;">
+          * Contas de impostos a pagar (FGTS, INSS) são <strong>Credoras</strong>.
+        </div>
+      </div>
+      <div class="filtro-conta-box" id="filtroContaBox" style="display:none;">
+        <div class="filtro-conta-title">Buscar Conta</div>
+        <input type="text" id="contaInput" class="filtro-conta-input" placeholder="Digite o número da conta..." oninput="filtrarListaContas()">
+        <select id="contaSelect" class="filtro-conta-select" size="5" onchange="selecionarConta()">
+          <option value="">Aguardando arquivo...</option>
+        </select>
+      </div>
+    </div>
+    <div id="uploadStatus" class="upload-status"></div>
+  </div>
+
+  <!-- ETAPAS DE CONCILIAÇÃO -->
+  <div id="etapasWrapper" style="display:none;">
+
+    <!-- ETAPA 1 -->
+    <div class="etapa-box" id="etapa1Box">
+      <div class="etapa-header">
+        <div class="etapa-num" id="etapa1Num">1</div>
+        <div class="etapa-info">
+          <div class="etapa-titulo">Conciliação Automática</div>
+          <div class="etapa-sub">Elimina lançamentos que fecham por competência ou número de documento</div>
+        </div>
+        <div class="etapa-acoes">
+          <button class="btn-secondary" onclick="toggleCruzamentoFiliais()" id="btnFiliais">Cruzar Filiais: Não</button>
+          <button class="btn-primary" onclick="executarEtapa1()" id="btnEtapa1">✨ Executar Conciliação</button>
+        </div>
+      </div>
+      <div class="etapa-resultado" id="etapa1Resultado" style="display:none;"></div>
+    </div>
+
+    <!-- ETAPA 2 -->
+    <div class="etapa-box etapa-box-locked" id="etapa2Box">
+      <div class="etapa-header">
+        <div class="etapa-num etapa-num-locked" id="etapa2Num">2</div>
+        <div class="etapa-info">
+          <div class="etapa-titulo">Conciliação por Saldo Anterior</div>
+          <div class="etapa-sub">Indique se há saldo anterior e importe o relatório de pendências do período anterior</div>
+        </div>
+        <div class="etapa-acoes" id="etapa2Acoes" style="opacity:0.35;pointer-events:none;">
+          <button class="btn-conciliar-saldo" id="btnEtapa2Exec" onclick="executarEtapa2()" style="display:none;">Conciliar Saldo Anterior</button>
+          <button class="btn-secondary" onclick="desfazerSaldoAnt()" style="padding:8px 14px;">Desfazer</button>
+        </div>
+      </div>
+      <div class="etapa-campos" id="etapa2Campos" style="opacity:0.35;pointer-events:none;">
+        <div class="saldo-ant-toggle-row">
+          <span class="saldo-ant-toggle-label">Esta conta possui saldo anterior?</span>
+          <div class="sat-btn-grp">
+            <button class="sat-btn-item nao-active" id="satBtnNao" onclick="setSAT(false)">&#10004; Não</button>
+            <button class="sat-btn-item" id="satBtnSim" onclick="setSAT(true)">&#9888; Sim</button>
+          </div>
+        </div>
+        <div id="saldoAntCamposWrap" style="display:none;">
+          <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-start;margin-bottom:1rem;">
+            <div class="saldo-ant-group">
+              <span class="saldo-ant-label">Valor do Saldo Anterior (R$)</span>
+              <input type="text" id="saldoAntValor" class="saldo-ant-input" placeholder="0,00"
+                oninput="onSaldoAntInput(this)" style="text-align:right;font-size:16px;font-weight:600;">
+              <div class="saldo-ant-brl" id="saldoAntBRL"></div>
+              <span style="font-size:10px;color:var(--text4);">Digite apenas números</span>
+            </div>
+            <div class="saldo-ant-group">
+              <span class="saldo-ant-label">Natureza</span>
+              <select id="saldoAntNatureza" class="saldo-ant-select">
+                <option value="C">Credor (C)</option>
+                <option value="D">Devedor (D)</option>
+              </select>
+            </div>
+            <div class="saldo-ant-group">
+              <span class="saldo-ant-label">Data de referência</span>
+              <input type="text" id="saldoAntRef" class="saldo-ant-input" placeholder="DD/MM/AAAA"
+                maxlength="10" oninput="mascaraData(this)" style="width:140px;">
+            </div>
+            <div class="saldo-ant-group">
+              <span class="saldo-ant-label">Buscar pagamentos ATÉ a data</span>
+              <input type="text" id="saldoAntAteData" class="saldo-ant-input" placeholder="DD/MM/AAAA"
+                maxlength="10" oninput="mascaraData(this)" style="width:140px;">
+              <span style="font-size:10px;color:var(--text4);margin-top:3px;">Apenas lançamentos até essa data</span>
+            </div>
+          </div>
+          <span class="saldo-ant-label">Relatório de Pendências do Período Anterior</span>
+          <label class="sau-box" id="sauBoxEl">
+            <input type="file" accept=".xlsx,.xls" onchange="lerRelatorioSAU(this.files[0])">
+            <span class="sau-icon">&#128203;</span>
+            <span>
+              <div class="sau-title" id="sauTitle">Selecione o Excel de Pendências</div>
+              <div class="sau-sub">Gerado pelo botão "Exportar Pendências" no período anterior</div>
+              <div class="sau-valid" id="sauValid"></div>
+            </span>
+          </label>
+        </div>
+      </div>
+      <div id="saldoAntResultado" class="saldo-ant-resultado" style="margin-top:1rem;display:none;"></div>
+    </div>
+
+    <!-- BARRA INFERIOR -->
+    <div class="actions-bar" id="actionsBar" style="display:flex;margin-top:1rem;">
+      <div class="action-group" style="margin-left:auto;">
+        <div class="saldo-alvo-box">
+          <span class="saldo-alvo-label">Saldo da Conta:</span>
+          <input type="text" id="saldoAlvo" class="saldo-alvo-input" value="0,00" readonly>
+        </div>
+        <button class="btn-limpar" onclick="limparDados()">↺ Limpar e Reiniciar</button>
+        <button class="btn-secondary" onclick="exportarNaoConciliados()">↓ Exportar Pendências</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="cards-resumo" id="cardsResumo">
+    <div class="card-resumo">
+      <div class="card-resumo-label">Total Pendente</div>
+      <div class="card-resumo-valor val-s" id="resumoPendente">R$ 0,00</div>
+      <div class="card-resumo-sub" id="qtdPendente">0 lançamentos</div>
+    </div>
+    <div class="card-resumo">
+      <div class="card-resumo-label">Diferença p/ Saldo da Conta</div>
+      <div class="card-resumo-valor val-diff" id="resumoDiferenca">R$ 0,00</div>
+      <div class="card-resumo-sub">O ideal é chegar a R$ 0,00</div>
+    </div>
+    <div class="card-resumo">
+      <div class="card-resumo-label">Já Conciliado</div>
+      <div class="card-resumo-valor val-c" id="resumoConciliado">R$ 0,00</div>
+      <div class="card-resumo-sub" id="qtdConciliado">0 lançamentos</div>
+    </div>
+  </div>
+
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar" id="filterBar" style="display:none;">
+    <div class="filter-group">
+      <label class="filter-label">Mostrar</label>
+      <div class="filter-toggle">
+        <button class="ftog active" id="ftogTodos"       onclick="setFiltroVis('todos')">Todos</button>
+        <button class="ftog"        id="ftogPendentes"   onclick="setFiltroVis('pendentes')">Pendentes</button>
+        <button class="ftog"        id="ftogConciliados" onclick="setFiltroVis('conciliados')">Conciliados</button>
+        <button class="ftog"        id="ftogSaldoAnt"    onclick="setFiltroVis('saldoant')">Saldo Ant.</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">Buscar histórico</label>
+      <input type="text" id="buscaHistorico" class="filter-input" placeholder="Texto livre..." oninput="paginaAtual=1; renderTabelaDebounced()">
+    </div>
+    <div class="filter-group" id="filtroPeriodoGroup">
+      <label class="filter-label">Competência / Período</label>
+      <input type="month" id="filtroPeriodo" class="filter-input" oninput="renderTabela()">
+    </div>
+  </div>
+
+
+  <div id="tabelaContainer"></div>
+</div>
+
+<div class="selection-info" id="selectionInfo">
+  <div class="selection-info-title">Soma Selecionada</div>
+  <div class="selection-info-val" id="selectionVal">R$ 0,00</div>
+  <button class="btn-primary" style="margin-top: 8px; width: 100%;" onclick="conciliarSelecionados()">Conciliar Seleção</button>
+</div>
+
+<script>
+let todosOsDados    = [];
+let dadosFiltrados  = [];
+let listaContasUnicas = [];
+let cruzarFiliais   = false;
+let naturezaConta   = 'C';
+let selecionados    = new Set();
+let saldoContaSelecionada = 0;
+let filtroVisibilidade    = 'todos';
+let modoAtual = 'fornecedor'; // 'impostos' | 'fornecedor'
+
+// ── Meses PT-BR ────────────────────────────────────────────────
+const MESES = {
+  jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,
+  jul:7,ago:8,set:9,out:10,nov:11,dez:12,
+  janeiro:1,fevereiro:2,marco:3,abril:4,
+  maio:5,junho:6,julho:7,agosto:8,setembro:9,
+  outubro:10,novembro:11,dezembro:12
+};
+
+// ── Modo ────────────────────────────────────────────────────────
+function setModo(modo) {
+  modoAtual = modo;
+
+  // Atualiza visual dos cards da sidebar
+  ['modoCardImpostos','modoCardFornecedor','modoCardTransferencias'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  const modoParaCard = {
+    impostos:       'modoCardImpostos',
+    fornecedor:     'modoCardFornecedor',
+    transferencias: 'modoCardTransferencias',
+  };
+  const cardAtivo = document.getElementById(modoParaCard[modo]);
+  if (cardAtivo) cardAtivo.classList.add('active');
+
+  const desc    = document.getElementById('modoDesc');
+  const pgGroup = document.getElementById('filtroPeriodoGroup');
+
+  if (modo === 'impostos') {
+    desc.innerHTML = '<strong>Modo Impostos:</strong> concilia por <strong>competência</strong> extraída do histórico '
+      + '(set/24, 09/2024, setembro/2024…). Agrupa N provisões e N pagamentos cuja soma fecha para a mesma competência.';
+    if (pgGroup) pgGroup.style.display = 'flex';
+  } else if (modo === 'fornecedor') {
+    desc.innerHTML = '<strong>Modo Fornecedores:</strong> concilia por <strong>número</strong> extraído do histórico '
+      + '(NF, duplicata, etc.). Agrupa todos os lançamentos com o mesmo número e verifica se débitos = créditos.';
+    if (pgGroup) pgGroup.style.display = 'none';
+  } else if (modo === 'transferencias') {
+    desc.innerHTML = '<strong>Modo Transferências:</strong> concilia a <strong>conta transitória</strong> de transferências entre filiais. '
+      + 'Cruza notas que saíram (déb. transitória) com notas que entraram (créd. transitória) pelo número da NF e valor.';
+    if (pgGroup) pgGroup.style.display = 'none';
+  }
+
+  // Reset conciliação se já houver dados
+  if (dadosFiltrados.length > 0) {
+    dadosFiltrados.forEach(d => { d.conciliado = false; d.grupoId = null; d.ehSaldoAnt = false; });
+    selecionados.clear();
+    renderTabela();
+  }
+}
+
+// ── Extrai competência "MM/YYYY" do histórico ──────────────────
+function extrairCompetencia(texto) {
+  if (!texto) return null;
+  const t = texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // 09/24, 09/2024, 9/24
+  let m = t.match(/\b(0?[1-9]|1[0-2])\/(20\d{2}|\d{2})\b/);
+  if (m) {
+    const ano = m[2].length === 2 ? '20' + m[2] : m[2];
+    return String(parseInt(m[1])).padStart(2,'0') + '/' + ano;
+  }
+  // set/24, setembro/2024, set 2024
+  const mesKeys = Object.keys(MESES).sort((a,b)=>b.length-a.length).join('|');
+  m = t.match(new RegExp('(' + mesKeys + ')[^\\d]*(20\\d{2}|\\d{2})\\b', 'i'));
+  if (m) {
+    const mesNum = MESES[m[1].toLowerCase()];
+    const ano = m[2].length === 2 ? '20' + m[2] : m[2];
+    return String(mesNum).padStart(2,'0') + '/' + ano;
+  }
+  // "Mes 09/2024"
+  m = t.match(/mes\s+(0?[1-9]|1[0-2])\/(20\d{2})/i);
+  if (m) return String(parseInt(m[1])).padStart(2,'0') + '/' + m[2];
+
+  return null;
+}
+
+// ── Extrai números relevantes do histórico (NF, duplicata) ─────
+// Retorna um Set de strings numéricas com 4+ dígitos
+function extrairNumeros(texto) {
+  if (!texto) return new Set();
+  // Remove anos comuns para não confundir com nº NF
+  const t = texto.replace(/\b(20\d{2}|19\d{2})\b/g, '');
+  const matches = t.match(/\d{4,}/g) || [];
+  return new Set(matches.map(n => n.replace(/^0+/, '') || '0'));
+}
+
+// ── Verifica se dois Sets de números compartilham pelo menos um elemento ──
+// IMPORTANTE: recebe os Sets pré-computados (.numeros), não o texto bruto
+function numerosComuns(setA, setB) {
+  if (!setA.size || !setB.size) return false;
+  // Itera sobre o menor Set para minimizar comparações
+  const [menor, maior] = setA.size <= setB.size ? [setA, setB] : [setB, setA];
+  for (const n of menor) if (maior.has(n)) return true;
+  return false;
+}
+
+// ── Normaliza conta ─────────────────────────────────────────────
+function normConta(v) {
+  if (v === undefined || v === null || v === '') return '';
+  return String(v).trim().replace(/\.0$/, '');
+}
+
+// ── Natureza ────────────────────────────────────────────────────
+function setNatureza(n) {
+  naturezaConta = n;
+  document.getElementById('optCredora').classList.toggle('active', n === 'C');
+  document.getElementById('optDevedora').classList.toggle('active', n === 'D');
+  if (dadosFiltrados.length > 0) { calcularSaldoConta(); atualizarResumo(); }
+}
+
+// ── Filtro visibilidade ─────────────────────────────────────────
+function setFiltroVis(v) {
+  filtroVisibilidade = v;
+  paginaAtual = 1;
+  document.querySelectorAll('.ftog').forEach(b => b.classList.remove('active'));
+  const map = { todos: 'ftogTodos', pendentes: 'ftogPendentes', conciliados: 'ftogConciliados', saldoant: 'ftogSaldoAnt' };
+  const el = document.getElementById(map[v]);
+  if (el) el.classList.add('active');
+  renderTabela();
+}
+
+// ── Leitura do arquivo ──────────────────────────────────────────
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target.result);
+    const wb   = XLSX.read(data, { type: 'array', cellDates: true });
+    const ws   = wb.Sheets[wb.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, dateNF: 'dd/mm/yyyy' });
+
+    if (json.length < 2) { alert('Arquivo vazio ou sem dados válidos.'); return; }
+
+    // Encontra a linha de cabeçalho — pula linhas vazias no início
+    let headerRowIdx = 0;
+    for (let i = 0; i < Math.min(10, json.length); i++) {
+      if (json[i] && json[i].some(c => c !== null && c !== undefined && c !== '')) {
+        headerRowIdx = i;
+        break;
+      }
+    }
+    const header = json[headerRowIdx].map(c => String(c == null ? '' : c).trim());
+    const dataRows = json.slice(headerRowIdx + 1);
+
+    const ci = (re) => header.findIndex(c => re.test(c));
+    // Data: aceita "Data", "DATA", "Dt", "DT Lançamento", etc.
+    let colData = ci(/^data$/i);
+    if (colData < 0) colData = ci(/^data\b/i);
+    if (colData < 0) colData = ci(/^dt\b/i);
+    if (colData < 0) colData = ci(/data/i);
+
+    // Histórico
+    let colHist = ci(/hist[oó]rico/i);
+    if (colHist < 0) colHist = ci(/histor/i);
+    if (colHist < 0) colHist = ci(/descri/i);
+
+    // Valor: aceita "Valor", "VALOR", "Valor R$", "Vlr", etc.
+    let colVal = ci(/^valor$/i);
+    if (colVal < 0) colVal = ci(/^valor\s/i);
+    if (colVal < 0) colVal = ci(/^vlr/i);
+    if (colVal < 0) colVal = ci(/valor/i);
+
+    const colFil   = ci(/filial/i);
+    let   colDeb   = ci(/^d[ée]bito$/i);
+    if (colDeb < 0) colDeb = ci(/d[ée]bito/i);
+    let   colCred  = ci(/^cr[eé]dito$/i);
+    if (colCred < 0) colCred = ci(/cr[eé]dito/i);
+    if (colDeb  < 0) colDeb  = 2;
+    if (colCred < 0) colCred = 3;
+
+    // Diagnóstico — avisa se colunas essenciais não foram encontradas
+    const colNaoEncontradas = [];
+    if (colData  < 0) colNaoEncontradas.push('Data');
+    if (colVal   < 0) colNaoEncontradas.push('Valor');
+    if (colNaoEncontradas.length > 0) {
+      const cabecalho = header.filter(h => h).join(' | ');
+      alert(`Atenção: não encontrei as colunas [${colNaoEncontradas.join(', ')}] no arquivo.\n\nCabeçalhos detectados:\n${cabecalho}\n\nVerifique se o arquivo é do Questor e se a primeira linha contém os títulos.`);
+      return;
+    }
+
+    todosOsDados = [];
+    for (let i = 0; i < dataRows.length; i++) {
+      const row = dataRows[i];
+      if (!row || row.every(c => c == null || c === '')) continue;
+      if (!row[colData]) continue;
+      const dataVal = row[colData];
+      let dataFmt = '';
+      if (dataVal instanceof Date) {
+        const d = dataVal;
+        dataFmt = String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+      } else if (typeof dataVal === 'number') {
+        // Excel serial date
+        const d = new Date(Math.round((dataVal - 25569) * 86400 * 1000));
+        dataFmt = String(d.getUTCDate()).padStart(2,'0') + '/' + String(d.getUTCMonth()+1).padStart(2,'0') + '/' + d.getUTCFullYear();
+      } else {
+        dataFmt = String(dataVal);
+      }
+      const historico = String(row[colHist] || '');
+      todosOsDados.push({
+        id:           headerRowIdx + 1 + i,
+        contaDeb:     normConta(row[colDeb]),
+        contaCred:    normConta(row[colCred]),
+        data:         dataFmt,
+        historico,
+        valor:        parseMoeda(row[colVal]),
+        filial:       String(row[colFil] || '1'),
+        conciliado:   false,
+        competencia:  extrairCompetencia(historico),
+        numeros:      extrairNumeros(historico),
+        grupoId:      null   // preenchido pela conciliação
+      });
+    }
+
+    const contas = new Set();
+    todosOsDados.forEach(d => {
+      if (d.contaDeb)  contas.add(d.contaDeb);
+      if (d.contaCred) contas.add(d.contaCred);
+    });
+    listaContasUnicas = [...contas].sort();
+    popularContas(listaContasUnicas);
+
+    document.getElementById('uploadStatus').className = 'upload-status ok';
+    document.getElementById('uploadStatus').textContent =
+      `✓ ${todosOsDados.length} lançamentos carregados de ${file.name} · Colunas: Data[${colData}] Valor[${colVal}] Déb[${colDeb}] Créd[${colCred}]`;
+    document.getElementById('filtroContaBox').style.display = 'block';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function popularContas(contas) {
+  const sel = document.getElementById('contaSelect');
+  sel.innerHTML = '';
+  contas.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    sel.appendChild(o);
+  });
+}
+
+function filtrarListaContas() {
+  const b = document.getElementById('contaInput').value.toLowerCase();
+  popularContas(listaContasUnicas.filter(c => c.toLowerCase().includes(b)));
+}
+
+function selecionarConta() {
+  const conta = document.getElementById('contaSelect').value;
+  if (!conta) return;
+  paginaAtual = 1;
+  dadosFiltrados = todosOsDados.filter(d => d.contaDeb === conta || d.contaCred === conta);
+  dadosFiltrados.forEach(d => { d.conciliado = false; d.grupoId = null; d.ehSaldoAnt = false; });
+  selecionados.clear();
+  calcularSaldoConta();
+
+  // Mostrar etapas e resetar estado
+  document.getElementById('etapasWrapper').style.display = 'block';
+  document.getElementById('cardsResumo').style.display = 'grid';
+  document.getElementById('filterBar').style.display = 'flex';
+
+  // Resetar Etapa 1
+  const e1box = document.getElementById('etapa1Box');
+  e1box.classList.remove('etapa-concluida');
+  document.getElementById('etapa1Resultado').style.display = 'none';
+  document.getElementById('btnEtapa1').disabled = false;
+  document.getElementById('btnEtapa1').textContent = '✨ Executar Conciliação';
+
+  // Bloquear Etapa 2
+  bloquearEtapa2(true);
+
+  renderTabela();
+}
+
+function calcularSaldoConta() {
+  const conta = document.getElementById('contaSelect').value;
+  let deb = 0, cred = 0;
+  dadosFiltrados.forEach(d => {
+    if (d.contaDeb  === conta) deb  += d.valor;
+    if (d.contaCred === conta) cred += d.valor;
+  });
+  saldoContaSelecionada = naturezaConta === 'C' ? (cred - deb) : (deb - cred);
+  document.getElementById('saldoAlvo').value =
+    fmtMoeda(saldoContaSelecionada).replace('R$', '').trim();
+}
+
+// ── Etapa 1 — Conciliação Automática ────────────────────────────
+async function executarEtapa1() {
+  const conta = document.getElementById('contaSelect').value;
+  const btn = document.getElementById('btnEtapa1');
+
+  // Exibe estado de carregamento sem travar a UI
+  btn.disabled = true;
+  btn.textContent = '⏳ Processando…';
+
+  // Cede o controle ao browser para renderizar o spinner antes de começar
+  await new Promise(r => setTimeout(r, 30));
+
+  // Reset conciliação atual (exceto saldo anterior se já feito)
+  dadosFiltrados.forEach(d => { if (!d.ehSaldoAnt) { d.conciliado = false; d.grupoId = null; } });
+  selecionados.clear();
+
+  conciliarFornecedores(conta);
+
+  const conc = dadosFiltrados.filter(d => d.conciliado && !d.ehSaldoAnt).length;
+  const pend = dadosFiltrados.filter(d => !d.conciliado).length;
+
+  // Atualizar visual da Etapa 1
+  const e1box = document.getElementById('etapa1Box');
+  e1box.classList.add('etapa-concluida');
+  document.getElementById('etapa1Num').classList.add('etapa-num-done');
+  document.getElementById('etapa1Num').classList.remove('etapa-num-locked');
+
+  const res = document.getElementById('etapa1Resultado');
+  res.style.display = 'block';
+  if (pend === 0) {
+    res.className = 'etapa-resultado';
+    res.innerHTML = `✓ Todos os ${conc} lançamentos conciliados! Nada pendente.`;
+  } else {
+    res.className = 'etapa-resultado aviso';
+    res.innerHTML = `✓ ${conc} lançamentos conciliados &nbsp;|&nbsp; ⚠ ${pend} pendentes — prossiga para a Etapa 2 se houver saldo anterior a liquidar.`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '↺ Refazer Conciliação';
+
+  // Desbloquear Etapa 2
+  bloquearEtapa2(false);
+  renderTabela();
+}
+
+function bloquearEtapa2(bloquear) {
+  const e2box    = document.getElementById('etapa2Box');
+  const campos   = document.getElementById('etapa2Campos');
+  const acoes    = document.getElementById('etapa2Acoes');
+  const num      = document.getElementById('etapa2Num');
+  if (bloquear) {
+    e2box.classList.add('etapa-box-locked');
+    campos.style.opacity = '0.35';
+    campos.style.pointerEvents = 'none';
+    acoes.style.opacity = '0.35';
+    acoes.style.pointerEvents = 'none';
+    num.classList.add('etapa-num-locked');
+    num.classList.remove('etapa-num-done');
+  } else {
+    e2box.classList.remove('etapa-box-locked');
+    campos.style.opacity = '1';
+    campos.style.pointerEvents = 'auto';
+    acoes.style.opacity = '1';
+    acoes.style.pointerEvents = 'auto';
+    num.classList.remove('etapa-num-locked');
+  }
+}
+
+// Mantém compatibilidade com código antigo
+function sugerirConciliacao() { executarEtapa1(); }
+
+// ── Etapa 2 — Saldo Anterior ─────────────────────────────────────
+function executarEtapa2() { conciliarPorSaldoAnterior(); }
+
+
+
+// ── MODO FORNECEDORES ───────────────────────────────────────────
+// Usa índice invertido (número → lista) para reduzir de O(n²) para O(n·k)
+function conciliarFornecedores(conta) {
+  const credora    = naturezaConta === 'C';
+  const provisoes  = dadosFiltrados.filter(d => credora ? d.contaCred === conta : d.contaDeb  === conta);
+  const pagamentos = dadosFiltrados.filter(d => credora ? d.contaDeb  === conta : d.contaCred === conta);
+
+  // Constrói índice invertido: número → Set de pagamentos que contêm esse número
+  const idxPag = new Map();
+  pagamentos.forEach(pag => {
+    pag.numeros.forEach(n => {
+      if (!idxPag.has(n)) idxPag.set(n, new Set());
+      idxPag.get(n).add(pag);
+    });
+  });
+
+  // Constrói índice invertido: número → Set de provisões que contêm esse número
+  const idxProv = new Map();
+  provisoes.forEach(prov => {
+    prov.numeros.forEach(n => {
+      if (!idxProv.has(n)) idxProv.set(n, new Set());
+      idxProv.get(n).add(prov);
+    });
+  });
+
+  let grupoSeq = 1;
+
+  // Passo A: para cada provisão, busca candidatos via índice (não percorre toda a lista)
+  provisoes.forEach(prov => {
+    if (prov.conciliado) return;
+
+    // Candidatos = union dos pagamentos indexados por cada número da provisão
+    const candidatos = new Set();
+    prov.numeros.forEach(n => {
+      (idxPag.get(n) || []).forEach(pag => {
+        if (!pag.conciliado && (cruzarFiliais || pag.filial === prov.filial))
+          candidatos.add(pag);
+      });
+    });
+    if (!candidatos.size) return;
+
+    const lista = [...candidatos];
+
+    // Caso 1: todos os candidatos somam = valor da provisão (1 NF → N parcelas)
+    const somaPags = lista.reduce((s, p) => s + p.valor, 0);
+    if (Math.abs(somaPags - prov.valor) < 0.05) {
+      const gid = 'FOR-' + String(grupoSeq++).padStart(3, '0');
+      prov.conciliado = true; prov.grupoId = gid;
+      lista.forEach(p => { p.conciliado = true; p.grupoId = gid; });
+      return;
+    }
+
+    // Caso 2: pagamento exato com mesmo número
+    const parExato = lista.find(p => Math.abs(p.valor - prov.valor) < 0.05);
+    if (parExato) {
+      const gid = 'FOR-' + String(grupoSeq++).padStart(3, '0');
+      prov.conciliado = true; prov.grupoId = gid;
+      parExato.conciliado = true; parExato.grupoId = gid;
+    }
+  });
+
+  // Passo B: caso inverso — N provisões → 1 pagamento (usa o índice de provisões)
+  pagamentos.forEach(pag => {
+    if (pag.conciliado) return;
+
+    const candidatos = new Set();
+    pag.numeros.forEach(n => {
+      (idxProv.get(n) || []).forEach(prov => {
+        if (!prov.conciliado && (cruzarFiliais || prov.filial === pag.filial))
+          candidatos.add(prov);
+      });
+    });
+    if (!candidatos.size) return;
+
+    const lista = [...candidatos];
+    const somaProvs = lista.reduce((s, d) => s + d.valor, 0);
+    if (Math.abs(somaProvs - pag.valor) < 0.05) {
+      const gid = 'FOR-' + String(grupoSeq++).padStart(3, '0');
+      pag.conciliado = true; pag.grupoId = gid;
+      lista.forEach(p => { p.conciliado = true; p.grupoId = gid; });
+    }
+  });
+}
+
+// ── Filiais ─────────────────────────────────────────────────────
+function toggleCruzamentoFiliais() {
+  cruzarFiliais = !cruzarFiliais;
+  document.getElementById('btnFiliais').textContent =
+    `Permitir Cruzar Filiais: ${cruzarFiliais ? 'Sim' : 'Não'}`;
+}
+
+// ── Seleção manual ───────────────────────────────────────────────
+function toggleSelecao(id, event) {
+  if (event.target.closest('.check-box') || event.ctrlKey) {
+    // Clique no checkbox: marca/desmarca seleção para conciliar em grupo
+    if (selecionados.has(id)) selecionados.delete(id);
+    else selecionados.add(id);
+    renderTabela();
+  } else {
+    // Clique na linha: toggle conciliação manual individual
+    const item = dadosFiltrados.find(d => d.id === id);
+    if (item) {
+      item.conciliado = !item.conciliado;
+      item.grupoId = item.conciliado ? 'MAN' : null;
+      selecionados.delete(id);
+      renderTabela();
+    }
+  }
+}
+
+function conciliarSelecionados() {
+  selecionados.forEach(id => {
+    const item = dadosFiltrados.find(d => d.id === id);
+    if (item) { item.conciliado = true; item.grupoId = 'MAN'; }
+  });
+  selecionados.clear();
+  renderTabela();
+}
+
+// ── Utilitário debounce ─────────────────────────────────────────
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+}
+
+// ── Limite de linhas por vez (evita travar com arquivos grandes) ─
+const LINHAS_POR_PAGINA = 400;
+let paginaAtual = 1;
+
+// ── Render tabela ───────────────────────────────────────────────
+function renderTabela() {
+  const conta   = document.getElementById('contaSelect').value;
+  const busca   = (document.getElementById('buscaHistorico')?.value || '').toLowerCase();
+
+  const dados = dadosFiltrados.filter(d => {
+    if (filtroVisibilidade === 'pendentes'   &&  d.conciliado) return false;
+    if (filtroVisibilidade === 'conciliados' && (!d.conciliado || d.ehSaldoAnt)) return false;
+    if (filtroVisibilidade === 'saldoant'    && !d.ehSaldoAnt) return false;
+    if (busca && !d.historico.toLowerCase().includes(busca)) return false;
+    return true;
+  });
+
+  // Paginação: exibe apenas as primeiras N linhas
+  const totalLinhas = dados.length;
+  const exibir = dados.slice(0, paginaAtual * LINHAS_POR_PAGINA);
+  const temMais = totalLinhas > exibir.length;
+
+  let html = `
+    <table class="lanc-table">
+      <thead><tr>
+        <th width="30"></th>
+        <th>Data</th><th>Filial</th><th>Histórico</th>
+        <th>Nº Identificado</th>
+        <th style="text-align:right">Débito</th>
+        <th style="text-align:right">Crédito</th>
+        <th>Grupo</th>
+      </tr></thead><tbody>`;
+
+  exibir.forEach(d => {
+    const isSel   = selecionados.has(d.id);
+    const valDeb  = d.contaDeb  === conta ? d.valor : 0;
+    const valCred = d.contaCred === conta ? d.valor : 0;
+
+    const nums = [...d.numeros].slice(0, 3).join(', ');
+    const tagCell = nums
+      ? `<span class="grupo-tag fornecedor">${nums}</span>`
+      : '<span style="color:var(--text4);font-size:9px;">—</span>';
+
+    const grupoCell = d.grupoId
+      ? `<span class="grupo-tag fornecedor ${d.ehSaldoAnt ? 'saldo-ant' : ''}" title="Grupo">${d.grupoId}</span>`
+      : '<span style="color:var(--text4);font-size:9px;">—</span>';
+
+    const rowClass  = isSel ? 'selecionado' : (d.conciliado ? (d.ehSaldoAnt ? 'conciliado-saldo-ant' : 'conciliado') : 'nao-conciliado');
+    const checkIcon = d.conciliado ? '✓' : (isSel ? '●' : '');
+
+    html += `
+      <tr class="${rowClass}" onclick="toggleSelecao(${d.id}, event)">
+        <td><div class="check-box" style="${d.conciliado ? 'background:var(--verde-text);border-color:var(--verde-text);color:#fff;' : isSel ? 'background:var(--bege);border-color:var(--bege);' : ''}">${checkIcon}</div></td>
+        <td style="white-space:nowrap">${d.data}</td>
+        <td><span class="badge-filial">${d.filial}</span></td>
+        <td>${d.historico}</td>
+        <td>${tagCell}</td>
+        <td style="text-align:right">${valDeb  > 0 ? fmtMoeda(valDeb)  : '—'}</td>
+        <td style="text-align:right">${valCred > 0 ? fmtMoeda(valCred) : '—'}</td>
+        <td>${grupoCell}</td>
+      </tr>`;
+  });
+
+  html += '</tbody></table>';
+
+  // Rodapé com contador e botão "carregar mais"
+  if (temMais) {
+    const restam = totalLinhas - exibir.length;
+    html += `<div style="text-align:center;padding:1rem;border-top:.5px solid var(--border);">
+      <button onclick="carregarMais()" style="background:none;border:.5px solid var(--border2);color:var(--text3);padding:7px 18px;border-radius:2px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;">
+        ↓ Exibir mais ${Math.min(LINHAS_POR_PAGINA, restam)} de ${restam} restantes
+      </button>
+    </div>`;
+  } else if (totalLinhas > LINHAS_POR_PAGINA) {
+    html += `<div style="text-align:center;padding:.6rem;font-size:11px;color:var(--text4);">
+      Exibindo todos os ${totalLinhas} lançamentos
+    </div>`;
+  }
+
+  document.getElementById('tabelaContainer').innerHTML = html;
+  atualizarResumo();
+}
+
+function carregarMais() {
+  paginaAtual++;
+  renderTabela();
+}
+
+// Versão com debounce para uso no campo de busca (evita render a cada tecla)
+const renderTabelaDebounced = debounce(renderTabela, 250);
+
+// ── Resumo ───────────────────────────────────────────────────────
+function atualizarResumo() {
+  const conta     = document.getElementById('contaSelect').value;
+  const pendentes   = dadosFiltrados.filter(d => !d.conciliado);
+  const conciliados = dadosFiltrados.filter(d =>  d.conciliado);
+
+  let deb = 0, cred = 0;
+  pendentes.forEach(d => {
+    if (d.contaDeb  === conta) deb  += d.valor;
+    if (d.contaCred === conta) cred += d.valor;
+  });
+
+  const saldoPend = naturezaConta === 'C' ? (cred - deb) : (deb - cred);
+  const diferenca = saldoPend - saldoContaSelecionada;
+
+  document.getElementById('resumoPendente').textContent   = fmtMoeda(saldoPend);
+  document.getElementById('qtdPendente').textContent      = `${pendentes.length} lançamentos`;
+  document.getElementById('resumoConciliado').textContent =
+    fmtMoeda(conciliados.reduce((s,d) => s + d.valor, 0));
+  document.getElementById('qtdConciliado').textContent    = `${conciliados.length} lançamentos`;
+
+  const diffElem = document.getElementById('resumoDiferenca');
+  diffElem.textContent = fmtMoeda(diferenca);
+  diffElem.style.color = Math.abs(diferenca) < 0.05
+    ? 'var(--verde-text)' : 'var(--vermelho-text)';
+
+  const infoBox = document.getElementById('selectionInfo');
+  if (selecionados.size > 0) {
+    let soma = 0;
+    selecionados.forEach(id => {
+      const item = dadosFiltrados.find(d => d.id === id);
+      if (item) soma += item.valor;
+    });
+    document.getElementById('selectionVal').textContent = fmtMoeda(soma);
+    infoBox.style.display = 'block';
+  } else {
+    infoBox.style.display = 'none';
+  }
+}
+
+// ── Exportar ─────────────────────────────────────────────────────
+function exportarNaoConciliados() {
+  try {
+    const conta     = document.getElementById('contaSelect').value;
+    const pendentes = dadosFiltrados.filter(d => !d.conciliado);
+    if (!pendentes.length) { alert('Não há lançamentos pendentes para exportar.'); return; }
+    if (!conta) { alert('Selecione uma conta antes de exportar.'); return; }
+
+    // ── ABA 1: Lançamentos ─────────────────────────────────────────
+    const dataExport = pendentes.map(p => {
+      const nums = p.numeros instanceof Set ? [...p.numeros] : (Array.isArray(p.numeros) ? p.numeros : []);
+      return {
+        'Conta Débito':        p.contaDeb  || '',
+        'Conta Crédito':       p.contaCred || '',
+        'Data':                p.data      || '',
+        'Filial':              p.filial    || '',
+        'Histórico':           p.historico || '',
+        'Competência':         p.competencia || '',
+        'Nºs Identificados':   nums.join(', '),
+        'Débito':              p.contaDeb  === conta ? (p.valor || 0) : '',
+        'Crédito':             p.contaCred === conta ? (p.valor || 0) : ''
+      };
+    });
+
+    const ws1 = XLSX.utils.json_to_sheet(dataExport);
+    ws1['!cols'] = [{wch:15},{wch:15},{wch:12},{wch:8},{wch:55},{wch:12},{wch:20},{wch:15},{wch:15}];
+
+    // ── ABA 2: Resumo por Nota/Duplicata ──────────────────────────
+    const mapaNotas = new Map();
+
+    pendentes.forEach(p => {
+      const nums   = p.numeros instanceof Set ? [...p.numeros] : (Array.isArray(p.numeros) ? p.numeros : []);
+      const chaves = nums.length > 0 ? nums : ['(sem número)'];
+      const deb    = p.contaDeb  === conta ? (p.valor || 0) : 0;
+      const cred   = p.contaCred === conta ? (p.valor || 0) : 0;
+
+      chaves.forEach(num => {
+        if (!mapaNotas.has(num)) {
+          mapaNotas.set(num, {
+            numero:      String(num),
+            historico:   (p.historico || '').substring(0, 80),
+            datas:       new Set(),
+            totalDeb:    0,
+            totalCred:   0,
+            lancamentos: 0
+          });
+        }
+        const nota = mapaNotas.get(num);
+        nota.totalDeb  += deb;
+        nota.totalCred += cred;
+        nota.lancamentos++;
+        if (p.data) nota.datas.add(p.data);
+      });
+    });
+
+    const credora = naturezaConta === 'C';
+    let totalGeralDeb = 0, totalGeralCred = 0, totalGeralSaldo = 0;
+    const resumoRows = [];
+
+    mapaNotas.forEach(nota => {
+      const saldo = credora
+        ? (nota.totalCred - nota.totalDeb)
+        : (nota.totalDeb  - nota.totalCred);
+      totalGeralDeb   += nota.totalDeb;
+      totalGeralCred  += nota.totalCred;
+      totalGeralSaldo += saldo;
+      resumoRows.push({
+        'Nº / Identificador': nota.numero,
+        'Histórico (resumo)': nota.historico,
+        'Datas':              [...nota.datas].join(', '),
+        'Qtd Lançamentos':    nota.lancamentos,
+        'Total Débito':       nota.totalDeb  > 0 ? nota.totalDeb  : '',
+        'Total Crédito':      nota.totalCred > 0 ? nota.totalCred : '',
+        'Saldo':              saldo,
+        'Situação':           saldo > 0.01  ? (credora ? 'A pagar' : 'A receber') :
+                              saldo < -0.01 ? 'Saldo negativo' : 'Zerado'
+      });
+    });
+
+    resumoRows.sort((a, b) => Math.abs(b['Saldo']) - Math.abs(a['Saldo']));
+    resumoRows.push({
+      'Nº / Identificador': 'TOTAL',
+      'Histórico (resumo)': '',
+      'Datas':              '',
+      'Qtd Lançamentos':    pendentes.length,
+      'Total Débito':       totalGeralDeb,
+      'Total Crédito':      totalGeralCred,
+      'Saldo':              totalGeralSaldo,
+      'Situação':           Math.abs(totalGeralSaldo) < 0.05 ? 'Zerado' :
+                            `Saldo ${credora ? (totalGeralSaldo>0?'C':'D') : (totalGeralSaldo>0?'D':'C')}`
+    });
+
+    const ws2 = XLSX.utils.json_to_sheet(resumoRows);
+    ws2['!cols'] = [{wch:20},{wch:50},{wch:25},{wch:12},{wch:15},{wch:15},{wch:15},{wch:20}];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws1, 'Lançamentos Pendentes');
+    XLSX.utils.book_append_sheet(wb, ws2, 'Resumo por Nota');
+
+    // ── ABA 3: Saldo Anterior (se houver) ─────────────────────────
+    const saldoAntLancs = dadosFiltrados.filter(d => d.ehSaldoAnt);
+    if (saldoAntLancs.length > 0) {
+      const refLabel      = document.getElementById('saldoAntRef').value || 'período anterior';
+      const valorSaldoAnt = document.getElementById('saldoAntValor').value || '';
+      const saldoAntRows  = [];
+
+      saldoAntRows.push({
+        'Data': 'Saldo Anterior: ' + refLabel,
+        'Seq': '', 'Conta Débito': '', 'Conta Crédito': '', 'Filial': '',
+        'Histórico': 'Valor: ' + valorSaldoAnt, 'Débito': '', 'Crédito': ''
+      });
+
+      let totalD = 0, totalC = 0;
+      saldoAntLancs.forEach(p => {
+        const deb  = p.contaDeb  === conta ? (p.valor || 0) : 0;
+        const cred = p.contaCred === conta ? (p.valor || 0) : 0;
+        totalD += deb; totalC += cred;
+        saldoAntRows.push({
+          'Data': p.data || '', 'Seq': p.seq || '',
+          'Conta Débito': p.contaDeb || '', 'Conta Crédito': p.contaCred || '',
+          'Filial': p.filial || '', 'Histórico': p.historico || '',
+          'Débito':  deb  > 0 ? deb  : '',
+          'Crédito': cred > 0 ? cred : ''
+        });
+      });
+
+      saldoAntRows.push({
+        'Data': 'TOTAL', 'Seq': '',
+        'Conta Débito': '', 'Conta Crédito': '',
+        'Filial': saldoAntLancs.length + ' lançamentos',
+        'Histórico': '',
+        'Débito':  totalD > 0 ? totalD : '',
+        'Crédito': totalC > 0 ? totalC : ''
+      });
+
+      const ws3 = XLSX.utils.json_to_sheet(saldoAntRows);
+      ws3['!cols'] = [{wch:14},{wch:10},{wch:12},{wch:12},{wch:10},{wch:60},{wch:15},{wch:15}];
+      const sheetName = ('Saldo Ant. ' + refLabel).substring(0, 31).replace(/[:\\\/\?\*\[\]]/g, '-');
+      XLSX.utils.book_append_sheet(wb, ws3, sheetName);
+    }
+
+    XLSX.writeFile(wb, `pendencias_${modoAtual}_${conta}.xlsx`);
+
+  } catch(err) {
+    alert('Erro ao exportar: ' + err.message + '\n\nAbra o console do navegador (F12) para mais detalhes.');
+    console.error('Erro exportarNaoConciliados:', err);
+  }
+}
+
+// ── Máscaras de entrada ──────────────────────────────────────────
+function mascaraValor(input) {
+  // Remove tudo que não é dígito
+  let digits = input.value.replace(/\D/g, '');
+  if (!digits) { input.value = ''; return; }
+  // Trata como centavos: últimos 2 dígitos = centavos
+  digits = digits.replace(/^0+/, '') || '0';
+  while (digits.length < 3) digits = '0' + digits;
+  const cents  = digits.slice(-2);
+  const reais  = digits.slice(0, -2);
+  // Formata milhar
+  const reaisFormatado = reais.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  input.value = reaisFormatado + ',' + cents;
+}
+
+function mascaraData(input) {
+  let v = input.value.replace(/\D/g, '');
+  if (v.length > 8) v = v.slice(0, 8);
+  if (v.length >= 5)      v = v.slice(0,2) + '/' + v.slice(2,4) + '/' + v.slice(4);
+  else if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2);
+  input.value = v;
+}
+
+function ddmmyyyyToYYYYMMDD(str) {
+  // Converte DD/MM/AAAA para YYYY-MM-DD (para comparação com converterData)
+  if (!str || str.length < 10) return null;
+  const p = str.split('/');
+  if (p.length !== 3 || p[2].length !== 4) return null;
+  return p[2] + p[1].padStart(2,'0') + p[0].padStart(2,'0'); // yyyymmdd
+}
+
+// ── Saldo Anterior ───────────────────────────────────────────────
+function conciliarPorSaldoAnterior() {
+  const conta    = document.getElementById('contaSelect').value;
+  const valorStr = document.getElementById('saldoAntValor').value;
+  const natureza = document.getElementById('saldoAntNatureza').value;
+  const ref      = document.getElementById('saldoAntRef').value || 'período anterior';
+  const ateDataStr = document.getElementById('saldoAntAteData').value; // DD/MM/AAAA
+  const resultado = document.getElementById('saldoAntResultado');
+  resultado.style.display = 'block';
+
+  const saldoAlvo = parseMoeda(valorStr);
+  if (!saldoAlvo || saldoAlvo <= 0) {
+    resultado.className = 'saldo-ant-resultado err';
+    resultado.textContent = '⚠ Informe um valor de saldo anterior válido.';
+    return;
+  }
+
+  const pendentes = dadosFiltrados.filter(d => !d.conciliado);
+  const debitos   = pendentes.filter(d => d.contaDeb  === conta);
+  const creditos  = pendentes.filter(d => d.contaCred === conta);
+  const somaD     = debitos.reduce((s,d)  => s + d.valor, 0);
+  const somaC     = creditos.reduce((s,d) => s + d.valor, 0);
+
+  // Filtra por "até data" se informado (agora em DD/MM/AAAA)
+  const ateDataYMD = ddmmyyyyToYYYYMMDD(ateDataStr); // yyyymmdd or null
+
+  const filtrarPorData = (lista) => {
+    if (!ateDataYMD) return lista;
+    return lista.filter(d => {
+      const dc = converterData(d.data); // retorna yyyymmdd
+      return !dc || dc <= ateDataYMD;
+    });
+  };
+
+  // Saldo final calculado = anterior ± movimento do período
+  const saldoFinal = natureza === 'C'
+    ? saldoAlvo + somaC - somaD
+    : saldoAlvo + somaD - somaC;
+  const saldoFinalNat = saldoFinal >= 0 ? natureza : (natureza==='C'?'D':'C');
+
+  // Débitos dentro do filtro de data (pagamentos que podem liquidar o saldo anterior)
+  const debitosDisponiveis = filtrarPorData(debitos).sort((a,b) =>
+    converterData(a.data).localeCompare(converterData(b.data)));
+
+  // Estratégia A: débitos mais antigos liquidam o saldo anterior
+  let saldoRestante = saldoAlvo;
+  const usados = [];
+  for (const d of debitosDisponiveis) {
+    if (saldoRestante <= 0.05) break;
+    if (d.valor <= saldoRestante + 0.05) {
+      usados.push(d);
+      saldoRestante -= d.valor;
+    }
+  }
+
+  if (Math.abs(saldoRestante) < 0.05 && usados.length > 0) {
+    usados.forEach(d => { d.conciliado = true; d.grupoId = `SALD-${ref}`; d.ehSaldoAnt = true; });
+
+    // Marcar etapa 2 como concluída
+    document.getElementById('etapa2Box').classList.add('etapa-concluida');
+    document.getElementById('etapa2Num').classList.add('etapa-num-done');
+    document.getElementById('etapa2Num').classList.remove('etapa-num-locked');
+
+    resultado.className = 'saldo-ant-resultado ok';
+    const pendFinal = dadosFiltrados.filter(d => !d.conciliado).length;
+    resultado.innerHTML =
+      `✓ <strong>${usados.length} pagamentos</strong> identificados como liquidação do Saldo Anterior de
+       ${fmtMoeda(saldoAlvo)} (${ref})${ateDataStr ? ' até '+ateDataStr : ''}.<br>
+       Saldo final calculado: <strong>${fmtMoeda(Math.abs(saldoFinal))} ${saldoFinalNat}</strong> &nbsp;|&nbsp;
+       <strong>${pendFinal} lançamentos</strong> permanecem pendentes (em vermelho) — são as NFs/duplicatas do período atual sem baixa.`;
+    renderTabela();
+    return;
+  }
+
+  // Estratégia B: tenta com créditos (conta devedora)
+  const creditosDisponiveis = filtrarPorData(creditos).sort((a,b) =>
+    converterData(a.data).localeCompare(converterData(b.data)));
+
+  saldoRestante = saldoAlvo;
+  const usadosC = [];
+  for (const c of creditosDisponiveis) {
+    if (saldoRestante <= 0.05) break;
+    if (c.valor <= saldoRestante + 0.05) { usadosC.push(c); saldoRestante -= c.valor; }
+  }
+
+  if (Math.abs(saldoRestante) < 0.05 && usadosC.length > 0) {
+    usadosC.forEach(d => { d.conciliado = true; d.grupoId = `SALD-${ref}`; d.ehSaldoAnt = true; });
+    resultado.className = 'saldo-ant-resultado ok';
+    resultado.innerHTML = `✓ <strong>${usadosC.length} lançamentos</strong> identificados como Saldo Anterior (${ref}). Saldo final: <strong>${fmtMoeda(Math.abs(saldoFinal))} ${saldoFinalNat}</strong>`;
+    renderTabela();
+    return;
+  }
+
+  // Não fechou — mostra diagnóstico detalhado
+  resultado.className = 'saldo-ant-resultado warn';
+  const dispQtd = debitosDisponiveis.length;
+  const dispSum = debitosDisponiveis.reduce((s,d) => s+d.valor, 0);
+  resultado.innerHTML =
+    `⚠ Não foi possível fechar automaticamente com ${fmtMoeda(saldoAlvo)} (${ref}).<br>
+     ${ateDataStr ? `Pagamentos disponíveis até ${ateDataStr}: <strong>${dispQtd} lançamentos = ${fmtMoeda(dispSum)}</strong><br>` : ''}
+     Saldo calculado (anterior ± período): <strong>${fmtMoeda(Math.abs(saldoFinal))} ${saldoFinalNat}</strong><br>
+     <span style="font-size:11px">Tente ajustar a data limite, ou concilie manualmente clicando nas linhas.</span>`;
+}
+
+
+function converterData(data) {
+  // Converte dd/mm/yyyy → yyyymmdd para ordenação
+  if (!data) return '';
+  const p = String(data).split('/');
+  if (p.length === 3) return p[2] + p[1] + p[0];
+  return String(data).replace(/\D/g,'');
+}
+
+function desfazerSaldoAnt() {
+  dadosFiltrados.forEach(d => {
+    if (d.ehSaldoAnt) { d.conciliado = false; d.grupoId = null; d.ehSaldoAnt = false; }
+  });
+  const resultado = document.getElementById('saldoAntResultado');
+  resultado.style.display = 'none';
+  renderTabela();
+}
+
+// ── Helpers ──────────────────────────────────────────────────────
+function parseMoeda(valor) {
+  if (valor === undefined || valor === null) return 0;
+  if (typeof valor === 'number') return valor;
+  let s = String(valor).replace(/[R$\s]/g, '');
+  if (s.includes(',') && s.includes('.')) s = s.replace(/\./g, '').replace(',', '.');
+  else if (s.includes(',')) s = s.replace(',', '.');
+  return parseFloat(s) || 0;
+}
+
+function fmtMoeda(valor) {
+  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+
+// ── Limpar e Reiniciar ───────────────────────────────────────
+function limparDados() {
+  if (!confirm('Limpar todos os dados e reiniciar do zero?')) return;
+  todosOsDados=[]; dadosFiltrados=[]; listaContasUnicas=[];
+  selecionados.clear(); saldoContaSelecionada=0; filtroVisibilidade='todos';
+  temSaldoAnt=false; sauRelatorio=[]; sauRelatorioValor=0;
+  document.getElementById('uploadStatus').textContent='';
+  document.getElementById('uploadStatus').className='upload-status';
+  document.getElementById('filtroContaBox').style.display='none';
+  document.getElementById('etapasWrapper').style.display='none';
+  document.getElementById('cardsResumo').style.display='none';
+  document.getElementById('filterBar').style.display='none';
+  document.getElementById('tabelaContainer').innerHTML='';
+  document.getElementById('etapa1Resultado').style.display='none';
+  document.getElementById('saldoAntResultado').style.display='none';
+  document.getElementById('saldoAlvo').value='0,00';
+  document.getElementById('saldoAntValor').value='';
+  const brl=document.getElementById('saldoAntBRL'); if(brl) brl.textContent='';
+  document.getElementById('contaSelect').innerHTML='<option value="">Aguardando arquivo...</option>';
+  document.getElementById('contaInput').value='';
+  bloquearEtapa2(true); setSAT(false);
+  const fi=document.getElementById('fileInput'); if(fi) fi.value='';
+}
+let temSaldoAnt=false, sauRelatorio=[], sauRelatorioValor=0;
+function setSAT(sim){
+  temSaldoAnt=sim;
+  const n=document.getElementById('satBtnNao'),s=document.getElementById('satBtnSim');
+  if(n) n.className='sat-btn-item'+(!sim?' nao-active':'');
+  if(s) s.className='sat-btn-item'+(sim?' sim-active':'');
+  const w=document.getElementById('saldoAntCamposWrap'); if(w) w.style.display=sim?'block':'none';
+  const b=document.getElementById('btnEtapa2Exec'); if(b) b.style.display=sim?'inline-flex':'none';
+  if(!sim){sauRelatorio=[];sauRelatorioValor=0;resetSAU();}
+}
+function resetSAU(){
+  const b=document.getElementById('sauBoxEl'); if(b) b.className='sau-box';
+  const t=document.getElementById('sauTitle'); if(t) t.textContent='Selecione o Excel de Pendências';
+  const v=document.getElementById('sauValid'); if(v){v.textContent='';v.className='sau-valid';}
+  const brl=document.getElementById('saldoAntBRL'); if(brl) brl.textContent='';
+  const i=document.getElementById('saldoAntValor'); if(i) i.value='';
+}
+function onSaldoAntInput(input){
+  mascaraValor(input);
+  const v=parseMoeda(input.value),el=document.getElementById('saldoAntBRL');
+  if(el) el.textContent=v>0?fmtMoeda(v):'';
+  validarSAU();
+}
+function lerRelatorioSAU(file){
+  if(!file) return;
+  const rd=new FileReader();
+  rd.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const sh=wb.SheetNames.find(s=>s.toLowerCase().includes('lan')||s.toLowerCase().includes('pend'))||wb.SheetNames[0];
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[sh],{header:1,raw:true});
+      if(rows.length<2){alert('Relatório vazio.');return;}
+      const hdr=rows[0].map(h=>String(h||'').trim());
+      const iD=hdr.findIndex(h=>h==='Ébédito'||h==='Debito'||h==='Débito');
+      const iC=hdr.findIndex(h=>h==='Crédito'||h==='Credito');
+      sauRelatorio=[];let tD=0,tC=0;
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i]; if(!r||r.every(c=>c==null||c===''))continue;
+        const d=parseFloat(r[iD]||0)||0,c=parseFloat(r[iC]||0)||0;
+        tD+=d;tC+=c;sauRelatorio.push({valor:d||c,debito:d,credito:c});
+      }
+      const shR=wb.SheetNames.find(s=>s.toLowerCase().includes('resum'))||null;
+      let sR=null;
+      if(shR){
+        const rr=XLSX.utils.sheet_to_json(wb.Sheets[shR],{header:1,raw:true});
+        const tr=rr.find(r=>r&&String(r[0]||'').toUpperCase()==='TOTAL');
+        if(tr) sR=Math.abs(parseFloat(tr[6])||0);
+      }
+      sauRelatorioValor=sR!==null?sR:Math.abs(tD-tC);
+      const bx=document.getElementById('sauBoxEl'); if(bx) bx.className='sau-box loaded';
+      const t=document.getElementById('sauTitle');
+      if(t) t.textContent='✔ '+file.name+' — '+sauRelatorio.length+' lançamentos | Saldo: '+fmtMoeda(sauRelatorioValor);
+      validarSAU();
+    }catch(err){alert('Erro: '+err.message);}
+  };
+  rd.readAsArrayBuffer(file);
+}
+function validarSAU(){
+  const el=document.getElementById('sauValid'); if(!el)return;
+  const vlr=parseMoeda(document.getElementById('saldoAntValor').value);
+  const bx=document.getElementById('sauBoxEl');
+  if(!sauRelatorio.length||!vlr){el.textContent='';el.className='sau-valid';return;}
+  const diff=Math.abs(vlr-sauRelatorioValor);
+  if(diff<0.02){
+    el.className='sau-valid ok';
+    el.textContent='✔ Saldo validado ('+fmtMoeda(sauRelatorioValor)+')';
+    if(bx) bx.className='sau-box loaded';
+  }else{
+    el.className='sau-valid err';
+    el.textContent='✘ Divergência: digitado '+fmtMoeda(vlr)+' | relatório '+fmtMoeda(sauRelatorioValor)+' | diferença '+fmtMoeda(diff);
+    if(bx) bx.className='sau-box err';
+  }
+}
+
+</script>
+</body>
+</html>
