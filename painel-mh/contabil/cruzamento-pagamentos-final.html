@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cruzamento de Pagamentos — MH Consultoria</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --cream:#f5f0e8;--cream2:#ede7d9;--cream3:#e4dccb;
+  --gold:#a8895a;--gold2:#c4a870;--gold3:#d4bc8e;
+  --brown:#6b4f2e;--brown2:#8a6640;
+  --bege:#a8895a;--bege-claro:#c4a870;
+  --bege-bg:rgba(168,137,90,0.10);--bege-border:rgba(168,137,90,0.25);
+  --bg:#f5f0e8;--bg2:#fff;--bg3:#ede7d9;
+  --border:rgba(168,137,90,0.15);--border2:rgba(168,137,90,0.28);
+  --text1:#2c1f0e;--text2:#5a4228;--text3:#9a7d5a;--text4:#c4aa88;
+  --verde-bg:rgba(74,124,89,0.08);--verde-text:#3d7a52;
+  --vermelho-bg:rgba(180,60,60,0.08);--vermelho-text:#a03030;
+  --amarelo-text:#8a6200;--azul-text:#1a4a8a;--azul-bg:rgba(26,74,138,0.08);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);min-height:100vh;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:12px;padding:.85rem 2rem;background:#fff;border-bottom:.5px solid var(--border2);position:sticky;top:0;z-index:100;}
+.btn-back{background:none;border:.5px solid var(--border2);color:var(--text3);padding:5px 12px;border-radius:2px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:all .2s;}
+.btn-back:hover{color:var(--text1);border-color:var(--bege);}
+.topbar-title{font-size:13px;color:var(--text2);font-weight:500;}
+.topbar-badge{margin-left:auto;font-size:9px;font-weight:500;background:var(--bege-bg);color:var(--bege-claro);border:.5px solid var(--bege-border);padding:3px 9px;border-radius:20px;letter-spacing:.06em;text-transform:uppercase;}
+
+/* MAIN */
+.main{max-width:1280px;margin:0 auto;padding:2rem;}
+.tool-header{margin-bottom:2rem;}
+.tool-label{font-size:10px;color:var(--text4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
+.tool-title{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;color:var(--text1);}
+.tool-title em{font-style:italic;color:var(--bege-claro);}
+.tool-desc{font-size:13px;color:var(--text3);margin-top:6px;line-height:1.6;}
+
+/* UPLOAD */
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;}
+.upload-box{border:.5px dashed var(--border2);border-radius:2px;padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg2);position:relative;overflow:hidden;}
+.upload-box:hover,.upload-box.drag{border-color:var(--bege);background:var(--bege-bg);}
+.upload-box.loaded{border-color:var(--verde-text);background:var(--verde-bg);}
+.upload-icon{font-size:28px;margin-bottom:.5rem;}
+.upload-title{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:4px;}
+.upload-hint{font-size:11px;color:var(--text4);}
+.upload-status{font-size:11px;color:var(--verde-text);margin-top:6px;font-weight:500;}
+.upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+
+/* MODO CRUZAMENTO */
+.modo-section{background:var(--bg2);border:.5px solid var(--border2);border-radius:2px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;}
+.modo-label{font-size:9px;color:var(--text4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.75rem;}
+.modo-opcoes{display:flex;gap:.75rem;flex-wrap:wrap;}
+.modo-card{flex:1;min-width:180px;border:.5px solid var(--border2);border-radius:2px;padding:.85rem 1rem;cursor:pointer;transition:all .2s;background:var(--cream);}
+.modo-card:hover{border-color:var(--gold);background:var(--bege-bg);}
+.modo-card.ativo{border-color:var(--gold);background:var(--bege-bg);}
+.modo-card.ativo .mc-num{background:var(--gold);color:#fff;}
+.mc-num{width:20px;height:20px;border-radius:50%;background:var(--border2);color:var(--text4);font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-bottom:.5rem;}
+.mc-title{font-size:12px;font-weight:500;color:var(--text1);margin-bottom:3px;}
+.mc-desc{font-size:10px;color:var(--text3);line-height:1.5;}
+
+/* BOTÕES */
+.btn-primary{background:var(--bege);color:#fff;border:none;border-radius:2px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-primary:hover{background:var(--bege-claro);}
+.btn-primary:disabled{background:var(--border2);cursor:not-allowed;}
+.btn-secondary{background:none;border:.5px solid var(--border2);color:var(--text2);border-radius:2px;padding:8px 16px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-secondary:hover{border-color:var(--bege);color:var(--text1);}
+.btn-export{background:var(--brown);color:#fff;border:none;border-radius:2px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-export:hover{background:var(--brown2);}
+
+.action-bar{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1.5rem;}
+
+/* CARDS RESUMO */
+.cards-resumo{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:1.5rem;}
+.card-resumo{background:var(--bg2);border:.5px solid var(--border);border-radius:2px;padding:1rem;}
+.card-resumo-label{font-size:10px;color:var(--text4);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
+.card-resumo-valor{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500;}
+.card-resumo-sub{font-size:10px;color:var(--text4);margin-top:3px;}
+.val-verde{color:var(--verde-text);}
+.val-vermelho{color:var(--vermelho-text);}
+.val-amarelo{color:var(--amarelo-text);}
+.val-gold{color:var(--gold);}
+
+/* TABELA */
+.tabela-section{background:var(--bg2);border:.5px solid var(--border2);border-radius:2px;overflow:hidden;margin-bottom:1.5rem;}
+.tabela-header{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.25rem;border-bottom:.5px solid var(--border);flex-wrap:wrap;gap:.5rem;}
+.tabela-titulo{font-size:13px;font-weight:500;color:var(--text1);}
+.tabela-count{font-size:11px;color:var(--text3);}
+.tabela-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-weight:500;padding:10px 12px;text-align:left;border-bottom:.5px solid var(--border2);background:var(--cream2);white-space:nowrap;}
+td{font-size:12px;color:var(--text2);padding:7px 12px;border-bottom:.5px solid rgba(184,153,106,0.06);}
+tr:hover td{background:rgba(184,153,106,0.07);}
+tr.ok td{color:var(--verde-text);}
+tr.ok{background:rgba(74,124,89,0.04);}
+tr.warn td{color:var(--amarelo-text);}
+tr.warn{background:rgba(140,98,0,0.04);}
+tr.err td{color:var(--vermelho-text);}
+tr.err{background:rgba(180,60,60,0.03);}
+.badge-status{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;}
+.badge-ok{background:var(--verde-bg);color:var(--verde-text);border:.5px solid rgba(74,124,89,0.2);}
+.badge-warn{background:rgba(140,98,0,0.08);color:var(--amarelo-text);border:.5px solid rgba(140,98,0,0.2);}
+.badge-err{background:var(--vermelho-bg);color:var(--vermelho-text);border:.5px solid rgba(180,60,60,0.2);}
+.mono{font-family:'DM Sans',sans-serif;font-size:11px;}
+.val-col{font-family:'Cormorant Garamond',serif;font-size:14px;}
+th.th-f{background:rgba(26,74,138,0.09);color:var(--azul-text);}
+th.th-status{background:var(--brown);color:#fff;text-align:center;white-space:nowrap;min-width:110px;}
+th.th-ctb{background:rgba(74,124,89,0.09);color:var(--verde-text);}
+td.td-status{text-align:center;background:rgba(107,79,46,0.04);border-left:2px solid var(--border2);border-right:2px solid var(--border2);}
+
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:.5px solid var(--border2);margin-bottom:0;}
+.tab-btn{padding:.7rem 1.25rem;font-size:12px;font-weight:500;color:var(--text3);border:none;background:none;cursor:pointer;font-family:'DM Sans',sans-serif;border-bottom:2px solid transparent;transition:all .2s;}
+.tab-btn.ativo{color:var(--gold);border-bottom-color:var(--gold);}
+.tab-btn:hover:not(.ativo){color:var(--text1);}
+.tab-content{display:none;}
+.tab-content.ativo{display:block;}
+
+/* FILTER */
+.filter-bar{display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end;background:var(--cream2);padding:.75rem 1rem;border-bottom:.5px solid var(--border);}
+.filter-group{display:flex;flex-direction:column;gap:3px;}
+.filter-lbl{font-size:9px;color:var(--text4);text-transform:uppercase;letter-spacing:.08em;}
+.filter-input{background:var(--bg2);border:.5px solid var(--border2);color:var(--text2);padding:5px 9px;border-radius:2px;font-size:12px;outline:none;font-family:'DM Sans',sans-serif;}
+.filter-input:focus{border-color:var(--gold);}
+.ftog-wrap{display:flex;}
+.ftog{background:none;border:.5px solid var(--border2);color:var(--text3);padding:5px 12px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.ftog:first-child{border-radius:2px 0 0 2px;}
+.ftog:last-child{border-radius:0 2px 2px 0;}
+.ftog:not(:first-child){border-left:none;}
+.ftog.active{background:var(--gold);color:#fff;border-color:var(--gold);}
+
+/* LOADING */
+#loading{display:none;position:fixed;inset:0;background:rgba(245,240,232,.85);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:1rem;}
+.loader-ring{width:44px;height:44px;border:3px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#loading p{font-size:13px;color:var(--text3);}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:3rem 2rem;color:var(--text4);}
+.empty-icon{font-size:36px;margin-bottom:.75rem;}
+.empty-msg{font-size:13px;}
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="loader-ring"></div><p>Processando cruzamento…</p></div>
+
+<div class="topbar">
+  <a href="index.html" class="btn-back">← Painel</a>
+  <span style="color:var(--text4)">|</span>
+  <span class="topbar-title">SETOR CONTÁBIL — CONTAS A PAGAR</span>
+  <span class="topbar-badge">MH CONTÁBIL</span>
+</div>
+
+<div class="main">
+  <div class="tool-header">
+    <div class="tool-label">CONTÁBIL — CRUZAMENTO DE PAGAMENTOS</div>
+    <h1 class="tool-title">Cruzamento de <em>Pagamentos × Duplicatas</em></h1>
+    <p class="tool-desc">Importe os lançamentos não identificados (Excel) e o relatório de duplicatas em aberto (CSV fiscal) para identificar quais pagamentos correspondem a notas fiscais pendentes.</p>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="upload-grid">
+    <div class="upload-box" id="box-xl" ondrop="dropFile(event,'xl')" ondragover="ev(event)" ondragleave="dragLeave('xl')">
+      <input type="file" accept=".xlsx,.xls" onchange="loadXL(this)">
+      <div class="upload-icon">📊</div>
+      <div class="upload-title">Lançamentos Contábeis</div>
+      <div class="upload-hint">Planilha Excel — Lançamentos Contábeis</div>
+      <div class="upload-status" id="status-xl"></div>
+    </div>
+    <div class="upload-box" id="box-csv" ondrop="dropFile(event,'csv')" ondragover="ev(event)" ondragleave="dragLeave('csv')">
+      <input type="file" accept=".xlsx,.xls" onchange="loadCSV(this)">
+      <div class="upload-icon">🗂️</div>
+      <div class="upload-title">Duplicatas a Pagar Pendentes</div>
+      <div class="upload-hint">Planilha Excel — Duplicatas em Aberto (Fiscal)</div>
+      <div class="upload-status" id="status-csv"></div>
+    </div>
+  </div>
+
+  <!-- MODO -->
+  <div class="modo-section">
+    <div class="modo-label">Modo de Cruzamento</div>
+    <div class="modo-opcoes">
+      <div class="modo-card ativo" id="modo-1" onclick="setModo(1)">
+        <div class="mc-num">1</div>
+        <div class="mc-title">Soma por Número de NF</div>
+        <div class="mc-desc">Agrupa todos os lançamentos da mesma NF, soma os valores e compara com o Saldo da duplicata no fiscal.</div>
+      </div>
+      <div class="modo-card" id="modo-2" onclick="setModo(2)">
+        <div class="mc-num">2</div>
+        <div class="mc-title">Apenas Número de NF</div>
+        <div class="mc-desc">Verifica se o número da NF extraído do histórico existe no relatório do fiscal, sem comparar valores.</div>
+      </div>
+      <div class="modo-card" id="modo-3" onclick="setModo(3)">
+        <div class="mc-num">3</div>
+        <div class="mc-title">Apenas Valor</div>
+        <div class="mc-desc">Cruza pelo valor do lançamento igual ao Saldo da duplicata, sem levar em conta o número da NF.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AÇÕES -->
+  <div class="action-bar">
+    <button class="btn-primary" id="btn-cruzar" onclick="executarCruzamento()" disabled>⇄ Executar Cruzamento</button>
+    <button class="btn-secondary" onclick="limpar()">Limpar</button>
+    <button class="btn-export" id="btn-export" style="display:none" onclick="exportarExcel()">↓ Exportar Planilha Excel</button>
+  </div>
+
+  <!-- RESULTADOS -->
+  <div id="resultado" style="display:none">
+    <!-- CARDS -->
+    <div class="cards-resumo" id="cards"></div>
+
+    <!-- TABS -->
+    <div class="tabela-section">
+      <div class="tabs" id="tabs-bar"></div>
+      <div id="tabs-content"></div>
+    </div>
+  </div>
+
+  <div id="empty-msg" style="display:none">
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-msg">Importe os dois arquivos e clique em "Executar Cruzamento".</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let xlData = null;  // Array de objetos do Excel
+let csvData = null; // Array de objetos do CSV
+let modoAtivo = 1;
+let resultados = {}; // {1: [], 2: [], 3: []} dependendo do modo
+let filtroAtivo = 'todos'; // todos|match|sem-match
+const TOL = 0.05;
+
+// ── DRAG & DROP ───────────────────────────────────────────────────────────────
+function ev(e){ e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('drag'); }
+function dragLeave(id){ document.getElementById('box-'+id).classList.remove('drag'); }
+function dropFile(e, tipo){
+  e.preventDefault();
+  document.getElementById('box-'+tipo).classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if(!file) return;
+  if(tipo==='xl') processXL(file);
+  else processCSV(file);
+}
+
+// ── LOAD EXCEL ─────────────────────────────────────────────────────────────────
+function loadXL(input){ if(input.files[0]) processXL(input.files[0]); }
+function processXL(file){
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
+      xlData = raw.map(r => {
+        const hist = r['Histórico'] || r['Historico'] || r['histórico'] || '';
+        const nf = extractNF(String(hist));
+        const val = parseFloat(r['Valor']) || 0;
+        const dt = r['Data'];
+        let dtStr = '';
+        if(dt instanceof Date) dtStr = dt.toLocaleDateString('pt-BR');
+        else if(dt) dtStr = String(dt);
+        return {
+          data: dtStr,
+          historico: String(hist),
+          nf: nf,
+          valor: val,
+          filial: String(r['Filial'] || r['filial'] || ''),
+          debito: String(r['Débito'] || r['Debito'] || ''),
+          credito: String(r['Crédito'] || r['Credito'] || ''),
+          transacao: String(r['Transação'] || r['Transacao'] || ''),
+        };
+      });
+      document.getElementById('status-xl').textContent = `✔ ${xlData.length} lançamentos carregados`;
+      document.getElementById('box-xl').classList.add('loaded');
+      checkReady();
+    } catch(err) {
+      document.getElementById('status-xl').textContent = '✗ Erro ao ler arquivo';
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── LOAD FISCAL (XLSX) ────────────────────────────────────────────────────────
+function loadCSV(input){ if(input.files[0]) processCSV(input.files[0]); }
+function processCSV(file){
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
+      csvData = raw.map(r => {
+        const nfRaw = String(r['Número Duplicata'] || r['Numero Duplicata'] || '').trim();
+        return {
+          nf:        nfRaw,
+          serie:     String(r['Série'] || r['Serie'] || '').trim(),
+          fornecedor:String(r['Fornecedor'] || '').trim(),
+          codForn:   String(r['Cliente/Fornecedor'] || '').trim(),
+          dataVcto:  String(r['Data Entrada/Saída'] || r['Data Entrada/Saida'] || '').trim(),
+          filialCSV: String(r['Nome Estabelecimento'] || '').trim(),
+          estab:     String(r['Estabelecimento'] || '').trim(),
+          parcela:   Number(r['Parcela'] || 1),
+          vlrTotal:  Number(r['Valor'] || 0),
+          vlrPago:   Number(r['Valor Pago'] || 0),
+          saldo:     Number(r['Valor Pagar'] || 0),
+          documento: nfRaw + (r['Série'] && String(r['Série']).trim() ? '/'+String(r['Série']).trim() : ''),
+        };
+      }).filter(r => r.nf && r.saldo > 0);
+      document.getElementById('status-csv').textContent = `✔ ${csvData.length} duplicatas carregadas`;
+      document.getElementById('box-csv').classList.add('loaded');
+      checkReady();
+    } catch(err) {
+      document.getElementById('status-csv').textContent = '✗ Erro ao ler planilha';
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseBR(s){
+  if(!s) return 0;
+  const clean = String(s).replace(/"/g,'').trim().replace(/\./g,'').replace(',','.');
+  return parseFloat(clean) || 0;
+}
+
+
+function extractNF(texto){
+  const m = texto.match(/NF\s+(\d+)/i);
+  return m ? m[1] : null;
+}
+
+// ── CONTROLES ─────────────────────────────────────────────────────────────────
+function checkReady(){
+  const ok = xlData && csvData;
+  document.getElementById('btn-cruzar').disabled = !ok;
+  if(ok) document.getElementById('empty-msg').style.display='none';
+  else { document.getElementById('empty-msg').style.display='block'; document.getElementById('resultado').style.display='none'; }
+}
+
+function setModo(n){
+  modoAtivo = n;
+  [1,2,3].forEach(i => document.getElementById('modo-'+i).classList.toggle('ativo', i===n));
+}
+
+function limpar(){
+  xlData = null; csvData = null; resultados = {};
+  document.getElementById('status-xl').textContent='';
+  document.getElementById('status-csv').textContent='';
+  document.getElementById('box-xl').classList.remove('loaded');
+  document.getElementById('box-csv').classList.remove('loaded');
+  document.getElementById('resultado').style.display='none';
+  document.getElementById('btn-export').style.display='none';
+  document.getElementById('btn-cruzar').disabled=true;
+  document.getElementById('empty-msg').style.display='block';
+}
+
+// ── CRUZAMENTO ────────────────────────────────────────────────────────────────
+function executarCruzamento(){
+  document.getElementById('loading').style.display='flex';
+  setTimeout(()=>{
+    try{
+      if(modoAtivo===1) resultados = cruzaModo1();
+      else if(modoAtivo===2) resultados = cruzaModo2();
+      else resultados = cruzaModo3();
+      renderResultados();
+      document.getElementById('resultado').style.display='block';
+      document.getElementById('btn-export').style.display='inline-block';
+    }catch(e){ alert('Erro no cruzamento: '+e.message); console.error(e); }
+    finally{ document.getElementById('loading').style.display='none'; }
+  },100);
+}
+
+// MODO 1 — Soma por NF
+function cruzaModo1(){
+  // Agrupa Excel por NF
+  const grupos = {};
+  xlData.forEach(r => {
+    const nf = r.nf;
+    if(!nf) return;
+    if(!grupos[nf]) grupos[nf] = {nf, lancamentos:[], valorTotal:0, datas:new Set(), filiais:new Set()};
+    grupos[nf].lancamentos.push(r);
+    grupos[nf].valorTotal += r.valor;
+    grupos[nf].datas.add(r.data);
+    grupos[nf].filiais.add(r.filial);
+  });
+
+  // Mapa CSV por NF
+  const mapCSV = {};
+  csvData.forEach(c => { if(!mapCSV[c.nf]) mapCSV[c.nf]=[]; mapCSV[c.nf].push(c); });
+
+  const linhas = [];
+  Object.values(grupos).forEach(g => {
+    const matches = mapCSV[g.nf] || [];
+    if(matches.length===0){
+      linhas.push({
+        nf: g.nf, qtdLanc: g.lancamentos.length,
+        valorTotal: round2(g.valorTotal), saldoCSV: null,
+        diferenca: null, status: 'SEM MATCH NF',
+        fornecedor:'', documento:'', dataVcto:'', filialCSV:'',
+        datas:[...g.datas].join(', '), filiais:[...g.filiais].join(', '),
+        historicos: g.lancamentos.map(l=>l.historico).join(' | '),
+        lancamentos: g.lancamentos,
+      });
+    } else {
+      matches.forEach(m => {
+        const dif = round2(g.valorTotal - m.saldo);
+        linhas.push({
+          nf: g.nf, qtdLanc: g.lancamentos.length,
+          valorTotal: round2(g.valorTotal), saldoCSV: m.saldo,
+          diferenca: dif,
+          status: Math.abs(dif)<=TOL ? 'CONCILIADO' : 'DIVERGÊNCIA',
+          fornecedor: m.fornecedor, documento: m.documento,
+          dataVcto: m.dataVcto, filialCSV: m.filialCSV,
+          datas:[...g.datas].join(', '), filiais:[...g.filiais].join(', '),
+          historicos: g.lancamentos.map(l=>l.historico).join(' | '),
+          lancamentos: g.lancamentos,
+        });
+      });
+    }
+  });
+
+  // Lançamentos sem NF
+  xlData.filter(r=>!r.nf).forEach(r=>{
+    linhas.push({
+      nf:'—', qtdLanc:1, valorTotal:r.valor, saldoCSV:null, diferenca:null,
+      status:'SEM NF NO HISTÓRICO', fornecedor:'', documento:'', dataVcto:'',
+      filialCSV:'', datas:r.data, filiais:r.filial, historicos:r.historico, lancamentos:[r]
+    });
+  });
+
+  return linhas;
+}
+
+// MODO 2 — Só número de NF (agrupa lançamentos pela NF, mostra 1 linha por NF encontrada)
+function cruzaModo2(){
+  // Mapeia NF → entradas CSV (pode ter mais de uma se mesmo nº para fornecedores distintos)
+  const mapCSV = {};
+  csvData.forEach(c=>{
+    if(!mapCSV[c.nf]) mapCSV[c.nf] = [];
+    mapCSV[c.nf].push(c);
+  });
+
+  // Agrupa lançamentos Excel pelo número de NF (igual ao modo 1)
+  const grupos = {};
+  xlData.forEach(r => {
+    if(!r.nf) return;
+    if(!grupos[r.nf]) grupos[r.nf] = {nf:r.nf, lancamentos:[], datas:new Set(), filiais:new Set(), valorTotal:0};
+    grupos[r.nf].lancamentos.push(r);
+    grupos[r.nf].valorTotal += r.valor;
+    grupos[r.nf].datas.add(r.data);
+    grupos[r.nf].filiais.add(r.filial);
+  });
+
+  // Palavras-chave do histórico para distinguir fornecedor quando NF ambígua
+  function tokensForn(historico){
+    if(!historico) return [];
+    const m = historico.match(/NF\s+\d+[\s\-–]+(.*)/i);
+    const trecho = m ? m[1] : historico;
+    return trecho.toUpperCase().replace(/[^A-Z0-9\s]/g,' ').split(/\s+/)
+      .filter(w => w.length >= 4 &&
+        !['PGTO','PAGO','NOTA','FISCAL','LTDA','EIRELI','ENTRADA','SAIDA','SALDO','ANTERIOR','PERIODO','POSSIVELMENTE'].includes(w));
+  }
+  function nomeSimilar(historico, fornCSV){
+    const toks = tokensForn(historico);
+    if(!toks.length) return true;
+    const f = fornCSV.toUpperCase().replace(/[^A-Z0-9\s]/g,' ');
+    return toks.some(t => f.includes(t));
+  }
+
+  const resultado = [];
+  Object.values(grupos).forEach(g => {
+    const matches = mapCSV[g.nf];
+    if(!matches) return; // NF não existe no fiscal — descarta
+
+    // Histórico representativo do grupo (primeiro lançamento)
+    const histRep = g.lancamentos[0].historico;
+
+    let csvMatch;
+    if(matches.length === 1){
+      csvMatch = matches[0];
+    } else {
+      // Mesma NF para fornecedores diferentes: filtra pelo nome
+      const filtrados = matches.filter(m => nomeSimilar(histRep, m.fornecedor));
+      csvMatch = filtrados.length > 0 ? filtrados[0] : matches[0];
+    }
+
+    const ambiguo = matches.length > 1 &&
+      !matches.filter(m => nomeSimilar(histRep, m.fornecedor)).length;
+
+    resultado.push({
+      nf: g.nf,
+      qtdLanc: g.lancamentos.length,
+      valorTotal: round2(g.valorTotal),
+      datas: [...g.datas].join(', '),
+      filiais: [...g.filiais].join(', '),
+      historicos: g.lancamentos.map(l=>l.historico).join(' | '),
+      status: ambiguo ? 'NF ENCONTRADA (FORN. AMBÍGUO)' : 'NF ENCONTRADA',
+      matchCSV: csvMatch,
+    });
+  });
+  return resultado;
+}
+
+// MODO 3 — Só valor
+function cruzaModo3(){
+  const mapCSVVal = {};
+  csvData.forEach(c=>{
+    const k = round2(c.saldo);
+    if(!mapCSVVal[k]) mapCSVVal[k]=[];
+    mapCSVVal[k].push(c);
+  });
+  return xlData.map(r=>{
+    const k = round2(r.valor);
+    const matches = mapCSVVal[k]||[];
+    if(matches.length===0) return {...r, status:'SEM MATCH VALOR', matchCSV:null};
+    // pegar o primeiro (pode haver múltiplos com mesmo valor)
+    return {...r, status:'VALOR ENCONTRADO', matchCSV:matches[0]};
+  });
+}
+
+function round2(n){ return Math.round((n||0)*100)/100; }
+
+// ── RENDER ─────────────────────────────────────────────────────────────────────
+function renderResultados(){
+  renderCards();
+  renderTabs();
+}
+
+function renderCards(){
+  const data = Array.isArray(resultados) ? resultados : resultados;
+  const arr = Array.isArray(data) ? data : [];
+
+  let conciliados=0, diverge=0, semMatch=0, semNF=0, labels2ambig=0;
+  if(modoAtivo===1){
+    arr.forEach(r=>{
+      if(r.status==='CONCILIADO') conciliados++;
+      else if(r.status==='DIVERGÊNCIA') diverge++;
+      else if(r.status==='SEM NF NO HISTÓRICO') semNF++;
+      else semMatch++;
+    });
+  } else if(modoAtivo===2){
+    let ambiguos=0;
+    arr.forEach(r=>{
+      if(r.status==='NF ENCONTRADA') conciliados++;
+      else if(r.status.includes('AMBÍGUO')) ambiguos++;
+    });
+    if(ambiguos>0) labels2ambig = ambiguos;
+  } else {
+    arr.forEach(r=>{
+      if(r.status==='VALOR ENCONTRADO') conciliados++;
+      else semMatch++;
+    });
+  }
+
+  const total = arr.length;
+  const vlrMatch = arr.filter(r=>r.status==='CONCILIADO'||r.status==='NF ENCONTRADA'||r.status==='VALOR ENCONTRADO')
+    .reduce((s,r)=>s+(r.valor||r.valorTotal||0),0);
+
+  const labels = modoAtivo===1
+    ? [{l:'Grupos de NF',v:total,cls:'val-gold'},{l:'Conciliados',v:conciliados,cls:'val-verde'},{l:'Com Divergência',v:diverge,cls:'val-amarelo'},{l:'Sem Match',v:semMatch,cls:'val-vermelho'},{l:'Sem NF no Hist.',v:semNF,cls:'val-amarelo'},{l:'Valor Conciliado',v:'R$ '+fmtBR(vlrMatch),cls:'val-verde'}]
+    : modoAtivo===2
+    ? [{l:'Lançamentos Cruzados',v:total,cls:'val-gold'},{l:'NF Encontrada',v:conciliados,cls:'val-verde'},{l:'Forn. Ambíguo',v:(typeof labels2ambig!=='undefined'?labels2ambig:0),cls:'val-amarelo'}]
+    : [{l:'Lançamentos',v:total,cls:'val-gold'},{l:'Valor Encontrado',v:conciliados,cls:'val-verde'},{l:'Sem Match Valor',v:semMatch,cls:'val-vermelho'},{l:'Valor Cruzado',v:'R$ '+fmtBR(vlrMatch),cls:'val-verde'}];
+
+  document.getElementById('cards').innerHTML = labels.map(c=>`
+    <div class="card-resumo">
+      <div class="card-resumo-label">${c.l}</div>
+      <div class="card-resumo-valor ${c.cls}">${c.v}</div>
+    </div>`).join('');
+}
+
+function renderTabs(){
+  const arr = Array.isArray(resultados) ? resultados : [];
+  const tabsBar = document.getElementById('tabs-bar');
+  const tabsContent = document.getElementById('tabs-content');
+
+  if(modoAtivo===1){
+    const conciliados = arr.filter(r=>r.status==='CONCILIADO');
+    const diverge     = arr.filter(r=>r.status==='DIVERGÊNCIA');
+    const semMatch    = arr.filter(r=>r.status==='SEM MATCH NF');
+    const semNF       = arr.filter(r=>r.status==='SEM NF NO HISTÓRICO');
+
+    tabsBar.innerHTML = `
+      <button class="tab-btn ativo" onclick="switchTab(0,this)">Todos (${arr.length})</button>
+      <button class="tab-btn" onclick="switchTab(1,this)">✔ Conciliados (${conciliados.length})</button>
+      <button class="tab-btn" onclick="switchTab(2,this)">⚠ Divergência (${diverge.length})</button>
+      <button class="tab-btn" onclick="switchTab(3,this)">✗ Sem Match (${semMatch.length})</button>
+      <button class="tab-btn" onclick="switchTab(4,this)">Sem NF (${semNF.length})</button>`;
+
+    const sets = [arr, conciliados, diverge, semMatch, semNF];
+    tabsContent.innerHTML = sets.map((s,i)=>`
+      <div class="tab-content ${i===0?'ativo':''}" id="tab-${i}">
+        ${renderTableModo1(s)}
+      </div>`).join('');
+  } else if(modoAtivo===2){
+    tabsBar.innerHTML = `
+      <button class="tab-btn ativo" onclick="switchTab(0,this)">✔ NF Encontrada (${arr.length})</button>`;
+    tabsContent.innerHTML = `<div class="tab-content ativo" id="tab-0">${renderTableModo2(arr)}</div>`;
+  } else {
+    const found = arr.filter(r=>r.status==='VALOR ENCONTRADO');
+    const sem   = arr.filter(r=>r.status==='SEM MATCH VALOR');
+    tabsBar.innerHTML = `
+      <button class="tab-btn ativo" onclick="switchTab(0,this)">Todos (${arr.length})</button>
+      <button class="tab-btn" onclick="switchTab(1,this)">✔ Valor Encontrado (${found.length})</button>
+      <button class="tab-btn" onclick="switchTab(2,this)">✗ Sem Match (${sem.length})</button>`;
+    const sets=[arr,found,sem];
+    tabsContent.innerHTML=sets.map((s,i)=>`
+      <div class="tab-content ${i===0?'ativo':''}" id="tab-${i}">${renderTableModo3(s)}</div>`).join('');
+  }
+}
+
+function switchTab(idx, btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('ativo'));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  document.getElementById('tab-'+idx).classList.add('ativo');
+}
+
+function renderTableModo1(rows){
+  if(!rows.length) return `<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-msg">Nenhum item nesta categoria.</div></div>`;
+  return `<div class="tabela-wrap"><table>
+    <thead><tr>
+      <th class="th-f">NF-F</th>
+      <th class="th-f">Fornecedor-F</th>
+      <th class="th-f">Documento-F</th>
+      <th class="th-f">Vcto-F</th>
+      <th class="th-f">Saldo-F</th>
+      <th class="th-status">◀ STATUS ▶</th>
+      <th class="th-ctb">Data-CTB</th>
+      <th class="th-ctb" style="min-width:260px">Histórico-CTB</th>
+      <th class="th-ctb">Valor Total-CTB</th>
+      <th class="th-ctb">Filial-CTB</th>
+      <th class="th-ctb">Qtd Lanç.</th>
+      <th class="th-ctb">Diferença</th>
+    </tr></thead>
+    <tbody>
+    ${rows.map(r=>{
+      const cls = r.status==='CONCILIADO'?'ok':r.status==='DIVERGÊNCIA'?'warn':'err';
+      const badge = r.status==='CONCILIADO'
+        ?`<span class="badge-status badge-ok">Conciliado</span>`
+        :r.status==='DIVERGÊNCIA'
+        ?`<span class="badge-status badge-warn">Divergência</span>`
+        :`<span class="badge-status badge-err">${r.status}</span>`;
+      return `<tr class="${cls}">
+        <td class="mono">${esc(r.nf)||'—'}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.fornecedor)}">${esc(r.fornecedor)||'—'}</td>
+        <td class="mono">${esc(r.documento)||'—'}</td>
+        <td>${esc(r.dataVcto)||'—'}</td>
+        <td class="val-col">${r.saldoCSV!=null?'R$ '+fmtBR(r.saldoCSV):'—'}</td>
+        <td class="td-status">${badge}</td>
+        <td>${esc(r.datas)||'—'}</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--text3)" title="${esc(r.historicos)}">${esc(r.historicos)||'—'}</td>
+        <td class="val-col">R$ ${fmtBR(r.valorTotal)}</td>
+        <td>${esc(r.filiais)||'—'}</td>
+        <td style="text-align:center">${r.qtdLanc}</td>
+        <td class="val-col">${r.diferenca!=null?'R$ '+fmtBR(r.diferenca):'—'}</td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div>`;
+}
+
+function renderTableModo2(rows){
+  if(!rows.length) return `<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-msg">Nenhum item nesta categoria.</div></div>`;
+  return `<div class="tabela-wrap"><table>
+    <thead><tr>
+      <th class="th-f">NF-F</th>
+      <th class="th-f">Fornecedor-F</th>
+      <th class="th-f">Documento-F</th>
+      <th class="th-f">Vcto-F</th>
+      <th class="th-f">Saldo-F</th>
+      <th class="th-status">◀ STATUS ▶</th>
+      <th class="th-ctb">Data-CTB</th>
+      <th class="th-ctb" style="min-width:260px">Histórico-CTB</th>
+      <th class="th-ctb">Valor-CTB</th>
+      <th class="th-ctb">Filial-CTB</th>
+    </tr></thead>
+    <tbody>
+    ${rows.map(r=>{
+      const m = r.matchCSV;
+      const cls = r.status==='NF ENCONTRADA'?'ok':r.status.includes('AMBÍGUO')?'warn':'err';
+      const badge = r.status==='NF ENCONTRADA'
+        ?`<span class="badge-status badge-ok">NF Encontrada</span>`
+        :r.status.includes('AMBÍGUO')
+        ?`<span class="badge-status badge-warn">Forn. Ambíguo</span>`
+        :`<span class="badge-status badge-err">Sem Match</span>`;
+      return `<tr class="${cls}">
+        <td class="mono">${esc(r.nf)||'—'}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m?esc(m.fornecedor):''}">${m?esc(m.fornecedor):'—'}</td>
+        <td class="mono">${m?esc(m.documento):'—'}</td>
+        <td>${m?esc(m.dataVcto):'—'}</td>
+        <td class="val-col">${m?'R$ '+fmtBR(m.saldo):'—'}</td>
+        <td class="td-status">${badge}</td>
+        <td>${esc(r.datas)||'—'}</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--text3)" title="${esc(r.historicos)}">${esc(r.historicos)||'—'}</td>
+        <td class="val-col">R$ ${fmtBR(r.valorTotal||r.valor||0)}</td>
+        <td>${esc(r.filiais||r.filial)||'—'}</td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div>`;
+}
+
+function renderTableModo3(rows){
+  if(!rows.length) return `<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-msg">Nenhum item nesta categoria.</div></div>`;
+  return `<div class="tabela-wrap"><table>
+    <thead><tr>
+      <th class="th-f">NF-F</th>
+      <th class="th-f">Fornecedor-F</th>
+      <th class="th-f">Documento-F</th>
+      <th class="th-f">Vcto-F</th>
+      <th class="th-f">Saldo-F</th>
+      <th class="th-status">◀ STATUS ▶</th>
+      <th class="th-ctb">Data-CTB</th>
+      <th class="th-ctb" style="min-width:260px">Histórico-CTB</th>
+      <th class="th-ctb">Valor-CTB</th>
+      <th class="th-ctb">Filial-CTB</th>
+      <th class="th-ctb">NF-CTB</th>
+    </tr></thead>
+    <tbody>
+    ${rows.map(r=>{
+      const m = r.matchCSV;
+      const cls = r.status==='VALOR ENCONTRADO'?'ok':'err';
+      const badge = r.status==='VALOR ENCONTRADO'
+        ?`<span class="badge-status badge-ok">Valor Encontrado</span>`
+        :`<span class="badge-status badge-err">Sem Match</span>`;
+      return `<tr class="${cls}">
+        <td class="mono">${m?esc(m.nf):'—'}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m?esc(m.fornecedor):''}">${m?esc(m.fornecedor):'—'}</td>
+        <td class="mono">${m?esc(m.documento):'—'}</td>
+        <td>${m?esc(m.dataVcto):'—'}</td>
+        <td class="val-col">${m?'R$ '+fmtBR(m.saldo):'—'}</td>
+        <td class="td-status">${badge}</td>
+        <td>${esc(r.data)||'—'}</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--text3)" title="${esc(r.historico)}">${esc(r.historico)||'—'}</td>
+        <td class="val-col">R$ ${fmtBR(r.valor)}</td>
+        <td>${esc(r.filial)||'—'}</td>
+        <td class="mono">${esc(r.nf)||'—'}</td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div>`;
+}
+
+// ── EXPORTAR EXCEL — gera apenas a aba do modo ativo ──────────────────────────
+function exportarExcel(){
+  const wb = XLSX.utils.book_new();
+  const arr = Array.isArray(resultados) ? resultados : [];
+
+  if(modoAtivo === 1){
+    // Soma por NF × Saldo Fiscal — só conciliados (e divergências como aviso)
+    const header = ['NF-F','Fornecedor-F','Documento-F','Vcto-F','Saldo-F',
+                    'STATUS',
+                    'Data-CTB','Histórico-CTB','Valor Total-CTB','Filial-CTB','Qtd Lanç.','Diferença'];
+    const wsRows = [header];
+    [...arr.filter(r=>r.status==='CONCILIADO'), ...arr.filter(r=>r.status==='DIVERGÊNCIA')]
+      .forEach(r=>{
+        wsRows.push([
+          r.nf||'', r.fornecedor||'', r.documento||'', r.dataVcto||'', r.saldoCSV??'',
+          r.status,
+          r.datas||'', r.historicos||'', r.valorTotal, r.filiais||'', r.qtdLanc, r.diferenca??''
+        ]);
+      });
+    const ws = XLSX.utils.aoa_to_sheet(wsRows);
+    ws['!cols'] = [12,40,18,12,18,18,12,60,18,25,10,14].map(w=>({wch:w}));
+    XLSX.utils.book_append_sheet(wb, ws, 'Soma NF × Saldo Fiscal');
+
+  } else if(modoAtivo === 2){
+    // Só número de NF — cada NF agrupada, 1 linha por NF encontrada
+    const header = ['NF-F','Fornecedor-F','Documento-F','Vcto-F','Saldo-F',
+                    'STATUS',
+                    'Datas-CTB','Históricos-CTB','Valor Total-CTB','Filiais-CTB','Qtd Lanç.'];
+    const wsRows = [header];
+    arr.forEach(r=>{
+      const m = r.matchCSV;
+      wsRows.push([
+        m?m.nf:'', m?m.fornecedor:'', m?m.documento:'', m?m.dataVcto:'', m?m.saldo:'',
+        r.status,
+        r.datas||'', r.historicos||'', r.valorTotal||0, r.filiais||'', r.qtdLanc||1
+      ]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(wsRows);
+    ws['!cols'] = [12,40,18,12,18,22,20,60,18,25,10].map(w=>({wch:w}));
+    XLSX.utils.book_append_sheet(wb, ws, 'Cruzamento por NF');
+
+  } else {
+    // Só valor
+    const header = ['NF-F','Fornecedor-F','Documento-F','Vcto-F','Saldo-F',
+                    'STATUS',
+                    'Data-CTB','Histórico-CTB','Valor-CTB','Filial-CTB','NF-CTB'];
+    const wsRows = [header];
+    arr.filter(r=>r.status==='VALOR ENCONTRADO').forEach(r=>{
+      const m = r.matchCSV;
+      wsRows.push([
+        m?m.nf:'', m?m.fornecedor:'', m?m.documento:'', m?m.dataVcto:'', m?m.saldo:'',
+        r.status,
+        r.data||'', r.historico||'', r.valor, r.filial||'', r.nf||''
+      ]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(wsRows);
+    ws['!cols'] = [12,40,18,12,18,18,12,60,18,25,12].map(w=>({wch:w}));
+    XLSX.utils.book_append_sheet(wb, ws, 'Cruzamento por Valor');
+  }
+
+  const nomes = {1:'Soma_NF', 2:'Por_Numero_NF', 3:'Por_Valor'};
+  XLSX.writeFile(wb, `Cruzamento_${nomes[modoAtivo]}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
+}
+
+// ── UTILS ──────────────────────────────────────────────────────────────────────
+function fmtBR(n){
+  if(n==null) return '—';
+  return Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function esc(s){
+  if(!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Init
+document.getElementById('empty-msg').style.display='block';
+</script>
+</body>
+</html>
