@@ -499,7 +499,7 @@ body {
         📂 Fiscal <span class="tab-count" id="cnt-fiscal">1</span>
       </button>
       <button class="tab-btn" onclick="switchTab('contabil', this)">
-        📒 Contábil <span class="tab-count" id="cnt-contabil">2</span>
+        📒 Contábil <span class="tab-count" id="cnt-contabil">3</span>
       </button>
       <button class="tab-btn" onclick="switchTab('rh', this)">
         👥 RH <span class="tab-count" id="cnt-rh">0</span>
@@ -566,7 +566,21 @@ body {
           </div>
         </a>
 
-                <div class="add-card" onclick="alert('Me diga qual cruzamento contábil você quer criar!')">
+                <a class="tool-card" href="cruzamento-pagamentos.html">
+          <div class="card-stripe stripe-brown"></div>
+          <div class="card-head">
+            <div class="card-icon icon-brown">💳</div>
+            <span class="badge badge-new">Novo</span>
+          </div>
+          <div class="card-title">Pagamentos × Duplicatas</div>
+          <div class="card-desc">Cruza pagamentos não identificados da contabilidade com duplicatas em aberto do fiscal por NF ou valor</div>
+          <div class="card-foot">
+            <span class="card-meta">cruzamento-pagamentos.html</span>
+            <span class="card-arrow">→</span>
+          </div>
+        </a>
+
+        <div class="add-card" onclick="alert('Me diga qual cruzamento contábil você quer criar!')">
           <div class="add-circle">+</div>
           <div class="add-label">Nova ferramenta contábil</div>
         </div>
