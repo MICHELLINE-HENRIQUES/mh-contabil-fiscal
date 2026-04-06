@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cruzamento de DANFES × Planilha — MH Consultoria</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --cream:        #f5f0e8;
+  --cream2:       #ede7d9;
+  --cream3:       #e4dccb;
+  --gold:         #a8895a;
+  --gold2:        #c4a870;
+  --gold3:        #d4bc8e;
+  --brown:        #6b4f2e;
+  --brown2:       #8a6640;
+  --bege:         #a8895a;
+  --bege-claro:   #c4a870;
+  --bege-bg:      rgba(168,137,90,0.10);
+  --bege-border:  rgba(168,137,90,0.25);
+  --bg:           #f5f0e8;
+  --bg2:          #fff;
+  --bg3:          #ede7d9;
+  --border:       rgba(168,137,90,0.15);
+  --border2:      rgba(168,137,90,0.28);
+  --text1:        #2c1f0e;
+  --text2:        #5a4228;
+  --text3:        #9a7d5a;
+  --text4:        #c4aa88;
+  --verde-bg:     rgba(74,124,89,0.08);
+  --verde-text:   #3d7a52;
+  --vermelho-bg:  rgba(180,60,60,0.08);
+  --vermelho-text:#a03030;
+  --amarelo-text: #8a6200;
+  --azul-text:    #1a4a8a;
+  --azul-bg:      rgba(26,74,138,0.08);
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text1); min-height: 100vh; }
+
+/* ── Topbar ── */
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0.85rem 2rem; background: #fff;
+  border-bottom: 0.5px solid var(--border2); position: sticky; top: 0; z-index: 10;
+}
+.btn-back {
+  background: none; border: 0.5px solid var(--border2); color: var(--text3);
+  padding: 5px 12px; border-radius: 2px; font-size: 12px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;
+}
+.btn-back:hover { color: var(--text1); border-color: var(--bege); }
+.topbar-title { font-size: 13px; color: var(--text2); font-weight: 500; }
+.topbar-badge {
+  margin-left: auto; font-size: 9px; font-weight: 500;
+  background: var(--bege-bg); color: var(--bege-claro);
+  border: 0.5px solid var(--bege-border);
+  padding: 3px 9px; border-radius: 20px; letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+/* ── Layout ── */
+.main { max-width: 1280px; margin: 0 auto; padding: 2rem; }
+
+.tool-header { margin-bottom: 2rem; }
+.tool-label { font-size: 10px; color: var(--text4); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+.tool-title { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 400; color: var(--text1); }
+.tool-title em { font-style: italic; color: var(--bege-claro); }
+.tool-desc { font-size: 13px; color: var(--text3); margin-top: 6px; line-height: 1.6; }
+
+/* ── Stepper ── */
+.stepper { display: flex; gap: 0; margin-bottom: 2rem; flex-wrap: wrap; }
+.step-item { display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+  background: var(--bg2); border: 0.5px solid var(--border2); border-right: none;
+  font-size: 11px; color: var(--text4); transition: all 0.2s; }
+.step-item:first-child { border-radius: 2px 0 0 2px; }
+.step-item:last-child  { border-radius: 0 2px 2px 0; border-right: 0.5px solid var(--border2); }
+.step-num { width: 20px; height: 20px; border-radius: 50%; background: var(--border2); color: var(--text4);
+  display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+.step-item.active .step-num { background: var(--gold); color: #fff; }
+.step-item.active { color: var(--text2); }
+.step-item.done .step-num { background: var(--verde-text); color: #fff; }
+.step-item.done { color: var(--verde-text); }
+
+/* ── Section boxes ── */
+.section-box {
+  background: var(--bg2); border: 0.5px solid var(--border2);
+  border-radius: 2px; margin-bottom: 1.5rem; overflow: hidden;
+}
+.section-box.locked { opacity: 0.5; pointer-events: none; }
+.section-head {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1rem 1.25rem; border-bottom: 0.5px solid var(--border);
+  background: var(--cream2); flex-wrap: wrap;
+}
+.section-head-num {
+  width: 28px; height: 28px; border-radius: 50%; background: var(--gold);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+.section-head-num.done { background: var(--verde-text); }
+.section-head-info { flex: 1; }
+.section-titulo { font-size: 14px; font-weight: 600; color: var(--text1); }
+.section-sub    { font-size: 11px; color: var(--text4); margin-top: 2px; }
+.section-body   { padding: 1.25rem; }
+
+/* ── Upload ── */
+.upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media(max-width:640px){ .upload-grid { grid-template-columns: 1fr; } }
+
+.upload-box {
+  border: 0.5px dashed var(--border2); border-radius: 2px;
+  padding: 1.5rem; text-align: center; cursor: pointer;
+  transition: all 0.2s; background: var(--bg3);
+  position: relative;
+}
+.upload-box:hover { border-color: var(--bege); background: var(--bege-bg); }
+.upload-box.ok    { border-color: var(--verde-text); background: var(--verde-bg); border-style: solid; }
+.upload-box.drag  { border-color: var(--gold); background: var(--bege-bg); }
+.upload-icon  { font-size: 28px; margin-bottom: 8px; }
+.upload-title { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 4px; }
+.upload-hint  { font-size: 11px; color: var(--text4); }
+.upload-status{ font-size: 11px; color: var(--verde-text); margin-top: 6px; font-weight: 500; }
+input[type=file] { display: none; }
+
+/* ── Buttons ── */
+.btn-primary {
+  background: var(--bege); color: #fff; border: none; border-radius: 2px;
+  padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary:hover { background: var(--bege-claro); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-secondary {
+  background: none; border: 0.5px solid var(--border2); color: var(--text2);
+  border-radius: 2px; padding: 8px 16px; font-size: 13px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-secondary:hover { border-color: var(--bege); color: var(--text1); }
+.btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-export {
+  background: var(--brown); color: #fff; border: none; border-radius: 2px;
+  padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-export:hover { background: var(--brown2); }
+
+/* ── Limpar ── */
+.btn-limpar {
+  background: none; border: 0.5px solid rgba(180,60,60,0.35); color: var(--vermelho-text);
+  border-radius: 2px; padding: 6px 14px; font-size: 11px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.btn-limpar:hover { background: var(--vermelho-bg); border-color: var(--vermelho-text); }
+
+/* ── Column Mapping ── */
+.map-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 1rem; margin-bottom: 1rem; }
+.map-field label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text4); display: block; margin-bottom: 4px; }
+.map-field select, .map-field input {
+  width: 100%; background: var(--cream); border: 0.5px solid var(--border2); color: var(--text2);
+  padding: 7px 10px; border-radius: 2px; font-size: 12px; outline: none;
+  font-family: 'DM Sans', sans-serif;
+}
+.map-field select:focus, .map-field input:focus { border-color: var(--gold); }
+
+/* ── Progress bar ── */
+.progress-wrap { margin-top: 1rem; }
+.progress-bar  { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--gold); transition: width 0.3s; border-radius: 2px; }
+.progress-label { font-size: 11px; color: var(--text4); margin-top: 4px; }
+
+/* ── Table ── */
+.tbl-wrap { overflow-x: auto; margin-top: 0.5rem; }
+.lanc-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+.lanc-table th {
+  font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text3); font-weight: 500; padding: 9px 12px;
+  text-align: left; border-bottom: 0.5px solid var(--border2);
+  background: var(--cream2); white-space: nowrap;
+}
+.lanc-table td {
+  font-size: 12px; color: var(--text2); padding: 8px 12px;
+  border-bottom: 0.5px solid rgba(184,153,106,0.07);
+}
+.lanc-table tr:hover td { background: rgba(184,153,106,0.06); }
+.lanc-table tr.row-ok  td { color: var(--verde-text); }
+.lanc-table tr.row-err td { color: var(--vermelho-text); font-weight: 500; }
+.lanc-table tr.row-warn td { color: var(--amarelo-text); }
+
+/* ── Tags ── */
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 9px; padding: 2px 7px; border-radius: 20px; font-weight: 600;
+  letter-spacing: 0.04em; white-space: nowrap;
+}
+.tag-ok   { background: var(--verde-bg); color: var(--verde-text); border: 0.5px solid rgba(74,124,89,0.2); }
+.tag-err  { background: var(--vermelho-bg); color: var(--vermelho-text); border: 0.5px solid rgba(180,60,60,0.2); }
+.tag-warn { background: rgba(140,98,0,0.08); color: var(--amarelo-text); border: 0.5px solid rgba(140,98,0,0.2); }
+.tag-info { background: var(--azul-bg); color: var(--azul-text); border: 0.5px solid rgba(26,74,138,0.2); }
+
+/* ── Resumo cards ── */
+.resumo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 10px; margin-bottom: 1.25rem; }
+.resumo-card { background: var(--bg3); border: 0.5px solid var(--border); border-radius: 2px; padding: 1rem; }
+.resumo-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text4); margin-bottom: 6px; }
+.resumo-valor { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500; }
+.resumo-sub   { font-size: 10px; color: var(--text4); margin-top: 3px; }
+.v-ok   { color: var(--verde-text); }
+.v-err  { color: var(--vermelho-text); }
+.v-warn { color: var(--amarelo-text); }
+.v-neu  { color: var(--text2); }
+
+/* ── De/Para table ── */
+.depara-wrap { margin-bottom: 1rem; }
+.depara-table { width: 100%; border-collapse: collapse; }
+.depara-table th {
+  font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text3); font-weight: 500; padding: 8px 10px;
+  text-align: left; border-bottom: 0.5px solid var(--border2); background: var(--cream2);
+}
+.depara-table td { padding: 6px 6px; border-bottom: 0.5px solid var(--border); }
+.depara-input {
+  width: 100%; background: var(--cream); border: 0.5px solid var(--border2); color: var(--text1);
+  padding: 6px 8px; border-radius: 2px; font-size: 12px; outline: none;
+  font-family: 'DM Sans', sans-serif; font-weight: 500;
+}
+.depara-input:focus { border-color: var(--gold); }
+.depara-input.danfe-cfop { letter-spacing: 0.1em; font-weight: 700; color: var(--brown); }
+.depara-input.plan-cfop  { letter-spacing: 0.06em; }
+.btn-del { background: none; border: none; color: var(--text4); cursor: pointer; font-size: 14px; padding: 4px 8px; border-radius: 2px; }
+.btn-del:hover { color: var(--vermelho-text); background: var(--vermelho-bg); }
+
+/* ── Alert bar ── */
+.alert { padding: 10px 14px; border-radius: 2px; font-size: 12px; margin-bottom: 1rem; display: flex; gap: 8px; align-items: flex-start; }
+.alert-ok   { background: var(--verde-bg); color: var(--verde-text); border: 0.5px solid rgba(74,124,89,0.2); }
+.alert-err  { background: var(--vermelho-bg); color: var(--vermelho-text); border: 0.5px solid rgba(180,60,60,0.2); }
+.alert-warn { background: rgba(140,98,0,0.08); color: var(--amarelo-text); border: 0.5px solid rgba(140,98,0,0.2); }
+.alert-info { background: var(--azul-bg); color: var(--azul-text); border: 0.5px solid rgba(26,74,138,0.2); }
+
+/* ── Toolbar ── */
+.toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+.toolbar-sep { flex: 1; }
+
+/* ── Empty state ── */
+.empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text4); font-size: 12px; }
+.empty-state .empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+/* ── Resultado tabs ── */
+.res-tabs { display: flex; gap: 0; margin-bottom: 0; border-bottom: 0.5px solid var(--border2); }
+.res-tab {
+  padding: 9px 18px; font-size: 11px; cursor: pointer; border: none; background: none;
+  color: var(--text4); font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.res-tab.active { color: var(--gold); border-bottom-color: var(--gold); font-weight: 500; }
+.res-panel { display: none; padding-top: 1rem; }
+.res-panel.active { display: block; }
+
+/* ── Divergência highlight ── */
+.div-field { background: rgba(180,60,60,0.12); color: var(--vermelho-text); padding: 1px 4px; border-radius: 2px; font-weight: 600; }
+
+/* ── Spinner ── */
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(168,137,90,0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.hidden { display: none !important; }
+
+/* ── Checkboxes de campos ── */
+.check-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
+  gap: 8px; margin: 10px 0 4px;
+}
+.check-item {
+  display: flex; align-items: center; gap: 9px; cursor: pointer;
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: 2px; padding: 9px 12px; transition: all 0.18s;
+  user-select: none;
+}
+.check-item:hover { border-color: var(--gold); background: var(--bege-bg); }
+.check-item input[type=checkbox] {
+  width: 15px; height: 15px; accent-color: var(--gold);
+  cursor: pointer; flex-shrink: 0;
+}
+.check-item.checked { border-color: var(--gold); background: var(--bege-bg); }
+.check-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+.check-sub   { font-size: 10px; color: var(--text4); margin-top: 1px; }
+
+/* ── Collapse toggle ── */
+.btn-collapse {
+  background: none; border: 0.5px solid var(--border2); color: var(--text3);
+  width: 28px; height: 28px; border-radius: 2px; cursor: pointer;
+  font-size: 12px; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0; margin-left: auto;
+}
+.btn-collapse:hover { border-color: var(--gold); color: var(--gold); }
+.collapse-body { transition: all 0.2s; }
+.collapse-body.collapsed { display: none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="../../index.html" class="btn-back">← Painel</a>
+  <span style="color:var(--text4)">|</span>
+  <span class="topbar-title">Cruzamento de DANFES × Planilha</span>
+  <span class="topbar-badge">SETOR FISCAL</span>
+</div>
+
+<div class="main">
+  <div class="tool-header">
+    <div class="tool-label">SETOR FISCAL — CRUZAMENTO DE DOCUMENTOS</div>
+    <h1 class="tool-title">Cruzamento de <em>DANFES × Planilha</em></h1>
+    <p class="tool-desc">
+      Cruza DANFEs em PDF contra uma planilha de referência. Valida CNPJ do emitente, número da NF, data de emissão e valor.
+      Em seguida, verifica a conformidade dos CFOPs conforme regras de De/Para configuradas.
+    </p>
+  </div>
+
+  <!-- Stepper -->
+  <div class="stepper">
+    <div class="step-item active" id="step1-indicator">
+      <div class="step-num" id="snum1">1</div>
+      <span>Upload &amp; Extração</span>
+    </div>
+    <div class="step-item" id="step2-indicator">
+      <div class="step-num" id="snum2">2</div>
+      <span>Cruzamento 1 · Dados</span>
+    </div>
+    <div class="step-item" id="step3-indicator">
+      <div class="step-num" id="snum3">3</div>
+      <span>Cruzamento 2 · CFOP</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       SEÇÃO 1 — UPLOAD & EXTRAÇÃO
+  ════════════════════════════════════════════════ -->
+  <div class="section-box" id="sec-upload">
+    <div class="section-head" style="cursor:pointer;" onclick="toggleSec('corpo-upload','btn-col-upload')">
+      <div class="section-head-num" id="n1">1</div>
+      <div class="section-head-info">
+        <div class="section-titulo">Upload de Arquivos</div>
+        <div class="section-sub">Importe os DANFEs (PDF) e a planilha de referência (Excel)</div>
+      </div>
+      <button class="btn-limpar" onclick="event.stopPropagation();limparTudo()" title="Limpar tudo e recomeçar">🗑 Limpar</button>
+      <button class="btn-collapse" id="btn-col-upload" title="Expandir/Recolher" onclick="event.stopPropagation();toggleSec('corpo-upload','btn-col-upload')">▼</button>
+    </div>
+    <div class="collapse-body" id="corpo-upload">
+    <div class="section-body">
+      <div class="upload-grid">
+
+        <!-- DANFEs -->
+        <div>
+          <div class="upload-box" id="drop-danfe" onclick="document.getElementById('inp-danfe').click()"
+               ondragover="dragOver(event,'drop-danfe')" ondragleave="dragLeave('drop-danfe')" ondrop="dropDanfe(event)">
+            <div class="upload-icon">📄</div>
+            <div class="upload-title">DANFEs (PDF)</div>
+            <div class="upload-hint">Clique ou arraste — múltiplos arquivos aceitos</div>
+            <div class="upload-status hidden" id="status-danfe"></div>
+          </div>
+          <input type="file" id="inp-danfe" accept=".pdf" multiple onchange="handleDanfeFiles(this.files)">
+
+          <!-- Progress -->
+          <div class="progress-wrap hidden" id="prog-wrap">
+            <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+            <div class="progress-label" id="prog-label">Aguardando...</div>
+          </div>
+        </div>
+
+        <!-- Planilha -->
+        <div>
+          <div class="upload-box" id="drop-plan" onclick="document.getElementById('inp-plan').click()"
+               ondragover="dragOver(event,'drop-plan')" ondragleave="dragLeave('drop-plan')" ondrop="dropPlan(event)">
+            <div class="upload-icon">📊</div>
+            <div class="upload-title">Planilha de Referência (Excel)</div>
+            <div class="upload-hint">Clique ou arraste — .xlsx ou .xls</div>
+            <div class="upload-status hidden" id="status-plan"></div>
+          </div>
+          <input type="file" id="inp-plan" accept=".xlsx,.xls" onchange="handlePlanFile(this.files[0])">
+        </div>
+      </div>
+
+      <!-- Mapeamento de colunas (aparece após upload da planilha) -->
+      <div class="hidden" id="map-section" style="margin-top:1.5rem; padding-top:1.25rem; border-top:0.5px solid var(--border);">
+
+        <!-- BLOCO A: Vinculação de colunas -->
+        <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.08em;">
+          1 · Vinculação de Colunas da Planilha
+        </div>
+        <div style="font-size:11px;color:var(--text4);margin-bottom:0.85rem;">
+          Indique qual coluna da planilha corresponde a cada campo. Só mapeie as colunas que existirem.
+        </div>
+        <div class="map-grid">
+          <div class="map-field">
+            <label>Aba (Sheet)</label>
+            <select id="map-sheet" onchange="reloadSheet()"></select>
+          </div>
+          <div class="map-field">
+            <label>Coluna — CNPJ Emitente <span style="color:var(--text4);font-weight:300">(opt.)</span></label>
+            <select id="map-cnpj"></select>
+          </div>
+          <div class="map-field">
+            <label>Coluna — Nº NF</label>
+            <select id="map-nf"></select>
+          </div>
+          <div class="map-field">
+            <label>Coluna — Data Emissão <span style="color:var(--text4);font-weight:300">(opt.)</span></label>
+            <select id="map-data"></select>
+          </div>
+          <div class="map-field">
+            <label>Coluna — Valor Total <span style="color:var(--text4);font-weight:300">(opt.)</span></label>
+            <select id="map-valor"></select>
+          </div>
+          <div class="map-field">
+            <label>Coluna — CFOP <span style="color:var(--text4);font-weight:300">(opt.)</span></label>
+            <select id="map-cfop"></select>
+          </div>
+          <div class="map-field">
+            <label>Coluna — Nome Fornecedor <span style="color:var(--text4);font-weight:300">(opt.)</span></label>
+            <select id="map-nome"></select>
+          </div>
+          <div class="map-field" style="align-self:flex-end;">
+            <label>&nbsp;</label>
+            <button class="btn-secondary" onclick="confirmarMapeamento()">Aplicar vinculação →</button>
+          </div>
+        </div>
+        <div id="alert-map" class="hidden" style="margin-top:8px;"></div>
+
+        <!-- BLOCO B: Campos para cruzamento (aparece após confirmar mapeamento) -->
+        <div class="hidden" id="campos-section" style="margin-top:1.5rem; padding-top:1.25rem; border-top:0.5px solid var(--border);">
+          <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em;">
+            2 · Campos que serão comparados no Cruzamento 1
+          </div>
+          <div style="font-size:11px;color:var(--text4);margin-bottom:10px;">
+            Marque apenas os campos que deseja usar na comparação. A vinculação das colunas acima é suficiente — aqui você decide o que vai valer no cruzamento.
+          </div>
+
+          <div class="check-grid" id="check-grid-campos">
+            <!-- preenchido via JS conforme o que foi mapeado -->
+          </div>
+
+          <div id="alert-campos" class="alert alert-warn hidden" style="margin-top:10px;">
+            ⚠ Selecione ao menos um campo para continuar.
+          </div>
+
+          <div style="margin-top:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <button class="btn-primary" onclick="confirmarCampos()">✔ Confirmar campos e liberar cruzamento →</button>
+            <span style="font-size:11px;color:var(--text4)" id="resumo-campos-selecionados"></span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    </div><!-- /collapse-body sec1 -->
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       SEÇÃO 2 — PRÉVIA DA EXTRAÇÃO
+  ════════════════════════════════════════════════ -->
+  <div class="section-box locked" id="sec-extracao">
+    <div class="section-head" style="cursor:pointer;" onclick="toggleSec('corpo-extracao','btn-col-extracao')">
+      <div class="section-head-num" id="n2">2</div>
+      <div class="section-head-info">
+        <div class="section-titulo">Dados Extraídos dos DANFEs</div>
+        <div class="section-sub">Revise os dados lidos de cada PDF antes de cruzar</div>
+      </div>
+      <button class="btn-collapse" id="btn-col-extracao" title="Expandir/Recolher" onclick="event.stopPropagation();toggleSec('corpo-extracao','btn-col-extracao')">▼</button>
+    </div>
+    <div class="collapse-body" id="corpo-extracao">
+    <div class="section-body">
+      <div class="resumo-grid" id="resumo-extracao">
+        <div class="resumo-card"><div class="resumo-label">DANFEs carregados</div><div class="resumo-valor v-neu" id="r-total">—</div></div>
+        <div class="resumo-card"><div class="resumo-label">Extraídos com sucesso</div><div class="resumo-valor v-ok" id="r-ok">—</div></div>
+        <div class="resumo-card"><div class="resumo-label">Com erro de extração</div><div class="resumo-valor v-err" id="r-err">—</div></div>
+        <div class="resumo-card"><div class="resumo-label">Registros na planilha</div><div class="resumo-valor v-neu" id="r-plan">—</div></div>
+      </div>
+
+      <div class="toolbar">
+        <span style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;">Prévia — DANFEs</span>
+        <button class="btn-limpar" onclick="limparExtracao()" title="Limpar DANFEs extraídos">🗑 Limpar DANFEs</button>
+        <div class="toolbar-sep"></div>
+        <button class="btn-primary" id="btn-cruzar1" onclick="executarCruzamento1()" disabled>
+          ⚡ Executar Cruzamento 1
+        </button>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="lanc-table">
+          <thead>
+            <tr>
+              <th>Arquivo</th>
+              <th>CNPJ Emitente</th>
+              <th>Nº NF</th>
+              <th>Data Emissão</th>
+              <th>Valor Total</th>
+              <th>CFOP(s)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-danfes"></tbody>
+        </table>
+      </div>
+    </div>
+    </div><!-- /collapse-body -->
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       SEÇÃO 3 — CRUZAMENTO 1 (Resultado)
+  ════════════════════════════════════════════════ -->
+  <div class="section-box locked" id="sec-cruzamento1">
+    <div class="section-head" style="cursor:pointer;" onclick="toggleSec('corpo-cruzamento1','btn-col-c1')">
+      <div class="section-head-num" id="n3">3</div>
+      <div class="section-head-info">
+        <div class="section-titulo">Cruzamento 1 — Resultado</div>
+        <div class="section-sub" id="sub-c1">Campos comparados: —</div>
+      </div>
+      <button class="btn-limpar" onclick="event.stopPropagation();limparCruzamento1()" title="Limpar resultado do Cruzamento 1">🗑 Limpar</button>
+      <button class="btn-collapse" id="btn-col-c1" title="Expandir/Recolher" onclick="event.stopPropagation();toggleSec('corpo-cruzamento1','btn-col-c1')">▼</button>
+    </div>
+    <div class="collapse-body" id="corpo-cruzamento1">
+    <div class="section-body">
+      <div class="resumo-grid" id="resumo-c1">
+        <div class="resumo-card"><div class="resumo-label">DANFEs localizados</div><div class="resumo-valor v-ok" id="c1-match">—</div></div>
+        <div class="resumo-card"><div class="resumo-label">DANFEs sem correspondência</div><div class="resumo-valor v-err" id="c1-danfe-sem">—</div></div>
+        <div class="resumo-card"><div class="resumo-label">Notas s/ DANFE</div><div class="resumo-valor v-warn" id="c1-plan-sem">—</div></div>
+        <div class="resumo-card"><div class="resumo-label">Divergências de campo</div><div class="resumo-valor v-err" id="c1-diverg">—</div></div>
+      </div>
+
+      <!-- Abas de resultado -->
+      <div class="res-tabs">
+        <button class="res-tab active" onclick="switchResTab('r1a','this')" id="rtab1a">
+          🔴 DANFEs sem planilha <span id="cnt-r1a">(0)</span>
+        </button>
+        <button class="res-tab" onclick="switchResTab('r1b','this')" id="rtab1b">
+          🟡 Planilha sem DANFE <span id="cnt-r1b">(0)</span>
+        </button>
+        <button class="res-tab" onclick="switchResTab('r1c','this')" id="rtab1c">
+          🟢 Localizados <span id="cnt-r1c">(0)</span>
+        </button>
+      </div>
+
+      <div class="res-panel active" id="r1a">
+        <div class="tbl-wrap">
+          <table class="lanc-table"><thead><tr>
+            <th>Arquivo PDF</th><th>CNPJ (DANFE)</th><th>Nº NF</th><th>Data</th><th>Valor</th><th>CFOP(s)</th><th>Motivo</th>
+          </tr></thead>
+          <tbody id="tbl-r1a"></tbody>
+        </table></div>
+      </div>
+
+      <div class="res-panel" id="r1b">
+        <div class="tbl-wrap">
+          <table class="lanc-table"><thead><tr>
+            <th>Nº NF (Planilha)</th><th>CNPJ (Planilha)</th><th>Data (Planilha)</th><th>Valor (Planilha)</th><th>CFOP (Planilha)</th><th>Fornecedor</th>
+          </tr></thead>
+          <tbody id="tbl-r1b"></tbody>
+        </table></div>
+      </div>
+
+      <div class="res-panel" id="r1c">
+        <div class="tbl-wrap">
+          <table class="lanc-table"><thead><tr>
+            <th>Nº NF</th><th>CNPJ</th><th>Data</th><th>Valor</th><th>CFOP DANFE</th><th>CFOP Planilha</th>
+          </tr></thead>
+          <tbody id="tbl-r1c"></tbody>
+        </table></div>
+      </div>
+
+      <div class="toolbar" style="margin-top:1rem;">
+        <div class="toolbar-sep"></div>
+        <button class="btn-export" id="btn-exp1" onclick="exportarCruzamento1()" disabled>
+          📥 Exportar Pendências — Cruzamento 1
+        </button>
+      </div>
+    </div>
+    </div><!-- /collapse-body sec3 -->
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       SEÇÃO 4 — CRUZAMENTO 2 (CFOP De/Para)
+  ════════════════════════════════════════════════ -->
+  <div class="section-box locked" id="sec-cruzamento2">
+    <div class="section-head" style="cursor:pointer;" onclick="toggleSec('corpo-cruzamento2','btn-col-c2')">
+      <div class="section-head-num" id="n4">4</div>
+      <div class="section-head-info">
+        <div class="section-titulo">Cruzamento 2 — De/Para de CFOP</div>
+        <div class="section-sub">Configure as correspondências entre CFOP do DANFE (4 dígitos) e CFOP da planilha. Mín. 4 dígitos na planilha.</div>
+      </div>
+      <button class="btn-limpar" onclick="event.stopPropagation();limparCruzamento2()" title="Limpar resultado e De/Para">🗑 Limpar</button>
+      <button class="btn-collapse" id="btn-col-c2" title="Expandir/Recolher" onclick="event.stopPropagation();toggleSec('corpo-cruzamento2','btn-col-c2')">▼</button>
+    </div>
+    <div class="collapse-body" id="corpo-cruzamento2">
+    <div class="section-body">
+
+      <div id="alert-c2-sem-dados" class="alert alert-info" style="display:flex;">
+        ℹ️ Configure as regras de De/Para abaixo e clique em <strong style="margin:0 4px">Executar Cruzamento 2</strong>.
+        Somente NFs localizados no Cruzamento 1 serão avaliados.
+      </div>
+
+      <!-- Tabela De/Para -->
+      <div class="depara-wrap">
+        <table class="depara-table" id="tbl-depara">
+          <thead>
+            <tr>
+              <th style="width:180px">CFOP no DANFE <span style="color:var(--text4);font-weight:300">(4 dígitos)</span></th>
+              <th style="width:220px">CFOP na Planilha <span style="color:var(--text4);font-weight:300">(mín. 4 dígitos)</span></th>
+              <th style="width:300px">Descrição / Observação <span style="color:var(--text4);font-weight:300">(opcional)</span></th>
+              <th style="width:40px"></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-depara"></tbody>
+        </table>
+      </div>
+
+      <div class="toolbar" style="margin-bottom:1.5rem;">
+        <button class="btn-secondary" onclick="addDePara()">+ Adicionar Par CFOP</button>
+        <div class="toolbar-sep"></div>
+        <button class="btn-primary" id="btn-cruzar2" onclick="executarCruzamento2()">
+          ⚡ Executar Cruzamento 2
+        </button>
+      </div>
+
+      <!-- Resultado C2 -->
+      <div class="hidden" id="resultado-c2">
+        <div class="resumo-grid">
+          <div class="resumo-card"><div class="resumo-label">NFs avaliadas</div><div class="resumo-valor v-neu" id="c2-total">—</div></div>
+          <div class="resumo-card"><div class="resumo-label">CFOP em conformidade</div><div class="resumo-valor v-ok" id="c2-ok">—</div></div>
+          <div class="resumo-card"><div class="resumo-label">CFOP em divergência</div><div class="resumo-valor v-err" id="c2-diverg">—</div></div>
+          <div class="resumo-card"><div class="resumo-label">CFOP sem regra</div><div class="resumo-valor v-warn" id="c2-sem-regra">—</div></div>
+        </div>
+
+        <div class="tbl-wrap">
+          <table class="lanc-table">
+            <thead><tr>
+              <th>Nº NF</th>
+              <th>Data</th>
+              <th>Fornecedor (DANFE)</th>
+              <th>Valor</th>
+              <th>CFOP DANFE</th>
+              <th>CFOP Planilha</th>
+              <th>Regra Esperada</th>
+              <th>Situação</th>
+            </tr></thead>
+            <tbody id="tbl-c2"></tbody>
+          </table>
+        </div>
+
+        <div class="toolbar" style="margin-top:1rem;">
+          <div class="toolbar-sep"></div>
+          <button class="btn-export" id="btn-exp2" onclick="exportarCruzamento2()">
+            📥 Exportar Divergências — CFOP
+          </button>
+        </div>
+      </div>
+    </div>
+    </div><!-- /collapse-body sec4 -->
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  PDF.js worker
+// ═══════════════════════════════════════════════════════════
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ═══════════════════════════════════════════════════════════
+//  Estado global
+// ═══════════════════════════════════════════════════════════
+let danfeList    = [];   // [{arquivo, cnpj, numNF, dataEmissao, valorTotal, nomeEmitente, cfops, erro}]
+let planilhaRows = [];   // [{...colunas originais}]
+let planilhaHeaders = [];
+let planilhaWorkbook = null;
+let colMap = { sheet:0, cnpj:'', nf:'', data:'', valor:'', cfop:'', nome:'' };
+let c1Matched   = [];   // NFs com match total
+let c1DanfeSem  = [];   // DANFEs sem correspondência
+let c1PlanSem   = [];   // Linhas da planilha sem DANFE
+let c2Result    = [];
+
+// ═══════════════════════════════════════════════════════════
+//  Drag & Drop helpers
+// ═══════════════════════════════════════════════════════════
+function dragOver(e, id) {
+  e.preventDefault();
+  document.getElementById(id).classList.add('drag');
+}
+function dragLeave(id) {
+  document.getElementById(id).classList.remove('drag');
+}
+function dropDanfe(e) {
+  e.preventDefault();
+  document.getElementById('drop-danfe').classList.remove('drag');
+  handleDanfeFiles(e.dataTransfer.files);
+}
+function dropPlan(e) {
+  e.preventDefault();
+  document.getElementById('drop-plan').classList.remove('drag');
+  handlePlanFile(e.dataTransfer.files[0]);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DANFE PDF — Upload & Extração
+// ═══════════════════════════════════════════════════════════
+async function handleDanfeFiles(files) {
+  if (!files || files.length === 0) return;
+  danfeList = [];
+
+  const box = document.getElementById('drop-danfe');
+  const progWrap = document.getElementById('prog-wrap');
+  progWrap.classList.remove('hidden');
+  box.classList.remove('ok');
+
+  const total = files.length;
+  let done = 0;
+
+  for (const file of Array.from(files)) {
+    try {
+      const data = await extractDANFE(file);
+      data.arquivo = file.name;
+      danfeList.push(data);
+    } catch(e) {
+      danfeList.push({ arquivo: file.name, cnpj: null, numNF: null, dataEmissao: null, valorTotal: null, nomeEmitente: null, cfops: [], erro: e.message });
+    }
+    done++;
+    const pct = Math.round(done / total * 100);
+    document.getElementById('prog-fill').style.width = pct + '%';
+    document.getElementById('prog-label').textContent = `Extraindo ${done}/${total}: ${file.name}`;
+  }
+
+  // UI
+  box.classList.add('ok');
+  const stEl = document.getElementById('status-danfe');
+  stEl.textContent = `✔ ${total} arquivo(s) carregado(s)`;
+  stEl.classList.remove('hidden');
+  document.getElementById('prog-label').textContent = `✔ Extração concluída — ${total} DANFE(s)`;
+
+  renderTabelaDANFEs();
+  atualizarResumoExtracao();
+  desbloquear('sec-extracao');
+  atualizarStepper(2);
+  verificarBotaoCruzar1();
+}
+
+async function extractDANFE(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  // ── Página 1: extrai com posição para localizar Nº NF no canto superior direito
+  const page1 = await pdf.getPage(1);
+  const vp    = page1.getViewport({ scale: 1 });
+  const c1    = await page1.getTextContent();
+  const items = c1.items;
+
+  // Texto completo da página 1 (para os demais campos)
+  let fullText = items.map(it => it.str).join(' ');
+
+  // Demais páginas (quando houver)
+  for (let i = 2; i <= pdf.numPages; i++) {
+    const pg = await pdf.getPage(i);
+    const ct = await pg.getTextContent();
+    fullText += ' ' + ct.items.map(it => it.str).join(' ');
+  }
+
+  // ── Área superior direita do DANFE (onde fica "NF-e / N°. 000.013.666 / Série 001")
+  // PDF.js: transform[4]=x (esquerda→direita), transform[5]=y (baixo→cima)
+  // No DANFE padrão o bloco fica na metade direita e no terço superior
+  const pw = vp.width, ph = vp.height;
+  const topRightItems = items.filter(it =>
+    it.transform[4] > pw * 0.50 &&   // metade direita
+    it.transform[5] > ph * 0.60      // terço superior (y cresce de baixo p/ cima)
+  );
+  const topRightText = topRightItems.map(it => it.str).join(' ');
+
+  return parseDANFEText(fullText, topRightText);
+}
+
+function parseDANFEText(t, topRightText) {
+  // Normaliza espaços múltiplos
+  const txt = t.replace(/\s+/g, ' ');
+  const trt = (topRightText || '').replace(/\s+/g, ' ');
+
+  // ─────────────────────────────────────────────────────────────
+  // Nº da NF — ESTRATÉGIA EM CAMADAS
+  // O número fica em "N°. 000.013.666 Série 001" no canto sup. dir.
+  // Formato canônico DANFE: três grupos de 3 dígitos separados por ponto
+  // ─────────────────────────────────────────────────────────────
+  let numNF = null;
+
+  // Camada 1 — área superior direita + padrão ###.###.### próximo de "Série"
+  const c1 = trt.match(/(\d{3}\.\d{3}\.\d{3})\s*S[eé]rie/i)
+          || trt.match(/S[eé]rie\s*\d+\D{0,20}(\d{3}\.\d{3}\.\d{3})/i)
+          || trt.match(/NF[-\s]*e[\s\S]{0,80}?(\d{3}\.\d{3}\.\d{3})/i)
+          || trt.match(/N[°º][.\s]*(\d{3}\.\d{3}\.\d{3})/i);
+  if (c1) {
+    numNF = c1[1].replace(/\./g,'').replace(/^0+/,'') || '0';
+  }
+
+  // Camada 2 — texto completo, mas ainda exigindo formato ###.###.### + "Série"
+  if (!numNF) {
+    const c2 = txt.match(/(\d{3}\.\d{3}\.\d{3})\s*S[eé]rie/i)
+            || txt.match(/S[eé]rie\s*\d+\D{0,40}(\d{3}\.\d{3}\.\d{3})/i);
+    if (c2) numNF = c2[1].replace(/\./g,'').replace(/^0+/,'') || '0';
+  }
+
+  // Camada 3 — "NF-e" seguido de N° + número (pode ter espaços entre dígitos)
+  if (!numNF) {
+    const c3 = txt.match(/NF[-\s]*e\s+N[°º][.\s]*(\d{3}[.\s]?\d{3}[.\s]?\d{3})/i);
+    if (c3) numNF = c3[1].replace(/[.\s]/g,'').replace(/^0+/,'') || '0';
+  }
+
+  // Camada 4 — qualquer ###.###.### no texto (fallback conservador)
+  if (!numNF) {
+    const c4 = txt.match(/\b(\d{3}\.\d{3}\.\d{3})\b/);
+    if (c4) numNF = c4[1].replace(/\./g,'').replace(/^0+/,'') || '0';
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // CNPJ Emitente — primeiro CNPJ do documento (emitente vem antes do destinatário)
+  // ─────────────────────────────────────────────────────────────
+  const cnpjAll = [...txt.matchAll(/\d{2}[\.\s]?\d{3}[\.\s]?\d{3}\/\d{4}-\d{2}/g)]
+    .map(m => m[0].replace(/\s/g,''));
+  const cnpj = cnpjAll.length > 0 ? cnpjAll[0] : null;
+
+  // ─────────────────────────────────────────────────────────────
+  // Data de Emissão — prioriza labels explícitos, depois primeira data do doc
+  // ─────────────────────────────────────────────────────────────
+  let dataEmissao = null;
+  const datePatterns = [
+    /DATA\s+(?:DE\s+)?EMISS[AÃ]O\s*[:\-]?\s*(\d{2}\/\d{2}\/\d{4})/i,
+    /EMISS[AÃ]O\s*[:\-]?\s*(\d{2}\/\d{2}\/\d{4})/i,
+    /(\d{2}\/\d{2}\/\d{4})/,   // fallback: primeira data do documento
+  ];
+  for (const pat of datePatterns) {
+    const m = txt.match(pat);
+    if (m) { dataEmissao = m[1]; break; }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Valor Total da NF — prioriza campos rotulados
+  // ─────────────────────────────────────────────────────────────
+  let valorTotal = null;
+  const valorPatterns = [
+    /VALOR\s+TOTAL\s+DA\s+NF[-E]?\s*[:\-]?\s*([\d\.]+,\d{2})/i,
+    /VALOR\s+TOTAL\s*[:\-]?\s*([\d\.]+,\d{2})/i,
+    /TOTAL\s+DA\s+NOTA\s*[:\-]?\s*([\d\.]+,\d{2})/i,
+    // Padrão da faixa superior: "VALOR TOTAL: R$ 16,53"
+    /VALOR\s+TOTAL[:\s]+R?\$?\s*([\d\.]+,\d{2})/i,
+  ];
+  for (const pat of valorPatterns) {
+    const m = txt.match(pat);
+    if (m) { valorTotal = m[1]; break; }
+  }
+  // Fallback: maior valor monetário no formato brasileiro
+  if (!valorTotal) {
+    const allVals = [...txt.matchAll(/\b(\d{1,3}(?:\.\d{3})+,\d{2})\b/g)].map(m => parseBRL(m[1]));
+    if (allVals.length > 0) valorTotal = formatBRL(Math.max(...allVals));
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Nome do Emitente — texto imediatamente anterior ao primeiro CNPJ
+  // ─────────────────────────────────────────────────────────────
+  let nomeEmitente = null;
+  if (cnpj) {
+    const idx = txt.indexOf(cnpj);
+    if (idx > 0) {
+      const before = txt.substring(Math.max(0, idx - 300), idx).trim();
+      const words  = before.split(/\s+/).filter(Boolean);
+      nomeEmitente = words.slice(-10).join(' ').substring(0, 80);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // CFOP — primeiro código da tabela de itens do DANFE
+  //
+  // Estrutura da linha de dados no DANFE:
+  //   [NCM 8 dígitos]  [O/CST 3 dígitos]  [CFOP 4 dígitos]  UN  [qty]
+  //
+  // Estratégia em camadas — da mais específica à mais genérica.
+  // ─────────────────────────────────────────────────────────────
+  let cfopPrimario = null;
+
+  // Camada 1 — padrão exato da linha de itens: NCM(8) + CST(3) + CFOP(4)
+  // Captura o CFOP do primeiro item sem ambiguidade
+  const itemRow = txt.match(/\b\d{8}\s+\d{3}\s+([1-7]\d{3})\b/);
+  if (itemRow) cfopPrimario = itemRow[1];
+
+  // Camada 2 — CST(3) + CFOP(4) sem exigir NCM (alguns DANFEs omitem NCM na extração)
+  if (!cfopPrimario) {
+    // Procura dentro do trecho após "CFOP" (cabeçalho) os primeiros dados
+    const cfopIdx = txt.search(/\bCFOP\b/i);
+    if (cfopIdx >= 0) {
+      const apos = txt.slice(cfopIdx + 4, cfopIdx + 600);
+      const m = apos.match(/\b\d{3}\s+([1-7]\d{3})\b/);
+      if (m) cfopPrimario = m[1];
+    }
+  }
+
+  // Camada 3 — "CFOP" cabeçalho → primeiro [1-7]XXX encontrado em seguida
+  // (para layouts onde a extração de posição mistura a ordem)
+  if (!cfopPrimario) {
+    const m = txt.match(/\bCFOP\b[\s\S]{0,300}?\b([1-7]\d{3})\b/i);
+    if (m) cfopPrimario = m[1];
+  }
+
+  // Camada 4 — fallback via "NATUREZA DA OPERAÇÃO" para layouts mais compactos
+  if (!cfopPrimario) {
+    const m = txt.match(/NATUREZA[\s\S]{0,400}?\b([1-7]\d{3})\b/i);
+    if (m) cfopPrimario = m[1];
+  }
+
+  const cfops = cfopPrimario ? [cfopPrimario] : [];
+
+  // ─────────────────────────────────────────────────────────────
+  // Erros de extração
+  // ─────────────────────────────────────────────────────────────
+  const erros = [];
+  if (!cnpj)        erros.push('CNPJ não encontrado');
+  if (!numNF)       erros.push('Nº NF não encontrado');
+  if (!dataEmissao) erros.push('Data de emissão não encontrada');
+  if (!valorTotal)  erros.push('Valor total não encontrado');
+
+  return { cnpj, numNF, dataEmissao, valorTotal, nomeEmitente, cfops,
+           erro: erros.length > 0 ? erros.join('; ') : null };
+}
+
+// ── Helpers numéricos ──────────────────────────────────────
+function parseBRL(s) {
+  if (!s) return NaN;
+  return parseFloat(s.toString().replace(/\./g,'').replace(',','.'));
+}
+function formatBRL(n) {
+  if (isNaN(n)) return '—';
+  return n.toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function normCNPJ(s) {
+  return (s||'').replace(/\D/g,'');
+}
+function normNF(s) {
+  return parseInt((s||'').replace(/\D/g,''), 10) || 0;
+}
+function normData(s) {
+  // retorna string DD/MM/YYYY normalizada
+  if (!s) return '';
+  const str = s.toString().trim();
+  // Se vier como número serial do Excel
+  if (/^\d+$/.test(str)) {
+    const d = XLSX.SSF.parse_date_code(parseInt(str));
+    if (d) return `${String(d.d).padStart(2,'0')}/${String(d.m).padStart(2,'0')}/${d.y}`;
+  }
+  // DD/MM/YYYY já ok
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) return str;
+  // YYYY-MM-DD
+  const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  return str;
+}
+function normValor(s) {
+  if (s === null || s === undefined || s === '') return NaN;
+  const str = s.toString().trim();
+  // número puro (ex: 1234.56)
+  if (/^\d+\.\d+$/.test(str)) return parseFloat(str);
+  // BRL (ex: 1.234,56)
+  return parseBRL(str);
+}
+function normCFOP(s) {
+  return (s||'').toString().replace(/[^0-9]/g,'');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Render tabela DANFEs
+// ═══════════════════════════════════════════════════════════
+function renderTabelaDANFEs() {
+  const tbody = document.getElementById('tbl-danfes');
+  tbody.innerHTML = '';
+  danfeList.forEach(d => {
+    const ok = !d.erro;
+    const tr = document.createElement('tr');
+    tr.className = ok ? '' : 'row-err';
+    tr.innerHTML = `
+      <td>${escHtml(d.arquivo)}</td>
+      <td>${d.cnpj ? escHtml(d.cnpj) : '<span class="div-field">—</span>'}</td>
+      <td>${d.numNF ? escHtml(d.numNF) : '<span class="div-field">—</span>'}</td>
+      <td>${d.dataEmissao ? escHtml(d.dataEmissao) : '<span class="div-field">—</span>'}</td>
+      <td>${d.valorTotal ? escHtml(d.valorTotal) : '<span class="div-field">—</span>'}</td>
+      <td>${d.cfops.length > 0 ? d.cfops.map(c=>`<span class="tag tag-info">${c}</span>`).join(' ') : '<span class="tag tag-warn">—</span>'}</td>
+      <td>${ok ? '<span class="tag tag-ok">✓ OK</span>' : `<span class="tag tag-err">⚠ ${escHtml(d.erro)}</span>`}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function atualizarResumoExtracao() {
+  const total = danfeList.length;
+  const ok    = danfeList.filter(d => !d.erro).length;
+  const err   = danfeList.filter(d => !!d.erro).length;
+  document.getElementById('r-total').textContent = total;
+  document.getElementById('r-ok').textContent    = ok;
+  document.getElementById('r-err').textContent   = err;
+  document.getElementById('r-plan').textContent  = planilhaRows.length || '—';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PLANILHA — Upload & Mapeamento
+// ═══════════════════════════════════════════════════════════
+function handlePlanFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      planilhaWorkbook = XLSX.read(e.target.result, { type: 'array', cellDates: false });
+      popularSheets();
+      reloadSheet();
+      document.getElementById('map-section').classList.remove('hidden');
+      const box = document.getElementById('drop-plan');
+      box.classList.add('ok');
+      const st = document.getElementById('status-plan');
+      st.textContent = `✔ ${file.name}`;
+      st.classList.remove('hidden');
+    } catch(ex) {
+      alert('Erro ao ler a planilha: ' + ex.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function popularSheets() {
+  const sel = document.getElementById('map-sheet');
+  sel.innerHTML = '';
+  planilhaWorkbook.SheetNames.forEach((name, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+
+function reloadSheet() {
+  const idx = parseInt(document.getElementById('map-sheet').value);
+  const sheetName = planilhaWorkbook.SheetNames[idx];
+  const ws = planilhaWorkbook.Sheets[sheetName];
+  const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+  if (data.length < 2) { alert('Planilha vazia ou sem dados.'); return; }
+
+  // Primeira linha = headers
+  planilhaHeaders = data[0].map(h => (h||'').toString().trim());
+  planilhaRows = data.slice(1).filter(r => r.some(c => c !== ''));
+
+  popularColunas();
+  atualizarResumoExtracao();
+}
+
+function popularColunas() {
+  const sels = ['map-cnpj','map-nf','map-data','map-valor','map-cfop','map-nome'];
+  sels.forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">— Selecione —</option>';
+    planilhaHeaders.forEach((h, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = h || `Coluna ${i+1}`;
+      sel.appendChild(opt);
+    });
+  });
+
+  // Auto-detect por palavras-chave
+  const autoMap = {
+    'map-cnpj':  ['cnpj','cpf'],
+    'map-nf':    ['nota','nf','numero','num','n°','nº','nf-e','nfe'],
+    'map-data':  ['data','emissao','emissão','dt'],
+    'map-valor': ['valor','total','vl'],
+    'map-cfop':  ['cfop'],
+    'map-nome':  ['fornec','nome','razao','razão','empresa'],
+  };
+  planilhaHeaders.forEach((h, i) => {
+    const hl = h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    Object.entries(autoMap).forEach(([selId, kws]) => {
+      if (kws.some(k => hl.includes(k))) {
+        const sel = document.getElementById(selId);
+        if (sel.value === '') sel.value = i;
+      }
+    });
+  });
+}
+
+function confirmarMapeamento() {
+  const nf = document.getElementById('map-nf').value;
+  if (nf === '') {
+    mostrarAlerta('alert-map', 'err', 'Mapeie ao menos a coluna de Nº NF para continuar.');
+    return;
+  }
+
+  colMap = {
+    sheet: parseInt(document.getElementById('map-sheet').value),
+    cnpj:  document.getElementById('map-cnpj').value  !== '' ? parseInt(document.getElementById('map-cnpj').value)  : null,
+    nf:    parseInt(nf),
+    data:  document.getElementById('map-data').value  !== '' ? parseInt(document.getElementById('map-data').value)  : null,
+    valor: document.getElementById('map-valor').value !== '' ? parseInt(document.getElementById('map-valor').value) : null,
+    cfop:  document.getElementById('map-cfop').value  !== '' ? parseInt(document.getElementById('map-cfop').value)  : null,
+    nome:  document.getElementById('map-nome').value  !== '' ? parseInt(document.getElementById('map-nome').value)  : null,
+  };
+
+  mostrarAlerta('alert-map', 'ok', 'Vinculação aplicada. Agora selecione abaixo quais campos participarão do cruzamento.');
+  construirCheckboxes();
+  document.getElementById('campos-section').classList.remove('hidden');
+}
+
+function construirCheckboxes() {
+  // Monta as opções disponíveis baseado no que foi mapeado
+  const opcoes = [
+    { id: 'ck-nf',    label: 'Nº da Nota Fiscal', sub: 'Coluna: ' + (planilhaHeaders[colMap.nf] || '—'), always: true,  key: 'nf'    },
+    { id: 'ck-cnpj',  label: 'CNPJ Emitente',      sub: 'Coluna: ' + (colMap.cnpj  !== null ? planilhaHeaders[colMap.cnpj]  : 'não mapeada'), avail: colMap.cnpj  !== null, key: 'cnpj'  },
+    { id: 'ck-data',  label: 'Data de Emissão',     sub: 'Coluna: ' + (colMap.data  !== null ? planilhaHeaders[colMap.data]  : 'não mapeada'), avail: colMap.data  !== null, key: 'data'  },
+    { id: 'ck-valor', label: 'Valor Total',          sub: 'Coluna: ' + (colMap.valor !== null ? planilhaHeaders[colMap.valor] : 'não mapeada'), avail: colMap.valor !== null, key: 'valor' },
+  ];
+
+  const grid = document.getElementById('check-grid-campos');
+  grid.innerHTML = '';
+
+  opcoes.forEach(op => {
+    const disabled = !op.always && !op.avail;
+    const label = document.createElement('label');
+    label.className = 'check-item' + (disabled ? ' opacity-disabled' : '');
+    label.style.opacity = disabled ? '0.4' : '1';
+    label.style.cursor  = disabled ? 'not-allowed' : 'pointer';
+    label.innerHTML = `
+      <input type="checkbox" id="${op.id}" ${op.always || op.avail ? 'checked' : ''} ${disabled ? 'disabled' : ''}
+        onchange="atualizarResumoCheckboxes()">
+      <div>
+        <div class="check-label">${op.label}</div>
+        <div class="check-sub">${op.sub}</div>
+      </div>
+    `;
+    grid.appendChild(label);
+  });
+
+  atualizarResumoCheckboxes();
+}
+
+function atualizarResumoCheckboxes() {
+  const ativos = [];
+  if (document.getElementById('ck-nf')?.checked)    ativos.push('Nº NF');
+  if (document.getElementById('ck-cnpj')?.checked)  ativos.push('CNPJ');
+  if (document.getElementById('ck-data')?.checked)  ativos.push('Data');
+  if (document.getElementById('ck-valor')?.checked) ativos.push('Valor');
+  const el = document.getElementById('resumo-campos-selecionados');
+  if (el) el.textContent = ativos.length > 0 ? `Campos ativos: ${ativos.join(' · ')}` : 'Nenhum campo selecionado';
+}
+
+function confirmarCampos() {
+  const ativos = [];
+  if (document.getElementById('ck-nf')?.checked)    ativos.push('Nº NF');
+  if (document.getElementById('ck-cnpj')?.checked)  ativos.push('CNPJ');
+  if (document.getElementById('ck-data')?.checked)  ativos.push('Data');
+  if (document.getElementById('ck-valor')?.checked) ativos.push('Valor');
+
+  if (ativos.length === 0) {
+    document.getElementById('alert-campos').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('alert-campos').classList.add('hidden');
+  verificarBotaoCruzar1();
+  // Atualiza o subtítulo da seção 3
+  document.getElementById('sub-c1').textContent = 'Campos comparados: ' + ativos.join(' · ');
+}
+
+function toggleSec(bodyId, btnId) {
+  const corpo = document.getElementById(bodyId);
+  const btn   = document.getElementById(btnId);
+  if (!corpo) return;
+  const colapsado = corpo.classList.toggle('collapsed');
+  if (btn) btn.textContent = colapsado ? '▶' : '▼';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CRUZAMENTO 1
+// ═══════════════════════════════════════════════════════════
+function verificarBotaoCruzar1() {
+  // Precisa: DANFEs extraídos + planilha carregada + NF mapeado + ao menos 1 campo checado
+  const temDanfe  = danfeList.length > 0;
+  const temPlan   = planilhaRows.length > 0;
+  const temNF     = colMap.nf !== undefined && colMap.nf !== null;
+  const temCampo  = ['ck-nf','ck-cnpj','ck-data','ck-valor'].some(id => document.getElementById(id)?.checked);
+  document.getElementById('btn-cruzar1').disabled = !(temDanfe && temPlan && temNF && temCampo);
+}
+
+function executarCruzamento1() {
+  c1Matched  = [];
+  c1DanfeSem = [];
+  c1PlanSem  = [];
+
+  // Campos marcados pelo usuário
+  const usarNF    = document.getElementById('ck-nf')?.checked    ?? true;
+  const usarCNPJ  = document.getElementById('ck-cnpj')?.checked  ?? false;
+  const usarData  = document.getElementById('ck-data')?.checked  ?? false;
+  const usarValor = document.getElementById('ck-valor')?.checked ?? false;
+
+  // Precisa de NF como chave de lookup (sempre), mas pode não validar
+  const planUsada = new Set();
+
+  danfeList.forEach(d => {
+    const dCNPJ  = normCNPJ(d.cnpj);
+    const dNF    = normNF(d.numNF);
+    const dData  = normData(d.dataEmissao);
+    const dValor = normValor(d.valorTotal);
+
+    // Se campo obrigatório não pôde ser extraído e está marcado para cruzar → erro
+    const faltaCampo = [];
+    if (usarNF    && !d.numNF)       faltaCampo.push('Nº NF');
+    if (usarCNPJ  && !d.cnpj)        faltaCampo.push('CNPJ');
+    if (usarData  && !d.dataEmissao) faltaCampo.push('Data');
+    if (usarValor && !d.valorTotal)  faltaCampo.push('Valor');
+    if (faltaCampo.length > 0) {
+      c1DanfeSem.push({ ...d, motivo: 'Dados não extraídos do PDF: ' + faltaCampo.join(', ') });
+      return;
+    }
+
+    let encontrado = false;
+
+    for (let i = 0; i < planilhaRows.length; i++) {
+      const row = planilhaRows[i];
+
+      // Lookup inicial: sempre pelo NF (é o identificador base)
+      const pNF = normNF(row[colMap.nf]);
+      if (usarNF && pNF !== dNF) continue;
+
+      const pCNPJ  = colMap.cnpj  !== null ? normCNPJ(row[colMap.cnpj])   : '';
+      const pData  = colMap.data  !== null ? normData(row[colMap.data])    : '';
+      const pValor = colMap.valor !== null ? normValor(row[colMap.valor])  : NaN;
+      const pCFOP  = colMap.cfop  !== null ? normCFOP(row[colMap.cfop])   : '';
+      const pNome  = colMap.nome  !== null ? (row[colMap.nome]||'').toString().trim() : '';
+
+      // Avalia apenas os campos marcados
+      const divs = [];
+      if (usarCNPJ  && colMap.cnpj  !== null && pCNPJ  !== dCNPJ)                            divs.push(`CNPJ: "${dCNPJ}" ≠ "${pCNPJ}"`);
+      if (usarData  && colMap.data  !== null && pData  !== dData)                             divs.push(`Data: "${dData}" ≠ "${pData}"`);
+      if (usarValor && colMap.valor !== null && (isNaN(dValor) || isNaN(pValor) || Math.abs(dValor - pValor) >= 0.02))
+                                                                                              divs.push(`Valor: "${formatBRL(dValor)}" ≠ "${formatBRL(pValor)}"`);
+
+      if (divs.length === 0) {
+        // Match!
+        d._c1status = 'ok';
+        planUsada.add(i);
+        encontrado = true;
+        c1Matched.push({
+          numNF:     d.numNF,
+          cnpj:      d.cnpj,
+          data:      d.dataEmissao,
+          valor:     d.valorTotal,
+          cfopDanfe: d.cfops.join(', '),
+          cfopPlan:  pCFOP,
+          nome:      pNome,
+          danfe:     d,
+          planRow:   row,
+          planIdx:   i,
+        });
+        break;
+      } else {
+        // NF bate mas algum campo marcado diverge
+        d._c1status = 'divergencia';
+        planUsada.add(i);
+        encontrado = true;
+        c1DanfeSem.push({ ...d, motivo: 'Divergência: ' + divs.join(' | '), cfopPlan: pCFOP });
+        break;
+      }
+    }
+
+    if (!encontrado) {
+      d._c1status = 'sem-planilha';
+      c1DanfeSem.push({ ...d, motivo: 'NF não localizada na planilha' });
+    }
+  });
+
+  // Linhas da planilha sem DANFE
+  planilhaRows.forEach((row, i) => {
+    if (!planUsada.has(i)) c1PlanSem.push(row);
+  });
+
+  renderCruzamento1();
+  desbloquear('sec-cruzamento1');
+  desbloquear('sec-cruzamento2');
+  atualizarStepper(3);
+  document.getElementById('btn-exp1').disabled = false;
+  // Recolhe a prévia automaticamente para dar destaque ao resultado
+  document.getElementById('corpo-extracao').classList.add('collapsed');
+  document.getElementById('btn-col-extracao').textContent = '▶';
+  // Recolhe upload também
+  document.getElementById('corpo-upload').classList.add('collapsed');
+  document.getElementById('btn-col-upload').textContent = '▶';
+}
+
+function renderCruzamento1() {
+  // Resumo
+  document.getElementById('c1-match').textContent    = c1Matched.length;
+  document.getElementById('c1-danfe-sem').textContent = c1DanfeSem.length;
+  document.getElementById('c1-plan-sem').textContent  = c1PlanSem.length;
+  const diverg = c1DanfeSem.filter(d => d.motivo && d.motivo.startsWith('Divergência')).length;
+  document.getElementById('c1-diverg').textContent   = diverg;
+
+  // Tab counts
+  document.getElementById('cnt-r1a').textContent = `(${c1DanfeSem.length})`;
+  document.getElementById('cnt-r1b').textContent = `(${c1PlanSem.length})`;
+  document.getElementById('cnt-r1c').textContent = `(${c1Matched.length})`;
+
+  // Tabela R1A — DANFEs sem planilha
+  const tA = document.getElementById('tbl-r1a');
+  tA.innerHTML = '';
+  if (c1DanfeSem.length === 0) {
+    tA.innerHTML = `<tr><td colspan="7" class="empty-state"><div class="empty-icon">✅</div>Nenhum DANFE pendente!</td></tr>`;
+  } else {
+    c1DanfeSem.forEach(d => {
+      const tr = document.createElement('tr');
+      tr.className = 'row-err';
+      tr.innerHTML = `
+        <td>${escHtml(d.arquivo||'—')}</td>
+        <td>${escHtml(d.cnpj||'—')}</td>
+        <td>${escHtml(d.numNF||'—')}</td>
+        <td>${escHtml(d.dataEmissao||'—')}</td>
+        <td>${escHtml(d.valorTotal||'—')}</td>
+        <td>${(d.cfops||[]).map(c=>`<span class="tag tag-info">${c}</span>`).join(' ')||'—'}</td>
+        <td style="max-width:260px;white-space:normal">${escHtml(d.motivo)}</td>
+      `;
+      tA.appendChild(tr);
+    });
+  }
+
+  // Tabela R1B — Planilha sem DANFE
+  const tB = document.getElementById('tbl-r1b');
+  tB.innerHTML = '';
+  if (c1PlanSem.length === 0) {
+    tB.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-icon">✅</div>Todas as notas têm DANFE!</td></tr>`;
+  } else {
+    c1PlanSem.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.className = 'row-warn';
+      tr.innerHTML = `
+        <td>${escHtml((row[colMap.nf]||'').toString())}</td>
+        <td>${escHtml((row[colMap.cnpj]||'').toString())}</td>
+        <td>${escHtml(normData(row[colMap.data]))}</td>
+        <td>${escHtml((row[colMap.valor]||'').toString())}</td>
+        <td>${escHtml(colMap.cfop !== null ? (row[colMap.cfop]||'').toString() : '—')}</td>
+        <td>${escHtml(colMap.nome !== null ? (row[colMap.nome]||'').toString() : '—')}</td>
+      `;
+      tB.appendChild(tr);
+    });
+  }
+
+  // Tabela R1C — Localizados
+  const tC = document.getElementById('tbl-r1c');
+  tC.innerHTML = '';
+  if (c1Matched.length === 0) {
+    tC.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-icon">📋</div>Nenhum localizado.</td></tr>`;
+  } else {
+    c1Matched.forEach(m => {
+      const tr = document.createElement('tr');
+      tr.className = 'row-ok';
+      tr.innerHTML = `
+        <td>${escHtml(m.numNF||'—')}</td>
+        <td>${escHtml(m.cnpj||'—')}</td>
+        <td>${escHtml(m.data||'—')}</td>
+        <td>${escHtml(m.valor||'—')}</td>
+        <td>${(m.cfopDanfe||'—').split(',').map(c=>`<span class="tag tag-info">${c.trim()}</span>`).join(' ')}</td>
+        <td>${escHtml(m.cfopPlan||'—')}</td>
+      `;
+      tC.appendChild(tr);
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CRUZAMENTO 2 — De/Para CFOP
+// ═══════════════════════════════════════════════════════════
+let deParaRules = [];
+
+function addDePara(danfeCfop='', planCfop='', desc='') {
+  const tr = document.createElement('tr');
+  const id = Date.now() + Math.random();
+  tr.dataset.id = id;
+  tr.innerHTML = `
+    <td>
+      <input class="depara-input danfe-cfop" type="text" maxlength="4"
+        pattern="[0-9]{4}" placeholder="ex: 5101"
+        value="${escHtml(danfeCfop)}"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'').substring(0,4)"
+        title="Exatamente 4 dígitos">
+    </td>
+    <td>
+      <input class="depara-input plan-cfop" type="text" maxlength="20"
+        placeholder="ex: 110200"
+        value="${escHtml(planCfop)}"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+        title="Mínimo 4 dígitos — somente números">
+    </td>
+    <td>
+      <input class="depara-input" type="text" placeholder="Descrição opcional" value="${escHtml(desc)}" style="color:var(--text3)">
+    </td>
+    <td>
+      <button class="btn-del" onclick="this.closest('tr').remove()" title="Remover">✕</button>
+    </td>
+  `;
+  document.getElementById('tbody-depara').appendChild(tr);
+}
+
+function getDePara() {
+  const rows = document.querySelectorAll('#tbody-depara tr');
+  return [...rows].map(tr => {
+    const inputs = tr.querySelectorAll('input');
+    return {
+      danfeCfop: inputs[0].value.trim(),
+      planCfop:  inputs[1].value.trim(),
+      desc:      inputs[2].value.trim(),
+    };
+  }).filter(r => r.danfeCfop.length === 4);
+}
+
+function executarCruzamento2() {
+  deParaRules = getDePara();
+  if (deParaRules.length === 0) {
+    alert('Adicione ao menos um par De/Para antes de executar.');
+    return;
+  }
+
+  c2Result = [];
+
+  // Opera sobre c1Matched (NFs localizadas e com dados dos 2 lados)
+  const base = c1Matched;
+
+  base.forEach(m => {
+    const cfopsDanfe = m.danfe.cfops || [];
+    const cfopPlan   = normCFOP(m.cfopPlan);
+
+    // Para cada CFOP do DANFE verifica se existe regra
+    cfopsDanfe.forEach(cd => {
+      const regra = deParaRules.find(r => r.danfeCfop === cd);
+      let situacao, esperado;
+
+      if (!regra) {
+        situacao = 'sem-regra';
+        esperado = '—';
+      } else {
+        esperado = regra.planCfop;
+        // Compara normalizando: remove tudo que não for dígito
+        const pNorm = cfopPlan.replace(/\D/g,'');
+        const eNorm = esperado.replace(/\D/g,'');
+        situacao = pNorm === eNorm ? 'ok' : 'divergencia';
+      }
+
+      // Também verifica o sentido inverso: se o CFOP da planilha está mapeado
+      if (situacao === 'sem-regra') {
+        // Verifica se alguma regra tem esse danfeCfop
+        // (já checado acima)
+      }
+
+      c2Result.push({
+        numNF:     m.numNF,
+        data:      m.data,
+        nome:      m.nome || m.danfe.nomeEmitente || '—',
+        valor:     m.valor,
+        cfopDanfe: cd,
+        cfopPlan:  m.cfopPlan,
+        esperado,
+        situacao,
+        regra,
+      });
+    });
+
+    // Se não há CFOPs no DANFE
+    if (cfopsDanfe.length === 0) {
+      c2Result.push({
+        numNF:     m.numNF,
+        data:      m.data,
+        nome:      m.nome || m.danfe.nomeEmitente || '—',
+        valor:     m.valor,
+        cfopDanfe: '—',
+        cfopPlan:  m.cfopPlan,
+        esperado:  '—',
+        situacao:  'sem-cfop-danfe',
+        regra:     null,
+      });
+    }
+  });
+
+  renderCruzamento2();
+  document.getElementById('resultado-c2').classList.remove('hidden');
+  atualizarStepper(4);
+}
+
+function renderCruzamento2() {
+  const okList   = c2Result.filter(r => r.situacao === 'ok');
+  const divList  = c2Result.filter(r => r.situacao === 'divergencia');
+  const semList  = c2Result.filter(r => r.situacao === 'sem-regra' || r.situacao === 'sem-cfop-danfe');
+
+  document.getElementById('c2-total').textContent     = c2Result.length;
+  document.getElementById('c2-ok').textContent        = okList.length;
+  document.getElementById('c2-diverg').textContent    = divList.length;
+  document.getElementById('c2-sem-regra').textContent = semList.length;
+
+  const tbody = document.getElementById('tbl-c2');
+  tbody.innerHTML = '';
+
+  const filtrados = c2Result.filter(r => r.situacao !== 'ok'); // Mostra só pendências
+  if (filtrados.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><div class="empty-icon">✅</div>Todos os CFOPs estão conformes!</td></tr>`;
+  } else {
+    c2Result.forEach(r => {
+      const tr = document.createElement('tr');
+      if (r.situacao === 'ok') {
+        tr.className = 'row-ok';
+      } else if (r.situacao === 'divergencia') {
+        tr.className = 'row-err';
+      } else {
+        tr.className = 'row-warn';
+      }
+
+      let tagSit;
+      if (r.situacao === 'ok')              tagSit = '<span class="tag tag-ok">✓ Conforme</span>';
+      else if (r.situacao === 'divergencia') tagSit = '<span class="tag tag-err">✗ Divergente</span>';
+      else if (r.situacao === 'sem-regra')  tagSit = '<span class="tag tag-warn">⚠ Sem regra</span>';
+      else                                  tagSit = '<span class="tag tag-warn">⚠ CFOP não extraído</span>';
+
+      tr.innerHTML = `
+        <td>${escHtml(r.numNF||'—')}</td>
+        <td>${escHtml(r.data||'—')}</td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(r.nome)}">${escHtml(r.nome)}</td>
+        <td>${escHtml(r.valor||'—')}</td>
+        <td><span class="tag tag-info">${escHtml(r.cfopDanfe)}</span></td>
+        <td>${r.situacao==='divergencia' ? `<span class="div-field">${escHtml(r.cfopPlan||'—')}</span>` : escHtml(r.cfopPlan||'—')}</td>
+        <td>${escHtml(r.esperado||'—')}</td>
+        <td>${tagSit}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById('btn-exp2').disabled = false;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EXPORTAÇÃO
+// ═══════════════════════════════════════════════════════════
+function exportarCruzamento1() {
+  const wb = XLSX.utils.book_new();
+
+  // ABA 1 — DANFEs sem planilha
+  const hA = ['Arquivo PDF','CNPJ Emitente (DANFE)','Nº NF','Data Emissão','Valor Total','CFOP DANFE','CFOP Planilha','Motivo'];
+  const dA = c1DanfeSem.map(d => [
+    d.arquivo||'', d.cnpj||'', d.numNF||'', d.dataEmissao||'', d.valorTotal||'',
+    (d.cfops||[]).join(', '),
+    d.cfopPlan||'',
+    d.motivo||''
+  ]);
+  const wsA = XLSX.utils.aoa_to_sheet([hA, ...dA]);
+  estilizarSheet(wsA, hA.length);
+  XLSX.utils.book_append_sheet(wb, wsA, 'DANFEs sem Planilha');
+
+  // ABA 2 — Planilha sem DANFE
+  const hB = ['Nº NF (Planilha)','CNPJ (Planilha)','Data (Planilha)','Valor (Planilha)','CFOP (Planilha)','Fornecedor'];
+  const dB = c1PlanSem.map(row => [
+    (row[colMap.nf]||'').toString(),
+    (row[colMap.cnpj]||'').toString(),
+    normData(row[colMap.data]),
+    (row[colMap.valor]||'').toString(),
+    colMap.cfop !== null ? (row[colMap.cfop]||'').toString() : '',
+    colMap.nome !== null ? (row[colMap.nome]||'').toString() : '',
+  ]);
+  const wsB = XLSX.utils.aoa_to_sheet([hB, ...dB]);
+  estilizarSheet(wsB, hB.length);
+  XLSX.utils.book_append_sheet(wb, wsB, 'Planilha sem DANFE');
+
+  XLSX.writeFile(wb, `Pendencias_DANFE_${dataHoje()}.xlsx`);
+}
+
+function exportarCruzamento2() {
+  const wb = XLSX.utils.book_new();
+
+  const h = ['Nº NF','Data','Fornecedor (DANFE)','Valor','CFOP DANFE','CFOP Planilha','CFOP Esperado (Regra)','Situação'];
+  const d = c2Result.map(r => [
+    r.numNF||'', r.data||'', r.nome||'', r.valor||'',
+    r.cfopDanfe, r.cfopPlan||'', r.esperado||'',
+    r.situacao === 'ok' ? 'Conforme' : r.situacao === 'divergencia' ? 'Divergente' : 'Sem regra',
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([h, ...d]);
+  estilizarSheet(ws, h.length);
+  XLSX.utils.book_append_sheet(wb, ws, 'Divergencias CFOP');
+
+  XLSX.writeFile(wb, `Divergencias_CFOP_${dataHoje()}.xlsx`);
+}
+
+function estilizarSheet(ws, ncols) {
+  if (!ws['!cols']) ws['!cols'] = [];
+  for (let i = 0; i < ncols; i++) {
+    if (!ws['!cols'][i]) ws['!cols'][i] = {};
+    ws['!cols'][i].wch = 22;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UI Helpers
+// ═══════════════════════════════════════════════════════════
+function desbloquear(id) {
+  document.getElementById(id).classList.remove('locked');
+}
+
+function atualizarStepper(ativo) {
+  [1,2,3].forEach(n => {
+    const el = document.getElementById(`step${n}-indicator`);
+    const num = document.getElementById(`snum${n}`);
+    el.classList.remove('active','done');
+    num.classList.remove('done');
+    if (n < ativo) {
+      el.classList.add('done');
+      num.textContent = '✓';
+      num.classList.add('done');
+    } else if (n === ativo) {
+      el.classList.add('active');
+    }
+  });
+}
+
+function switchResTab(panelId) {
+  document.querySelectorAll('.res-tab').forEach((t,i) => {
+    t.classList.remove('active');
+  });
+  document.querySelectorAll('.res-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(panelId).classList.add('active');
+  // Find the corresponding tab button
+  const map = { r1a: 'rtab1a', r1b: 'rtab1b', r1c: 'rtab1c' };
+  const tabId = map[panelId];
+  if (tabId) document.getElementById(tabId).classList.add('active');
+}
+
+function mostrarAlerta(containerId, tipo, msg) {
+  const el = document.getElementById(containerId);
+  const cls = tipo === 'ok' ? 'alert-ok' : tipo === 'err' ? 'alert-err' : tipo === 'warn' ? 'alert-warn' : 'alert-info';
+  const icon = tipo === 'ok' ? '✅' : tipo === 'err' ? '⚠️' : tipo === 'warn' ? '⚠️' : 'ℹ️';
+  el.className = `alert ${cls}`;
+  el.innerHTML = `${icon} ${escHtml(msg)}`;
+  el.classList.remove('hidden');
+}
+
+function escHtml(s) {
+  return (s||'').toString()
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+function dataHoje() {
+  return new Date().toISOString().slice(0,10).replace(/-/g,'');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Funções de Limpeza
+// ═══════════════════════════════════════════════════════════
+
+function limparTudo() {
+  if (!confirm('Limpar todos os dados e reiniciar do zero?')) return;
+  // Dados
+  danfeList = []; planilhaRows = []; planilhaHeaders = [];
+  planilhaWorkbook = null;
+  colMap = { sheet:0, cnpj:null, nf:null, data:null, valor:null, cfop:null, nome:null };
+  c1Matched = []; c1DanfeSem = []; c1PlanSem = []; c2Result = [];
+
+  // Upload UI
+  document.getElementById('drop-danfe').classList.remove('ok');
+  document.getElementById('status-danfe').classList.add('hidden');
+  document.getElementById('inp-danfe').value = '';
+  document.getElementById('prog-wrap').classList.add('hidden');
+  document.getElementById('prog-fill').style.width = '0%';
+  document.getElementById('drop-plan').classList.remove('ok');
+  document.getElementById('status-plan').classList.add('hidden');
+  document.getElementById('inp-plan').value = '';
+  document.getElementById('map-section').classList.add('hidden');
+  document.getElementById('campos-section').classList.add('hidden');
+  document.getElementById('alert-map').classList.add('hidden');
+
+  // Seções
+  ['sec-extracao','sec-cruzamento1','sec-cruzamento2'].forEach(id =>
+    document.getElementById(id).classList.add('locked')
+  );
+  // Reabrir upload
+  ['corpo-upload'].forEach(id => {
+    document.getElementById(id).classList.remove('collapsed');
+  });
+  document.getElementById('btn-col-upload').textContent = '▼';
+
+  limparExtracao(true);
+  limparCruzamento1(true);
+  limparCruzamento2(true);
+  atualizarStepper(1);
+}
+
+function limparExtracao(silencioso) {
+  danfeList = [];
+  document.getElementById('tbl-danfes').innerHTML = '';
+  ['r-total','r-ok','r-err','r-plan'].forEach(id =>
+    document.getElementById(id).textContent = '—'
+  );
+  document.getElementById('btn-cruzar1').disabled = true;
+  if (!silencioso) {
+    // Limpa os DANFEs mas mantém a planilha
+    document.getElementById('drop-danfe').classList.remove('ok');
+    document.getElementById('status-danfe').classList.add('hidden');
+    document.getElementById('inp-danfe').value = '';
+    document.getElementById('prog-wrap').classList.add('hidden');
+    document.getElementById('prog-fill').style.width = '0%';
+  }
+}
+
+function limparCruzamento1(silencioso) {
+  c1Matched = []; c1DanfeSem = []; c1PlanSem = [];
+  ['tbl-r1a','tbl-r1b','tbl-r1c'].forEach(id =>
+    document.getElementById(id).innerHTML = ''
+  );
+  ['c1-match','c1-danfe-sem','c1-plan-sem','c1-diverg'].forEach(id =>
+    document.getElementById(id).textContent = '—'
+  );
+  ['cnt-r1a','cnt-r1b','cnt-r1c'].forEach(id =>
+    document.getElementById(id).textContent = '(0)'
+  );
+  document.getElementById('btn-exp1').disabled = true;
+  document.getElementById('sub-c1').textContent = 'Campos comparados: —';
+  if (!silencioso) {
+    // Expande a seção para o usuário saber que foi limpa
+    document.getElementById('corpo-cruzamento1').classList.remove('collapsed');
+    document.getElementById('btn-col-c1').textContent = '▼';
+  }
+}
+
+function limparCruzamento2(silencioso) {
+  c2Result = [];
+  document.getElementById('resultado-c2').classList.add('hidden');
+  document.getElementById('tbl-c2').innerHTML = '';
+  ['c2-total','c2-ok','c2-diverg','c2-sem-regra'].forEach(id =>
+    document.getElementById(id).textContent = '—'
+  );
+  if (!silencioso) {
+    // Limpa as linhas De/Para e adiciona exemplos padrão
+    document.getElementById('tbody-depara').innerHTML = '';
+    addDePara('1102','110200','Compra p/ comercialização interna');
+    addDePara('2102','210200','Compra p/ comercialização interestadual');
+    document.getElementById('corpo-cruzamento2').classList.remove('collapsed');
+    document.getElementById('btn-col-c2').textContent = '▼';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Init — adiciona uma linha De/Para vazia de exemplo
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  addDePara('1102','110200','Compra p/ comercialização interna');
+  addDePara('2102','210200','Compra p/ comercialização interestadual');
+});
+
+// ── Bind das abas de resultado ──
+document.getElementById('rtab1a').addEventListener('click', function(){ switchResTab('r1a'); });
+document.getElementById('rtab1b').addEventListener('click', function(){ switchResTab('r1b'); });
+document.getElementById('rtab1c').addEventListener('click', function(){ switchResTab('r1c'); });
+</script>
+</body>
+</html>
