@@ -496,10 +496,10 @@ body {
     <!-- TABS -->
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('fiscal', this)">
-        📂 Fiscal <span class="tab-count" id="cnt-fiscal">1</span>
+        📂 Fiscal <span class="tab-count" id="cnt-fiscal">2</span>
       </button>
       <button class="tab-btn" onclick="switchTab('contabil', this)">
-        📒 Contábil <span class="tab-count" id="cnt-contabil">3</span>
+        📒 Contábil <span class="tab-count" id="cnt-contabil">2</span>
       </button>
       <button class="tab-btn" onclick="switchTab('rh', this)">
         👥 RH <span class="tab-count" id="cnt-rh">0</span>
@@ -525,7 +525,21 @@ body {
           </div>
         </a>
 
-        <div class="add-card" onclick="alert('Me diga qual cruzamento fiscal você quer criar!')">
+        <a class="tool-card" href="painel-mh/fiscal/danfe-conferencia.html">
+          <div class="card-stripe stripe-gold"></div>
+          <div class="card-head">
+            <div class="card-icon icon-gold">📄</div>
+            <span class="badge badge-active">Ativo</span>
+          </div>
+          <div class="card-title">Cruzamento de DANFES × Planilha</div>
+          <div class="card-desc">Cruza DANFEs em PDF contra planilha de referência — valida NF, CNPJ, data, valor e CFOP com De/Para configurável</div>
+          <div class="card-foot">
+            <span class="card-meta">painel-mh/fiscal/danfe-conferencia.html</span>
+            <span class="card-arrow">→</span>
+          </div>
+        </a>
+
+        <div class="add-card" onclick="alert('Me diga qual cruzamento fiscal você quer criar!')">>
           <div class="add-circle">+</div>
           <div class="add-label">Nova ferramenta fiscal</div>
         </div>
@@ -566,21 +580,7 @@ body {
           </div>
         </a>
 
-        <a class="tool-card" href="painel-mh/contabil/cruzamento-pagamentos.html">
-          <div class="card-stripe stripe-brown"></div>
-          <div class="card-head">
-            <div class="card-icon icon-brown">💳</div>
-            <span class="badge badge-new">Novo</span>
-          </div>
-          <div class="card-title">Pendências × Duplicatas em Aberto Fiscal</div>
-          <div class="card-desc">Cruza valores a identificar na contabilidade com duplicatas em aberto no Questor Fiscal</div>
-          <div class="card-foot">
-            <span class="card-meta">painel-mh/contabil/cruzamento-pagamentos.html</span>
-            <span class="card-arrow">→</span>
-          </div>
-        </a>
-
-        <div class="add-card" onclick="alert('Me diga qual cruzamento contábil você quer criar!')">
+                <div class="add-card" onclick="alert('Me diga qual cruzamento contábil você quer criar!')">
           <div class="add-circle">+</div>
           <div class="add-label">Nova ferramenta contábil</div>
         </div>
