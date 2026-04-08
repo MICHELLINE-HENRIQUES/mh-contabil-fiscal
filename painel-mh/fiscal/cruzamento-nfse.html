@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cruzamento NFS-e — Questor × Prefeitura — MH Consultoria</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/*
+  ╔══════════════════════════════════════════════════════════╗
+  ║   ESCALA TIPOGRÁFICA PADRÃO — MH Painel (v2)            ║
+  ║   Use sempre as variáveis abaixo. Nunca font-size fixo. ║
+  ║                                                          ║
+  ║   --fs-micro  12px  badges, topbar-badge, tool-label    ║
+  ║   --fs-small  13px  hints, th de tabela, notas          ║
+  ║   --fs-body   15px  texto geral, td, selects, inputs    ║
+  ║   --fs-step   16px  títulos de etapas / cards           ║
+  ║   --fs-title  36px  tool-title (Cormorant Garamond)     ║
+  ║   --fs-val    28px  valores nos cards (Cormorant)        ║
+  ╚══════════════════════════════════════════════════════════╝
+*/
+
+:root {
+  --fs-micro: 12px;
+  --fs-small: 13px;
+  --fs-body:  15px;
+  --fs-step:  16px;
+  --fs-title: 36px;
+  --fs-val:   28px;
+
+  --cream: #f5f0e8; --cream2: #ede7d9; --cream3: #e4dccb;
+  --gold: #a8895a; --gold2: #c4a870; --gold3: #d4bc8e;
+  --brown: #6b4f2e; --brown2: #8a6640;
+  --bege: #a8895a; --bege-claro: #c4a870;
+  --bege-bg: rgba(168,137,90,0.10); --bege-border: rgba(168,137,90,0.25);
+  --bg: #f5f0e8; --bg2: #fff; --bg3: #ede7d9;
+  --border: rgba(168,137,90,0.15); --border2: rgba(168,137,90,0.28);
+  --text1: #2c1f0e; --text2: #5a4228; --text3: #9a7d5a; --text4: #c4aa88;
+  --verde-bg: rgba(74,124,89,0.08); --verde-text: #3d7a52;
+  --vermelho-bg: rgba(180,60,60,0.08); --vermelho-text: #a03030;
+  --amarelo-text: #8a6200;
+  --azul-text: #1a4a8a; --azul-bg: rgba(26,74,138,0.08);
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  background: var(--bg);
+  color: var(--text1);
+  min-height: 100vh;
+}
+
+/* TOPBAR */
+.topbar {
+  display: flex; align-items: center; gap: 14px;
+  padding: 1rem 2rem; background: #fff;
+  border-bottom: 0.5px solid var(--border2);
+  position: sticky; top: 0; z-index: 10;
+}
+.btn-back {
+  background: none; border: 0.5px solid var(--border2); color: var(--text3);
+  padding: 6px 14px; border-radius: 2px; font-size: var(--fs-small);
+  cursor: pointer; font-family: 'DM Sans', sans-serif; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
+}
+.btn-back:hover { color: var(--text1); border-color: var(--bege); }
+.topbar-title { font-size: var(--fs-body); color: var(--text2); font-weight: 500; }
+.topbar-badge {
+  margin-left: auto; font-size: var(--fs-micro); font-weight: 500;
+  background: var(--bege-bg); color: var(--bege-claro);
+  border: 0.5px solid var(--bege-border);
+  padding: 4px 12px; border-radius: 20px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+/* MAIN */
+.main { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+/* TOOL HEADER */
+.tool-header { margin-bottom: 2rem; }
+.tool-label  { font-size: var(--fs-micro); color: var(--text4); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+.tool-title  { font-family: 'Cormorant Garamond', serif; font-size: var(--fs-title); font-weight: 400; color: var(--text1); }
+.tool-title em { font-style: italic; color: var(--bege-claro); }
+.tool-desc   { font-size: var(--fs-body); color: var(--text3); margin-top: 8px; line-height: 1.65; }
+
+/* STEP BOX */
+.step-box {
+  background: var(--bg2); border: 0.5px solid var(--border2);
+  border-radius: 2px; margin-bottom: 1rem; overflow: hidden; transition: border-color 0.2s;
+}
+.step-box.done   { border-color: var(--verde-text); }
+.step-box.locked { opacity: 0.55; pointer-events: none; }
+
+.step-header {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1.1rem 1.5rem; cursor: pointer; user-select: none; flex-wrap: wrap;
+}
+.step-header:hover { background: rgba(168,137,90,0.03); }
+
+.step-num {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  background: var(--gold); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--fs-step); font-weight: 700;
+}
+.step-num.locked { background: var(--border2); color: var(--text4); }
+.step-num.done   { background: var(--verde-text); }
+
+.step-title-block { flex: 1; }
+.step-title { font-size: var(--fs-step); font-weight: 600; color: var(--text1); }
+.step-sub   { font-size: var(--fs-small); color: var(--text4); margin-top: 3px; }
+
+.step-header-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+
+.btn-limpar {
+  background: none; border: 0.5px solid var(--border2); color: var(--text3);
+  padding: 5px 13px; border-radius: 2px; font-size: var(--fs-small); cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.btn-limpar:hover { border-color: var(--vermelho-text); color: var(--vermelho-text); }
+
+.arrow-toggle {
+  font-size: var(--fs-small); color: var(--text4);
+  width: 22px; text-align: center;
+  transition: transform 0.2s; display: inline-block;
+}
+.arrow-toggle.collapsed { transform: rotate(-90deg); }
+
+/* STEP BODY */
+.step-body { padding: 0 1.5rem 1.5rem; }
+.step-body.hidden { display: none; }
+
+/* UPLOAD */
+.upload-box {
+  border: 0.5px dashed var(--border2); border-radius: 2px;
+  padding: 2rem; text-align: center; cursor: pointer;
+  transition: all 0.2s; background: var(--bg3); margin-bottom: 1.25rem;
+}
+.upload-box:hover    { border-color: var(--bege); background: var(--bege-bg); }
+.upload-box.has-file { border-color: var(--verde-text); background: var(--verde-bg); }
+.upload-title { font-size: var(--fs-body); font-weight: 500; color: var(--text2); margin-bottom: 5px; }
+.upload-hint  { font-size: var(--fs-small); color: var(--text4); }
+.upload-icon  { font-size: 28px; margin-bottom: 8px; }
+input[type=file] { display: none; }
+
+/* MAPEAMENTO */
+.map-label {
+  font-size: var(--fs-small); color: var(--text4);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  margin-bottom: 10px; font-weight: 500;
+}
+.map-grid {
+  display: grid; grid-template-columns: 1fr 30px 1fr;
+  gap: 8px; align-items: center; margin-bottom: 8px;
+}
+.map-field-name {
+  font-size: var(--fs-body); color: var(--text2); font-weight: 500;
+  padding: 9px 13px; background: var(--cream2);
+  border: 0.5px solid var(--border); border-radius: 2px;
+}
+.map-arrow { text-align: center; color: var(--text4); font-size: var(--fs-body); }
+.map-select {
+  font-family: 'DM Sans', sans-serif; font-size: var(--fs-body); color: var(--text2);
+  background: var(--cream); border: 0.5px solid var(--border2);
+  padding: 9px 12px; border-radius: 2px; outline: none; cursor: pointer; width: 100%;
+}
+.map-select:focus { border-color: var(--gold); }
+
+/* PREVIEW */
+.preview-wrap {
+  overflow-x: auto; margin-top: 1rem; max-height: 230px; overflow-y: auto;
+  border: 0.5px solid var(--border); border-radius: 2px;
+}
+.preview-table { width: 100%; border-collapse: collapse; }
+.preview-table th {
+  background: var(--cream2); color: var(--text3); font-weight: 500;
+  padding: 9px 13px; text-align: left; border-bottom: 0.5px solid var(--border2);
+  position: sticky; top: 0; font-size: var(--fs-small);
+  text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+}
+.preview-table td {
+  padding: 8px 13px; border-bottom: 0.5px solid var(--border);
+  color: var(--text2); white-space: nowrap; font-size: var(--fs-body);
+}
+.preview-table tr:hover td { background: var(--bege-bg); }
+
+/* FIELD SELECTOR */
+.fields-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px; margin-bottom: 1.5rem;
+}
+.field-check-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: var(--cream2);
+  border: 0.5px solid var(--border); border-radius: 2px;
+  cursor: pointer; transition: all 0.15s;
+}
+.field-check-item:hover    { border-color: var(--bege); background: var(--bege-bg); }
+.field-check-item.selected { border-color: var(--gold); background: var(--bege-bg); }
+.field-check-item input[type=checkbox] { accent-color: var(--gold); cursor: pointer; width: 16px; height: 16px; }
+.field-check-label { font-size: var(--fs-body); color: var(--text2); cursor: pointer; }
+
+/* CARDS */
+.cards-resumo {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px; margin-bottom: 1.5rem;
+}
+.card-resumo {
+  background: var(--bg2); border: 0.5px solid var(--border);
+  border-radius: 2px; padding: 1.1rem;
+}
+.card-resumo-label { font-size: var(--fs-small); color: var(--text4); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+.card-resumo-valor { font-family: 'Cormorant Garamond', serif; font-size: var(--fs-val); font-weight: 500; }
+.card-resumo.ok   .card-resumo-valor { color: var(--verde-text); }
+.card-resumo.inc1 .card-resumo-valor { color: var(--vermelho-text); }
+.card-resumo.inc2 .card-resumo-valor { color: var(--amarelo-text); }
+
+/* STATUS */
+.status-msg {
+  padding: 12px 16px; border-radius: 2px;
+  font-size: var(--fs-body); margin-bottom: 1.25rem; line-height: 1.55;
+}
+.status-ok   { background: var(--verde-bg);    color: var(--verde-text);   border: 0.5px solid rgba(74,124,89,0.2); }
+.status-warn { background: rgba(140,98,0,0.08); color: var(--amarelo-text); border: 0.5px solid rgba(140,98,0,0.2); }
+.status-info { background: var(--azul-bg);     color: var(--azul-text);    border: 0.5px solid rgba(26,74,138,0.2); }
+
+/* BOTÕES */
+.btn-primary {
+  background: var(--bege); color: #fff; border: none; border-radius: 2px;
+  padding: 10px 22px; font-size: var(--fs-body); font-weight: 600; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.btn-primary:hover    { background: var(--bege-claro); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-secondary {
+  background: none; border: 0.5px solid var(--border2); color: var(--text2);
+  border-radius: 2px; padding: 10px 22px; font-size: var(--fs-body); cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.btn-secondary:hover { border-color: var(--bege); color: var(--text1); }
+
+.btn-download {
+  background: var(--brown); color: #fff; border: none; border-radius: 2px;
+  padding: 12px 26px; font-size: var(--fs-body); font-weight: 600; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.btn-download:hover { background: var(--brown2); }
+
+.btn-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 1.25rem; }
+
+/* DIVIDER */
+.section-div { border-top: 0.5px solid var(--border); margin: 1.5rem 0; }
+
+/* BADGES */
+.badge-done {
+  font-size: var(--fs-micro); padding: 4px 10px; border-radius: 20px;
+  background: var(--verde-bg); color: var(--verde-text);
+  border: 0.5px solid rgba(74,124,89,0.25); font-weight: 600; letter-spacing: 0.05em;
+}
+.badge-pending {
+  font-size: var(--fs-micro); padding: 4px 10px; border-radius: 20px;
+  background: var(--bege-bg); color: var(--text3);
+  border: 0.5px solid var(--bege-border); letter-spacing: 0.05em;
+}
+
+/* TABS */
+.tab-bar { display: flex; }
+.tab-btn {
+  padding: 10px 18px; font-size: var(--fs-body); font-weight: 500; cursor: pointer;
+  background: var(--cream2); border: 0.5px solid var(--border2); border-bottom: none;
+  color: var(--text3); font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+}
+.tab-btn:not(:first-child)  { border-left: none; }
+.tab-btn.active             { background: var(--bg2); color: var(--text1); border-bottom: 0.5px solid var(--bg2); }
+.tab-btn.ok-tab.active      { color: var(--verde-text); }
+.tab-btn.inc1-tab.active    { color: var(--vermelho-text); }
+.tab-btn.inc2-tab.active    { color: var(--amarelo-text); }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.tab-panel {
+  border: 0.5px solid var(--border2); border-top: none;
+  border-radius: 0 0 2px 2px; overflow: hidden;
+}
+
+/* NOTA INLINE */
+.nota-info {
+  background: var(--azul-bg); border: 0.5px solid rgba(26,74,138,0.2);
+  border-radius: 2px; padding: 10px 14px; margin-bottom: 12px;
+  font-size: var(--fs-small); color: var(--azul-text); line-height: 1.55;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="../../index.html" class="btn-back">← Painel</a>
+  <span style="color:var(--text4)">|</span>
+  <span class="topbar-title">FISCAL — NFS-e QUESTOR × PREFEITURA</span>
+  <span class="topbar-badge">MH CONTÁBIL</span>
+</div>
+
+<div class="main">
+  <div class="tool-header">
+    <div class="tool-label">CONFERÊNCIA FISCAL — NFS-e</div>
+    <h1 class="tool-title">Cruzamento NFS-e <em>Questor × Prefeitura</em></h1>
+    <p class="tool-desc">Cruze as Notas Fiscais de Serviço exportadas do Questor com o Livro Fiscal da Prefeitura. Identifique notas a escriturar na Prefeitura, notas a escriturar no Questor e notas já conciliadas.</p>
+  </div>
+
+  <!-- ═══ ETAPA 1 ═══ -->
+  <div class="step-box" id="step1-box">
+    <div class="step-header" onclick="toggleStep(1)">
+      <div class="step-num" id="step1-num">1</div>
+      <div class="step-title-block">
+        <div class="step-title">Questor — Importar Planilha das NFS-e</div>
+        <div class="step-sub" id="step1-sub">Importe as Notas Fiscais de Serviço extraídas do Questor em Excel e vincule as colunas</div>
+      </div>
+      <div class="step-header-right">
+        <span class="badge-pending" id="step1-badge">PENDENTE</span>
+        <button class="btn-limpar" onclick="limparStep(1, event)">✕ Limpar</button>
+        <span class="arrow-toggle" id="step1-arrow">▼</span>
+      </div>
+    </div>
+    <div class="step-body" id="step1-body">
+      <div class="upload-box" id="upload1-box" onclick="document.getElementById('file1').click()">
+        <div class="upload-icon">📂</div>
+        <div class="upload-title">Clique para selecionar a exportação do Questor</div>
+        <div class="upload-hint">NFS-e emitidas — .xlsx ou .xls</div>
+      </div>
+      <input type="file" id="file1" accept=".xlsx,.xls,.csv" onchange="loadFile(1, this)">
+      <div id="map1-area" style="display:none;">
+        <div class="map-label">Vincular colunas do Questor aos campos NFS-e</div>
+        <div class="nota-info">ℹ️ Selecione <strong>— não usar —</strong> nos campos que não existem nesta planilha. Apenas campos mapeados entrarão no cruzamento.</div>
+        <div id="map1-grid"></div>
+        <div class="section-div"></div>
+        <div class="map-label">Pré-visualização — 5 primeiras linhas</div>
+        <div class="preview-wrap"><table class="preview-table" id="preview1-table"></table></div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="confirmarMapeamento(1)">Confirmar Mapeamento ›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ETAPA 2 ═══ -->
+  <div class="step-box locked" id="step2-box">
+    <div class="step-header" onclick="toggleStep(2)">
+      <div class="step-num locked" id="step2-num">2</div>
+      <div class="step-title-block">
+        <div class="step-title">Prefeitura — Importar Livro Fiscal</div>
+        <div class="step-sub" id="step2-sub">Complete a Etapa 1 para desbloquear</div>
+      </div>
+      <div class="step-header-right">
+        <span class="badge-pending" id="step2-badge">BLOQUEADA</span>
+        <button class="btn-limpar" onclick="limparStep(2, event)">✕ Limpar</button>
+        <span class="arrow-toggle collapsed" id="step2-arrow">▼</span>
+      </div>
+    </div>
+    <div class="step-body hidden" id="step2-body">
+      <div class="upload-box" id="upload2-box" onclick="document.getElementById('file2').click()">
+        <div class="upload-icon">📂</div>
+        <div class="upload-title">Clique para selecionar o Livro Fiscal da Prefeitura</div>
+        <div class="upload-hint">Livro de NFS-e da Prefeitura — .xlsx ou .xls</div>
+      </div>
+      <input type="file" id="file2" accept=".xlsx,.xls,.csv" onchange="loadFile(2, this)">
+      <div id="map2-area" style="display:none;">
+        <div class="map-label">Vincular colunas do Livro da Prefeitura aos campos NFS-e</div>
+        <div class="nota-info">ℹ️ Selecione <strong>— não usar —</strong> nos campos que não existem nesta planilha. Apenas campos mapeados entrarão no cruzamento.</div>
+        <div id="map2-grid"></div>
+        <div class="section-div"></div>
+        <div class="map-label">Pré-visualização — 5 primeiras linhas</div>
+        <div class="preview-wrap"><table class="preview-table" id="preview2-table"></table></div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="confirmarMapeamento(2)">Confirmar Mapeamento ›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ETAPA 3 ═══ -->
+  <div class="step-box locked" id="step3-box">
+    <div class="step-header" onclick="toggleStep(3)">
+      <div class="step-num locked" id="step3-num">3</div>
+      <div class="step-title-block">
+        <div class="step-title">Configurar e Executar o Cruzamento</div>
+        <div class="step-sub" id="step3-sub">Selecione os campos-chave e execute o cruzamento</div>
+      </div>
+      <div class="step-header-right">
+        <span class="badge-pending" id="step3-badge">BLOQUEADA</span>
+        <button class="btn-limpar" onclick="limparStep(3, event)">✕ Limpar</button>
+        <span class="arrow-toggle collapsed" id="step3-arrow">▼</span>
+      </div>
+    </div>
+    <div class="step-body hidden" id="step3-body">
+      <div class="map-label">Campos-chave do cruzamento</div>
+      <p style="font-size:var(--fs-body); color:var(--text3); margin-bottom:14px; line-height:1.6;">
+        Somente campos mapeados nas duas planilhas estão disponíveis. Marque um ou mais campos que serão usados para identificar registros correspondentes.
+      </p>
+      <div class="fields-grid" id="fields-selector"></div>
+      <div class="section-div"></div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="executarCruzamento()">⚡ Executar Cruzamento</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ETAPA 4 ═══ -->
+  <div class="step-box locked" id="step4-box">
+    <div class="step-header" onclick="toggleStep(4)">
+      <div class="step-num locked" id="step4-num">4</div>
+      <div class="step-title-block">
+        <div class="step-title">Resultado e Download</div>
+        <div class="step-sub" id="step4-sub">Visualize as inconsistências e baixe o relatório</div>
+      </div>
+      <div class="step-header-right">
+        <span class="badge-pending" id="step4-badge">BLOQUEADA</span>
+        <button class="btn-limpar" onclick="limparStep(4, event)">✕ Limpar</button>
+        <span class="arrow-toggle collapsed" id="step4-arrow">▼</span>
+      </div>
+    </div>
+    <div class="step-body hidden" id="step4-body">
+      <div class="cards-resumo" id="result-cards"></div>
+      <div id="result-status"></div>
+      <div class="tab-bar">
+        <button class="tab-btn ok-tab active"  onclick="showTab('ok')">✔ Notas Conciliadas OK</button>
+        <button class="tab-btn inc1-tab"       onclick="showTab('inc1')">⚠ A Escriturar na Prefeitura</button>
+        <button class="tab-btn inc2-tab"       onclick="showTab('inc2')">⚠ A Escriturar no Questor</button>
+      </div>
+      <div class="tab-panel">
+        <div class="tab-content active" id="tab-ok">
+          <div class="preview-wrap" style="max-height:340px;"><table class="preview-table" id="table-ok"></table></div>
+        </div>
+        <div class="tab-content" id="tab-inc1">
+          <div class="preview-wrap" style="max-height:340px;"><table class="preview-table" id="table-inc1"></table></div>
+        </div>
+        <div class="tab-content" id="tab-inc2">
+          <div class="preview-wrap" style="max-height:340px;"><table class="preview-table" id="table-inc2"></table></div>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:1.5rem;">
+        <button class="btn-download" onclick="downloadExcel()">⬇ Baixar Cruzamento NFS-e (.xlsx)</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const CAMPOS = [
+  { id: 'data_emissao',  label: 'Data de Emissão',              tipo: 'data'  },
+  { id: 'cnpj',          label: 'CNPJ Emitente/Prestador',       tipo: 'texto' },
+  { id: 'razao_social',  label: 'Razão Social Emitente/Prestador', tipo: 'texto' },
+  { id: 'num_nfse',      label: 'Número da NFS-e',               tipo: 'texto' },
+  { id: 'valor_nfse',    label: 'Valor da NFS-e',                tipo: 'valor' },
+];
+
+const state = {
+  p1: { raw:[], headers:[], mapping:{}, rows:[], done:false },
+  p2: { raw:[], headers:[], mapping:{}, rows:[], done:false },
+  cruzamento: { ok:[], inc1:[], inc2:[], done:false },
+  camposChave: [],
+};
+
+function toggleStep(n) {
+  document.getElementById(`step${n}-body`).classList.toggle('hidden');
+  document.getElementById(`step${n}-arrow`).classList.toggle('collapsed');
+}
+
+function resetUpload(n) {
+  const b = document.getElementById(`upload${n}-box`);
+  b.className = 'upload-box';
+  if (n === 1) {
+    b.innerHTML = `<div class="upload-icon">📂</div><div class="upload-title">Clique para selecionar a exportação do Questor</div><div class="upload-hint">NFS-e emitidas — .xlsx ou .xls</div>`;
+  } else {
+    b.innerHTML = `<div class="upload-icon">📂</div><div class="upload-title">Clique para selecionar o Livro Fiscal da Prefeitura</div><div class="upload-hint">Livro de NFS-e da Prefeitura — .xlsx ou .xls</div>`;
+  }
+}
+
+function lockStepsFrom(n) {
+  for (let i = n; i <= 4; i++) {
+    document.getElementById(`step${i}-box`).classList.add('locked');
+    document.getElementById(`step${i}-box`).classList.remove('done');
+    const num = document.getElementById(`step${i}-num`);
+    num.classList.add('locked'); num.classList.remove('done'); num.textContent = i;
+    document.getElementById(`step${i}-body`).classList.add('hidden');
+    document.getElementById(`step${i}-arrow`).classList.add('collapsed');
+    document.getElementById(`step${i}-badge`).textContent = 'BLOQUEADA';
+    document.getElementById(`step${i}-badge`).className = 'badge-pending';
+  }
+}
+
+function unlockStep(n) {
+  document.getElementById(`step${n}-box`).classList.remove('locked');
+  const num = document.getElementById(`step${n}-num`);
+  num.classList.remove('locked', 'done'); num.textContent = n;
+  document.getElementById(`step${n}-badge`).textContent = 'PENDENTE';
+  document.getElementById(`step${n}-badge`).className = 'badge-pending';
+}
+
+function resetStep(n, label, open) {
+  document.getElementById(`step${n}-box`).classList.remove('done');
+  const num = document.getElementById(`step${n}-num`);
+  num.classList.remove('done', 'locked'); num.textContent = n;
+  document.getElementById(`step${n}-badge`).textContent = label;
+  document.getElementById(`step${n}-badge`).className = 'badge-pending';
+  const body = document.getElementById(`step${n}-body`);
+  const arrow = document.getElementById(`step${n}-arrow`);
+  if (open) { body.classList.remove('hidden'); arrow.classList.remove('collapsed'); }
+  else { body.classList.add('hidden'); arrow.classList.add('collapsed'); }
+}
+
+function markDone(n, sub) {
+  document.getElementById(`step${n}-box`).classList.add('done');
+  const num = document.getElementById(`step${n}-num`);
+  num.classList.remove('locked'); num.classList.add('done'); num.textContent = '✓';
+  const badge = document.getElementById(`step${n}-badge`);
+  badge.textContent = 'CONCLUÍDA'; badge.className = 'badge-done';
+  if (sub) document.getElementById(`step${n}-sub`).textContent = sub;
+}
+
+function limparStep(n, e) {
+  e.stopPropagation();
+  if (n === 1) {
+    state.p1 = { raw:[], headers:[], mapping:{}, rows:[], done:false };
+    document.getElementById('file1').value = '';
+    resetUpload(1);
+    document.getElementById('map1-area').style.display = 'none';
+    state.p2 = { raw:[], headers:[], mapping:{}, rows:[], done:false };
+    document.getElementById('file2').value = '';
+    resetUpload(2);
+    document.getElementById('map2-area').style.display = 'none';
+    state.cruzamento = { ok:[], inc1:[], inc2:[], done:false };
+    resetStep(1, 'PENDENTE', true);
+    lockStepsFrom(2);
+  } else if (n === 2) {
+    state.p2 = { raw:[], headers:[], mapping:{}, rows:[], done:false };
+    document.getElementById('file2').value = '';
+    resetUpload(2);
+    document.getElementById('map2-area').style.display = 'none';
+    state.cruzamento = { ok:[], inc1:[], inc2:[], done:false };
+    resetStep(2, 'PENDENTE', true);
+    lockStepsFrom(3);
+  } else if (n === 3) {
+    state.cruzamento = { ok:[], inc1:[], inc2:[], done:false };
+    state.camposChave = [];
+    resetStep(3, 'PENDENTE', true);
+    lockStepsFrom(4);
+  } else if (n === 4) {
+    state.cruzamento = { ok:[], inc1:[], inc2:[], done:false };
+    resetStep(4, 'BLOQUEADA', false);
+    lockStepsFrom(4);
+  }
+}
+
+function loadFile(n, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array', cellDates:true });
+    const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header:1, defval:'' });
+    if (!json.length) { alert('Planilha vazia ou inválida.'); return; }
+    const headers = json[0].map(h => String(h).trim());
+    const rows    = json.slice(1).filter(r => r.some(c => c !== ''));
+    state[`p${n}`].headers = headers;
+    state[`p${n}`].raw     = rows;
+    state[`p${n}`].done    = false;
+    const box = document.getElementById(`upload${n}-box`);
+    box.className = 'upload-box has-file';
+    box.innerHTML = `<div class="upload-icon">✅</div><div class="upload-title">${file.name}</div><div class="upload-hint">${rows.length} registros · ${headers.length} colunas detectadas</div>`;
+    buildMappingUI(n, headers, rows);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function buildMappingUI(n, headers, rows) {
+  const grid = document.getElementById(`map${n}-grid`);
+  grid.innerHTML = '';
+  const opts = ['— não usar —', ...headers];
+  CAMPOS.forEach(campo => {
+    const row = document.createElement('div');
+    row.className = 'map-grid';
+    const lbl = document.createElement('div');
+    lbl.className = 'map-field-name'; lbl.textContent = campo.label;
+    const arr = document.createElement('div');
+    arr.className = 'map-arrow'; arr.textContent = '→';
+    const sel = document.createElement('select');
+    sel.className = 'map-select'; sel.id = `map${n}_${campo.id}`;
+    const autoIdx = opts.findIndex(h =>
+      normalizeKey(h) === normalizeKey(campo.label) ||
+      normalizeKey(h).includes(normalizeKey(campo.id))
+    );
+    opts.forEach((h, i) => {
+      const opt = document.createElement('option');
+      opt.value = h === '— não usar —' ? '' : h; opt.textContent = h;
+      if (i === (autoIdx >= 0 ? autoIdx : 0)) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    row.appendChild(lbl); row.appendChild(arr); row.appendChild(sel);
+    grid.appendChild(row);
+  });
+  buildPreview(n, headers, rows);
+  document.getElementById(`map${n}-area`).style.display = 'block';
+}
+
+function buildPreview(n, headers, rows) {
+  const tbl = document.getElementById(`preview${n}-table`);
+  tbl.innerHTML = '';
+  const thead = tbl.createTHead(); const tr = thead.insertRow();
+  headers.forEach(h => { const th = document.createElement('th'); th.textContent = h; tr.appendChild(th); });
+  const tbody = tbl.createTBody();
+  rows.slice(0,5).forEach(row => {
+    const tr2 = tbody.insertRow();
+    headers.forEach((_,i) => { const td = tr2.insertCell(); td.textContent = formatCell(row[i]); });
+  });
+}
+
+function confirmarMapeamento(n) {
+  const mapping = {}; let ok = false;
+  CAMPOS.forEach(c => {
+    const sel = document.getElementById(`map${n}_${c.id}`);
+    mapping[c.id] = sel.value || null;
+    if (sel.value) ok = true;
+  });
+  if (!ok) { alert('Mapeie pelo menos um campo para continuar.'); return; }
+  const pKey = `p${n}`;
+  state[pKey].mapping = mapping;
+  state[pKey].rows = state[pKey].raw.map(row => {
+    const obj = {};
+    CAMPOS.forEach(c => {
+      const colName = mapping[c.id];
+      obj[c.id] = colName ? (row[state[pKey].headers.indexOf(colName)] ?? '') : null;
+    });
+    return obj;
+  });
+  state[pKey].done = true;
+  const nMapped = Object.values(mapping).filter(v=>v).length;
+  markDone(n, `${state[pKey].rows.length} registros · ${nMapped} campos mapeados`);
+  document.getElementById(`step${n}-body`).classList.add('hidden');
+  document.getElementById(`step${n}-arrow`).classList.add('collapsed');
+  if (n === 1) {
+    unlockStep(2);
+    document.getElementById('step2-body').classList.remove('hidden');
+    document.getElementById('step2-arrow').classList.remove('collapsed');
+    document.getElementById('step2-sub').textContent = 'Selecione o Livro Fiscal da Prefeitura e vincule as colunas';
+  } else if (n === 2) {
+    unlockStep(3);
+    document.getElementById('step3-body').classList.remove('hidden');
+    document.getElementById('step3-arrow').classList.remove('collapsed');
+    buildFieldSelector();
+  }
+}
+
+function buildFieldSelector() {
+  const cont = document.getElementById('fields-selector');
+  cont.innerHTML = '';
+  const available = CAMPOS.filter(c => state.p1.mapping[c.id] && state.p2.mapping[c.id]);
+  if (!available.length) {
+    cont.innerHTML = '<div class="status-msg status-warn">Nenhum campo foi mapeado nas duas planilhas simultaneamente. Volte e revise o mapeamento.</div>';
+    return;
+  }
+  available.forEach(campo => {
+    const item = document.createElement('label'); item.className = 'field-check-item';
+    const cb = document.createElement('input'); cb.type='checkbox'; cb.id=`fchk_${campo.id}`; cb.value=campo.id;
+    if (campo.id === 'num_nfse') { cb.checked=true; item.classList.add('selected'); }
+    cb.addEventListener('change', () => item.classList.toggle('selected', cb.checked));
+    const lbl = document.createElement('span'); lbl.className='field-check-label'; lbl.textContent=campo.label;
+    item.appendChild(cb); item.appendChild(lbl);
+    item.addEventListener('click', e => { if(e.target!==cb){ cb.checked=!cb.checked; item.classList.toggle('selected',cb.checked); } });
+    cont.appendChild(item);
+  });
+}
+
+function executarCruzamento() {
+  const chaves = CAMPOS.filter(c => { const cb=document.getElementById(`fchk_${c.id}`); return cb&&cb.checked; });
+  if (!chaves.length) { alert('Selecione ao menos um campo para o cruzamento.'); return; }
+  state.camposChave = chaves;
+
+  const getKey = (row, campos) => campos.map(c => {
+    const v = row[c.id];
+    if (v===null||v===undefined||v==='') return '__null__';
+    if (c.tipo==='valor') return parseFloat(String(v).replace(/[^\d,.-]/g,'').replace(',','.')).toFixed(2);
+    if (c.tipo==='data')  return normData(v);
+    return normalizeKey(String(v));
+  }).join('||');
+
+  const map2 = new Map();
+  state.p2.rows.forEach(r => { const k=getKey(r,chaves); if(!map2.has(k)) map2.set(k,[]); map2.get(k).push(r); });
+
+  const usedP2 = new Set(); const okRows=[]; const inc1=[];
+  state.p1.rows.forEach(r1 => {
+    const k = getKey(r1, chaves);
+    if (map2.has(k)) {
+      const matches = map2.get(k);
+      const idx = matches.findIndex((_,i) => !usedP2.has(`${k}__${i}`));
+      if (idx>=0) { usedP2.add(`${k}__${idx}`); okRows.push({p1:r1,p2:matches[idx]}); }
+      else inc1.push(r1);
+    } else inc1.push(r1);
+  });
+  const inc2 = state.p2.rows.filter(r2 => {
+    const k=getKey(r2,chaves); const matches=map2.get(k)||[]; const idx=matches.indexOf(r2);
+    return !usedP2.has(`${k}__${idx}`);
+  });
+
+  state.cruzamento = { ok:okRows, inc1, inc2, done:true };
+  markDone(3, `Campos: ${chaves.map(c=>c.label).join(', ')}`);
+  document.getElementById('step3-body').classList.add('hidden');
+  document.getElementById('step3-arrow').classList.add('collapsed');
+  unlockStep(4); markDone(4, `${okRows.length} coincidências · ${inc1.length+inc2.length} inconsistências`);
+  document.getElementById('step4-body').classList.remove('hidden');
+  document.getElementById('step4-arrow').classList.remove('collapsed');
+  renderResultado();
+}
+
+function renderResultado() {
+  const {ok,inc1,inc2} = state.cruzamento;
+  document.getElementById('result-cards').innerHTML = `
+    <div class="card-resumo ok"><div class="card-resumo-label">Notas Conciliadas</div><div class="card-resumo-valor">${ok.length}</div></div>
+    <div class="card-resumo inc1"><div class="card-resumo-label">A Escriturar na Prefeitura</div><div class="card-resumo-valor">${inc1.length}</div></div>
+    <div class="card-resumo inc2"><div class="card-resumo-label">A Escriturar no Questor</div><div class="card-resumo-valor">${inc2.length}</div></div>
+    <div class="card-resumo"><div class="card-resumo-label">Total — Questor</div><div class="card-resumo-valor" style="color:var(--text2)">${state.p1.rows.length}</div></div>
+    <div class="card-resumo"><div class="card-resumo-label">Total — Prefeitura</div><div class="card-resumo-valor" style="color:var(--text2)">${state.p2.rows.length}</div></div>`;
+  document.getElementById('result-status').innerHTML = (inc1.length===0&&inc2.length===0)
+    ? '<div class="status-msg status-ok">✅ Cruzamento sem inconsistências — todas as NFS-e estão conciliadas entre o Questor e o Livro da Prefeitura.</div>'
+    : `<div class="status-msg status-warn">⚠ Inconsistências encontradas: ${inc1.length} nota(s) a escriturar na Prefeitura e ${inc2.length} nota(s) a escriturar no Questor.</div>`;
+  document.querySelector('.ok-tab').textContent  = `✔ Notas Conciliadas OK (${ok.length})`;
+  document.querySelector('.inc1-tab').textContent = `⚠ A Escriturar na Prefeitura (${inc1.length})`;
+  document.querySelector('.inc2-tab').textContent = `⚠ A Escriturar no Questor (${inc2.length})`;
+  const allC = CAMPOS.filter(c => state.p1.mapping[c.id]||state.p2.mapping[c.id]);
+  renderOkTable(ok,allC); renderIncTable('table-inc1',inc1,state.p1,allC,'vermelho'); renderIncTable('table-inc2',inc2,state.p2,allC,'amarelo');
+}
+
+function renderOkTable(rows, campos) {
+  const tbl=document.getElementById('table-ok'); tbl.innerHTML='';
+  const cP1=campos.filter(c=>state.p1.mapping[c.id]); const cP2=campos.filter(c=>state.p2.mapping[c.id]);
+  const thead=tbl.createTHead();
+  const hr1=thead.insertRow();
+  if(cP1.length){const th=document.createElement('th');th.colSpan=cP1.length;th.textContent='QUESTOR';th.style.cssText='background:rgba(74,124,89,0.12);color:var(--verde-text);text-align:center;border-right:1px solid var(--border2);font-size:var(--fs-small);';hr1.appendChild(th);}
+  if(cP2.length){const th=document.createElement('th');th.colSpan=cP2.length;th.textContent='PREFEITURA';th.style.cssText='background:rgba(74,124,89,0.06);color:var(--verde-text);text-align:center;font-size:var(--fs-small);';hr1.appendChild(th);}
+  const hr2=thead.insertRow();
+  [...cP1,...cP2].forEach(c=>{const th=document.createElement('th');th.textContent=c.label;hr2.appendChild(th);});
+  const tbody=tbl.createTBody();
+  if(!rows.length){const tr=tbody.insertRow();const td=tr.insertCell();td.colSpan=cP1.length+cP2.length;td.textContent='Nenhum registro coincidente';td.style.cssText='text-align:center;color:var(--text4);padding:2rem;';return;}
+  rows.forEach(pair=>{const tr=tbody.insertRow();tr.style.background='rgba(74,124,89,0.03)';cP1.forEach(c=>{const td=tr.insertCell();td.textContent=formatCell(pair.p1[c.id]);});cP2.forEach(c=>{const td=tr.insertCell();td.textContent=formatCell(pair.p2[c.id]);});});
+}
+
+function renderIncTable(tableId, rows, pState, campos, color) {
+  const tbl=document.getElementById(tableId); tbl.innerHTML='';
+  const cf=campos.filter(c=>pState.mapping[c.id]);
+  const thead=tbl.createTHead();const hr=thead.insertRow();
+  cf.forEach(c=>{const th=document.createElement('th');th.textContent=c.label;hr.appendChild(th);});
+  const tbody=tbl.createTBody();
+  if(!rows.length){const tr=tbody.insertRow();const td=tr.insertCell();td.colSpan=cf.length||1;td.textContent='Sem inconsistências ✓';td.style.cssText='text-align:center;color:var(--verde-text);padding:2rem;';return;}
+  rows.forEach(row=>{const tr=tbody.insertRow();tr.style.background=color==='vermelho'?'rgba(180,60,60,0.04)':'rgba(140,98,0,0.04)';cf.forEach(c=>{const td=tr.insertCell();td.textContent=formatCell(row[c.id]);td.style.color=color==='vermelho'?'var(--vermelho-text)':'var(--amarelo-text)';});});
+}
+
+function showTab(t) {
+  ['ok','inc1','inc2'].forEach(id=>document.getElementById(`tab-${id}`).classList.toggle('active',id===t));
+  document.querySelectorAll('.tab-btn').forEach(btn=>btn.classList.toggle('active',btn.onclick?.toString().includes(`'${t}'`)));
+}
+
+function downloadExcel() {
+  try {
+    if (!state.cruzamento.done) { alert('Execute o cruzamento antes de baixar.'); return; }
+
+    const {ok, inc1, inc2} = state.cruzamento;
+    const wb = XLSX.utils.book_new();
+
+    const cP1 = CAMPOS.filter(c => state.p1.mapping[c.id]);
+    const cP2 = CAMPOS.filter(c => state.p2.mapping[c.id]);
+
+    // ABA 1 — Notas Conciliadas OK
+    const dadosOk = [
+      [...cP1.map(c => `QUESTOR — ${c.label}`), ...cP2.map(c => `PREFEITURA — ${c.label}`)],
+      ...ok.map(p => [
+        ...cP1.map(c => exportVal(p.p1[c.id])),
+        ...cP2.map(c => exportVal(p.p2[c.id]))
+      ])
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dadosOk), 'Notas Conciliadas OK');
+
+    // ABA 2 — A Escriturar na Prefeitura
+    const dadosInc1 = [
+      [...cP1.map(c => c.label), 'OBSERVAÇÃO'],
+      ...inc1.map(r => [
+        ...cP1.map(c => exportVal(r[c.id])),
+        'Esta nota está no Questor e não está no Livro da Prefeitura — antes de escriturar valide a informação'
+      ])
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dadosInc1), 'Notas a Escriturar na Prefeit');
+
+    // ABA 3 — A Escriturar no Questor
+    const dadosInc2 = [
+      [...cP2.map(c => c.label), 'OBSERVAÇÃO'],
+      ...inc2.map(r => [
+        ...cP2.map(c => exportVal(r[c.id])),
+        'Esta nota está no Livro da Prefeitura e não está no Livro do Questor — confirme antes de escriturar no Questor'
+      ])
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dadosInc2), 'Notas a Escriturar no Questor');
+
+    XLSX.writeFile(wb, `Cruzamento_NFSe_${fmtHoje()}.xlsx`);
+
+  } catch(e) {
+    console.error('Erro ao gerar Excel:', e);
+    alert('Erro ao gerar o arquivo Excel: ' + e.message);
+  }
+}
+
+function normalizeKey(s){return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');}
+function normData(v){if(!v)return'';if(v instanceof Date)return v.toISOString().split('T')[0];const s=String(v).trim();const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(m)return`${m[3].padStart(4,'0')}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;return s;}
+function formatCell(v){if(v===null||v===undefined)return'';if(v instanceof Date)return v.toLocaleDateString('pt-BR');return String(v);}
+function exportVal(v){if(v===null||v===undefined)return'';if(v instanceof Date)return v.toLocaleDateString('pt-BR');return v;}
+function fmtHoje(){const d=new Date();return`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;}
+</script>
+</body>
+</html>
