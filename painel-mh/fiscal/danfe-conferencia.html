@@ -281,7 +281,7 @@ input[type=file]{display:none}
            ondragover="ev(event,'drop1')" ondragleave="el('drop1')" ondrop="dropDanfe(event)">
         <div class="upload-icon">📄</div>
         <div class="upload-title" id="upload-title1">DANFEs em PDF</div>
-        <div class="upload-hint" id="upload-hint1">Clique ou arraste — múltiplos arquivos aceitos</div>
+        <div class="upload-hint" id="upload-hint1">Clique ou arraste — múltiplos arquivos ou pastas separadas</div>
         <div class="upload-ok hidden" id="st1"></div>
       </div>
       <input type="file" id="inp1" accept=".pdf" multiple onchange="handlePDFs(this.files)">
@@ -289,6 +289,14 @@ input[type=file]{display:none}
       <div class="prog-wrap hidden" id="pgwrap">
         <div class="prog-bar"><div class="prog-fill" id="pgfill" style="width:0%"></div></div>
         <div class="prog-label" id="pglbl">Aguardando...</div>
+      </div>
+
+      <!-- Botão adicionar mais PDFs (aparece após 1º carregamento) -->
+      <div id="btn-add-mais" class="hidden" style="margin-top:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <button class="btn-secondary" onclick="document.getElementById('inp1').click()">
+          ＋ Adicionar mais PDFs
+        </button>
+        <span style="font-size:var(--fs-micro);color:var(--text4)">PDFs de outras pastas são acumulados à lista atual</span>
       </div>
 
       <!-- Campos a extrair -->
@@ -1336,7 +1344,7 @@ function atualizarModoLeitura() {
     hint.textContent = 'Um ou mais PDFs compilados — leitura por mudança de chave de acesso';
   } else {
     titl.textContent = 'DANFEs em PDF';
-    hint.textContent = 'Clique ou arraste — múltiplos arquivos aceitos';
+    hint.textContent = 'Clique ou arraste — múltiplos arquivos ou pastas separadas';
   }
 }
 
@@ -1352,8 +1360,15 @@ async function handlePDFs(files) {
   }
   document.getElementById('alert-modo').classList.add('hidden');
 
-  danfeList = [];
+  // NÃO zera danfeList — acumula sobre carregamentos anteriores.
+  // Deduplicação: remove entrada anterior com mesma chave NF-e (ou mesmo nome de arquivo).
   const arquivos = Array.from(files);
+  arquivos.forEach(f => {
+    // tenta remover pelo nome do arquivo (evita reprocessar o mesmo PDF)
+    const idxArq = danfeList.findIndex(d => d.arquivo === f.name);
+    if (idxArq >= 0) danfeList.splice(idxArq, 1);
+  });
+
   let totalProcessado = 0;
 
   document.getElementById('pgwrap').classList.remove('hidden');
@@ -1375,13 +1390,23 @@ async function handlePDFs(files) {
         // ── Modo individual puro: cada PDF = 1 DANFE
         const d = await extrairDANFEDePDF(pdf);
         d.arquivo = file.name;
+        // Remove entrada anterior com mesma chave de acesso, se houver
+        if (d.chave) {
+          const idxChave = danfeList.findIndex(x => x.chave && x.chave === d.chave);
+          if (idxChave >= 0) danfeList.splice(idxChave, 1);
+        }
         danfeList.push(d);
         totalProcessado++;
       } else {
         // ── Modo compilado (ou misto): lê por mudança de chave
-        // extrairMultiplosDANFEs retorna 1 item quando só 1 chave é encontrada
-        // — comportamento idêntico ao individual, sem processamento duplo
         const extraidos = await extrairMultiplosDANFEs(pdf, file.name);
+        // Remove entradas anteriores com mesma chave de acesso
+        extraidos.forEach(d => {
+          if (d.chave) {
+            const idxChave = danfeList.findIndex(x => x.chave && x.chave === d.chave);
+            if (idxChave >= 0) danfeList.splice(idxChave, 1);
+          }
+        });
         danfeList.push(...extraidos);
         totalProcessado += extraidos.length;
         document.getElementById('pglbl').textContent =
@@ -1394,13 +1419,18 @@ async function handlePDFs(files) {
     }
   }
 
+  // Resetar input para permitir re-seleção dos mesmos arquivos futuramente
+  document.getElementById('inp1').value = '';
+
+  const totalAcumulado = danfeList.length;
   document.getElementById('pgfill').style.width = '100%';
   document.getElementById('drop1').classList.add('ok');
   const stEl = document.getElementById('st1');
-  stEl.textContent = `✔ ${arquivos.length} arquivo(s) — ${totalProcessado} DANFE(s) extraído(s)`;
+  stEl.innerHTML = `✔ ${totalAcumulado} DANFE(s) no total &nbsp;<span style="color:var(--text4);font-size:var(--fs-micro)">(clique para adicionar mais)</span>`;
   stEl.classList.remove('hidden');
   document.getElementById('pglbl').textContent =
-    `✔ Extração concluída — ${totalProcessado} DANFE(s) em ${arquivos.length} arquivo(s)`;
+    `✔ Lote concluído — ${totalProcessado} novo(s) · ${totalAcumulado} DANFE(s) no total`;
+  document.getElementById('btn-add-mais').classList.remove('hidden');
 
   // ── Detectar DANFEs duplicados pela chave de acesso ──────
   detectarDuplicatas();
@@ -1541,7 +1571,7 @@ async function extrairMultiplosDANFEs(pdf, nomeArquivo) {
       valorNota:   extrairValorPosicional(itemsSeg,
                      ['TOTAL DA NOTA','V TOTAL DA NOTA','VALOR TOTAL DA NOTA'])
                    || extrairValorFallback(txt,
-                     ['V\\.\\s*TOTAL\\s+DA\\s+NOTA','VALOR\\s+TOTAL\\s+DA\\s+NF']),
+                     ['VALOR\\s+TOTAL\\s+DA\\s+NOTA','V\\.\\s*TOTAL\\s+DA\\s+NOTA','VALOR\\s+TOTAL\\s+DA\\s+NF','VALOR\\s+TOTAL\\s*[:\\-]']),
       valorIcms:   extrairValorPosicional(itemsSeg, ['VALOR DO ICMS'])
                    || extrairValorFallback(txt, ['VALOR\\s+DO\\s+ICMS']),
       erro: null,
@@ -1585,7 +1615,7 @@ async function extrairDANFEDePDF(pdf) {
     nomeEmit: extrairNomeEmit(txt), nomeDest: extrairNomeDest(txt),
     cfop: extrairCFOP(txt),
     valorNota:  extrairValorPosicional(items, ['TOTAL DA NOTA','V TOTAL DA NOTA','VALOR TOTAL DA NOTA'])
-                || extrairValorFallback(txt, ['V\\.\\s*TOTAL\\s+DA\\s+NOTA','VALOR\\s+TOTAL\\s+DA\\s+NF']),
+                || extrairValorFallback(txt, ['VALOR\\s+TOTAL\\s+DA\\s+NOTA','V\\.\\s*TOTAL\\s+DA\\s+NOTA','VALOR\\s+TOTAL\\s+DA\\s+NF','VALOR\\s+TOTAL\\s*[:\\-]']),
     valorIcms:  extrairValorPosicional(items, ['VALOR DO ICMS'])
                 || extrairValorFallback(txt, ['VALOR\\s+DO\\s+ICMS']),
     erro: null,
@@ -1622,7 +1652,7 @@ async function extrairDANFE(file) {
     nomeDest:    extrairNomeDest(txt),
     cfop:        extrairCFOP(txt),
     valorNota:   extrairValorPosicional(items, ['TOTAL DA NOTA','V TOTAL DA NOTA','VALOR TOTAL DA NOTA'])
-                 || extrairValorFallback(txt, ['V\\.\\s*TOTAL\\s+DA\\s+NOTA','VALOR\\s+TOTAL\\s+DA\\s+NF']),
+                 || extrairValorFallback(txt, ['VALOR\\s+TOTAL\\s+DA\\s+NOTA','V\\.\\s*TOTAL\\s+DA\\s+NOTA','VALOR\\s+TOTAL\\s+DA\\s+NF','VALOR\\s+TOTAL\\s*[:\\-]']),
     valorIcms:   extrairValorPosicional(items, ['VALOR DO ICMS','VL DO ICMS'])
                  || extrairValorFallback(txt, ['VALOR\\s+DO\\s+ICMS']),
     erro: null,
@@ -1743,18 +1773,34 @@ function extrairNomeDest(txt) {
 }
 
 function extrairCFOP(txt) {
-  // Linha de item: NCM(8) + CST(3) + CFOP(4)
-  let m = txt.match(/\b\d{8}\s+\d{3}\s+([1-7]\d{3})\b/);
+  // Normaliza formato X.XXX → XXXX (ex: 5.929 → 5929)
+  // Comum em DANFEs onde CFOP aparece com ponto separador de milhar
+  const norm = txt.replace(/\b([1-7])\.(\d{3})\b/g, '$1$2');
+
+  // Camada 1 — NCM(8) + CST(3) + CFOP(4): linha completa com CST preenchido
+  let m = norm.match(/\b\d{8}\s+\d{3}\s+([1-7]\d{3})\b/);
   if (m) return m[1];
-  // Após coluna CFOP
-  const idx = txt.search(/\bCFOP\b/i);
+
+  // Camada 1b — NCM(8) + CFOP(4) sem CST: coluna O/CST vazia/ausente
+  m = norm.match(/\b\d{8}\s+([1-7]\d{3})\b/);
+  if (m) return m[1];
+
+  // Camada 2 — segmento após cabeçalho "CFOP"
+  const idx = norm.search(/\bCFOP\b/i);
   if (idx >= 0) {
-    const seg = txt.slice(idx+4, idx+500);
+    const seg = norm.slice(idx + 4, idx + 500);
+    // Com CST
     m = seg.match(/\b\d{3}\s+([1-7]\d{3})\b/);
     if (m) return m[1];
+    // Sem CST — primeiro [1-7]XXX encontrado
     m = seg.match(/\b([1-7]\d{3})\b/);
     if (m) return m[1];
   }
+
+  // Camada 3 — fallback direto: formato X.XXX no texto original
+  m = txt.match(/\b([1-7])\.(\d{3})\b/);
+  if (m) return m[1] + m[2];
+
   return null;
 }
 
@@ -2446,6 +2492,7 @@ function limparTudo() {
   ['inp1','inp2'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('pgwrap').classList.add('hidden');
   document.getElementById('pgfill').style.width='0%';
+  document.getElementById('btn-add-mais').classList.add('hidden');
   document.getElementById('map-area').classList.add('hidden');
   document.getElementById('resultado-cruz').classList.add('hidden');
   document.getElementById('resultado-depara').classList.add('hidden');
