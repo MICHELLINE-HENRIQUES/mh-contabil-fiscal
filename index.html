@@ -74,9 +74,15 @@ body {
   gap: 1rem;
 }
 
+.login-logo-horiz {
+  width: 280px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
 .login-mono {
-  width: 100px;
-  height: 100px;
+  width: 90px;
+  height: 90px;
   object-fit: contain;
 }
 
@@ -508,8 +514,8 @@ body {
 <div id="login-screen">
   <div class="login-wrap">
     <div class="login-brand">
-      <img src="index_files/MONOGRAMA_BEGE_c%C3%B3pia_3.png" class="login-mono" alt="MH">
-      <div class="login-tagline">Consultoria &amp; Assessoria Contábil</div>
+      <img src="index_files/VARIA%C3%87%C3%83O_BEGE_c%C3%B3pia.png" class="login-logo-horiz" alt="Michelline Henriques">
+      <img src="index_files/MONOGRAMA_BEGE_c%C3%B3pia.png" class="login-mono" alt="MH">
     </div>
     <div class="login-card">
       <div class="login-divider"><span>Acesso corporativo</span></div>
@@ -580,7 +586,7 @@ body {
       <div class="sector-desc">Ferramentas de apuração e cruzamento de tributos estaduais e federais.</div>
       <div class="tools-grid">
 
-        <a class="tool-card" href="painel-mh/fiscal/icms.html">
+        <a class="tool-card" href="file:///C:/Users/Michelline/Downloads/painel-mh/fiscal/icms.html">
           <div class="card-stripe stripe-gold"></div>
           <div class="card-head">
             <div class="card-icon icon-gold">📊</div>
@@ -594,7 +600,7 @@ body {
           </div>
         </a>
 
-        <a class="tool-card" href="painel-mh/fiscal/danfe-conferencia.html">
+        <a class="tool-card" href="file:///C:/Users/Michelline/Downloads/painel-mh/fiscal/danfe-conferencia.html">
           <div class="card-stripe stripe-gold"></div>
           <div class="card-head">
             <div class="card-icon icon-gold">📄</div>
@@ -608,7 +614,7 @@ body {
           </div>
         </a>
 
-        <a class="tool-card" href="painel-mh/fiscal/cruzamento-nfse.html">
+        <a class="tool-card" href="file:///C:/Users/Michelline/Downloads/painel-mh/fiscal/cruzamento-nfse.html">
           <div class="card-stripe stripe-gold"></div>
           <div class="card-head">
             <div class="card-icon icon-gold">🧾</div>
@@ -635,7 +641,7 @@ body {
       <div class="sector-desc">Ferramentas de conciliação e análise de lançamentos contábeis.</div>
       <div class="tools-grid">
 
-        <a class="tool-card" href="painel-mh/contabil/razao.html">
+        <a class="tool-card" href="file:///C:/Users/Michelline/Downloads/painel-mh/contabil/razao.html">
           <div class="card-stripe stripe-brown"></div>
           <div class="card-head">
             <div class="card-icon icon-brown">📒</div>
@@ -649,7 +655,7 @@ body {
           </div>
         </a>
 
-        <a class="tool-card" href="painel-mh/contabil/cruzamento-notas.html">
+        <a class="tool-card" href="file:///C:/Users/Michelline/Downloads/painel-mh/contabil/cruzamento-notas.html">
           <div class="card-stripe stripe-brown"></div>
           <div class="card-head">
             <div class="card-icon icon-brown">🔗</div>
@@ -663,7 +669,7 @@ body {
           </div>
         </a>
 
-        <a class="tool-card" href="painel-mh/contabil/cruzamento-planilhas.html">
+        <a class="tool-card" href="file:///C:/Users/Michelline/Downloads/painel-mh/contabil/cruzamento-planilhas.html">
           <div class="card-stripe stripe-brown"></div>
           <div class="card-head">
             <div class="card-icon icon-brown">🔀</div>
@@ -750,47 +756,55 @@ window.onload = function() {
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: handleCredentialResponse,
-    auto_select: true,         // tenta login automático se houver sessão ativa
+    auto_select: false,
     cancel_on_tap_outside: false
   });
-
-  // Tenta login automático silencioso (One Tap)
-  google.accounts.id.prompt();
 };
 
 /* =========================================================
    FUNÇÃO ACIONADA PELO BOTÃO "ENTRAR COM GOOGLE"
    ========================================================= */
 function iniciarLogin() {
-  const btn = document.getElementById('btn-google');
-  const label = document.getElementById('btn-google-label');
+  const btn     = document.getElementById('btn-google');
+  const label   = document.getElementById('btn-google-label');
   const spinner = document.getElementById('login-spinner');
-  const erro = document.getElementById('login-error');
+  const erro    = document.getElementById('login-error');
 
-  // Estado de carregamento
   btn.disabled = true;
   label.textContent = 'Aguardando...';
   spinner.style.display = 'block';
   erro.style.display = 'none';
 
-  // Abre o seletor de contas do Google
-  google.accounts.id.prompt(notification => {
-    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-      // One Tap não funcionou — usa o fluxo de popup
-      const client = google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: 'email profile',
-        callback: (tokenResponse) => {
-          if (tokenResponse.access_token) {
-            buscarPerfilGoogle(tokenResponse.access_token);
-          } else {
-            resetarBotao();
-          }
+  // Timeout de segurança: reseta o botão se nada acontecer em 20s
+  const timeout = setTimeout(() => {
+    resetarBotao();
+    mostrarErro('O login demorou demais. Tente novamente.');
+  }, 20000);
+
+  // Vai direto para o popup de seleção de conta Google
+  try {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'email profile openid',
+      callback: (tokenResponse) => {
+        clearTimeout(timeout);
+        if (tokenResponse && tokenResponse.access_token) {
+          buscarPerfilGoogle(tokenResponse.access_token);
+        } else {
+          resetarBotao();
         }
-      });
-      client.requestAccessToken({ prompt: 'select_account' });
-    }
-  });
+      },
+      error_callback: () => {
+        clearTimeout(timeout);
+        resetarBotao();
+      }
+    });
+    client.requestAccessToken({ prompt: 'select_account' });
+  } catch(e) {
+    clearTimeout(timeout);
+    resetarBotao();
+    mostrarErro('Erro ao carregar o Google. Recarregue a página.');
+  }
 }
 
 /* =========================================================
