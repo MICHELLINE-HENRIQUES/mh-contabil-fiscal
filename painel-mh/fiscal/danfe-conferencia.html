@@ -1675,11 +1675,33 @@ async function extrairDANFE(file) {
 // ══════════════════════════════════════════════════════════
 
 function extrairChave(txt) {
-  // Grupos de 4 separados por espaço (formato impresso no DANFE)
+  // Formato A — grupos de 4 dígitos separados por espaço (modelo padrão SEFAZ)
+  // Ex: "2526 0208 7916 5900 0468 5500 3000 0491 4013 8356 9975"
   const m = txt.match(/(\d{4}\s){10}\d{4}/);
   if (m) return m[0].replace(/\s/g,'');
+
+  // Formato B — 44 dígitos contíguos sem separadores
   const m2 = txt.match(/\b(\d{44})\b/);
-  return m2 ? m2[1] : null;
+  if (m2) return m2[1];
+
+  // Formato C — chave com traços e pontos após "CHAVE DE ACESSO"
+  // Ex: "25-2308-11.895.653/0001-00-55-001-000.019.278-100.533.133-6"
+  // Estratégia: localizar o label e extrair os dígitos que se seguem
+  const idxLabel = txt.search(/CHAVE\s+DE\s+ACESSO/i);
+  if (idxLabel >= 0) {
+    const seg = txt.slice(idxLabel, idxLabel + 400);
+    // Pegar o primeiro bloco que começa com 2 dígitos (cUF) e contém / e - misturados
+    const m3 = seg.match(/(?:AUTENTICIDADE[^\d]*|BR\s+)(\d[\d\s\-\.\/:]+\d)/i)
+             || seg.match(/(\d{2}[-\s]\d{4}[-\s][\d\.]+\/[\d\-]+[-\s]\d{2}[-\s][\d\-]+)/);
+    if (m3) {
+      const pura = m3[1].replace(/\D/g, '');
+      if (pura.length === 44) return pura;
+    }
+    // Fallback C2: pegar qualquer sequência numérica de 44 dígitos após o label
+    const nums = seg.replace(/\D/g, '');
+    if (nums.length >= 44) return nums.slice(0, 44);
+  }
+  return null;
 }
 
 function parsearChave(chave) {
@@ -1773,31 +1795,34 @@ function extrairNomeDest(txt) {
 }
 
 function extrairCFOP(txt) {
-  // Normaliza formato X.XXX → XXXX (ex: 5.929 → 5929)
-  // Comum em DANFEs onde CFOP aparece com ponto separador de milhar
+  // Normaliza CFOP com ponto separador (ex: "5.929" → "5929")
   const norm = txt.replace(/\b([1-7])\.(\d{3})\b/g, '$1$2');
 
-  // Camada 1 — NCM(8) + CST(3) + CFOP(4): linha completa com CST preenchido
-  let m = norm.match(/\b\d{8}\s+\d{3}\s+([1-7]\d{3})\b/);
-  if (m) return m[1];
+  // Camada 1a — NCM(8) + CST(3) + CFOP(4) — Modelo A (CST 3 dígitos, ex: "060")
+  let m = norm.match(/\b(\d{8})\s+(\d{3})\s+([1-7]\d{3})\b/);
+  if (m) return m[3];
 
-  // Camada 1b — NCM(8) + CFOP(4) sem CST: coluna O/CST vazia/ausente
-  m = norm.match(/\b\d{8}\s+([1-7]\d{3})\b/);
-  if (m) return m[1];
+  // Camada 1b — NCM(8) + CST(4) + CFOP(4) — Modelo B (CST 4 dígitos, ex: "0102")
+  m = norm.match(/\b(\d{8})\s+(\d{4})\s+([1-7]\d{3})\b/);
+  if (m) return m[3];
+
+  // Camada 1c — NCM(8) + CFOP(4) sem CST explícito
+  m = norm.match(/\b(\d{8})\s+([1-7]\d{3})\b/);
+  if (m) return m[2];
 
   // Camada 2 — segmento após cabeçalho "CFOP"
   const idx = norm.search(/\bCFOP\b/i);
   if (idx >= 0) {
-    const seg = norm.slice(idx + 4, idx + 500);
-    // Com CST
-    m = seg.match(/\b\d{3}\s+([1-7]\d{3})\b/);
+    const seg = norm.slice(idx + 4, idx + 600);
+    // CST 3 ou 4 dígitos + CFOP 4 dígitos
+    m = seg.match(/\b\d{3,4}\s+([1-7]\d{3})\b/);
     if (m) return m[1];
-    // Sem CST — primeiro [1-7]XXX encontrado
+    // Fallback: primeiro [1-7]XXX encontrado
     m = seg.match(/\b([1-7]\d{3})\b/);
     if (m) return m[1];
   }
 
-  // Camada 3 — fallback direto: formato X.XXX no texto original
+  // Camada 3 — formato X.XXX no texto original
   m = txt.match(/\b([1-7])\.(\d{3})\b/);
   if (m) return m[1] + m[2];
 
@@ -1806,17 +1831,32 @@ function extrairCFOP(txt) {
 
 function extrairValorPosicional(items, labels) {
   const norm = s => s.trim().toUpperCase().replace(/[^A-Z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  const isValBRL = s => /^\d[\d\.]*,\d{2}$/.test(s.trim());
+
   for (const item of items) {
     const n = norm(item.str||'');
     if (!labels.some(l => n.includes(norm(l)))) continue;
     const lx = item.transform[4], ly = item.transform[5];
-    const cands = items
+
+    // Passagem 1 — Modelo A: valor na MESMA linha (mesmo Y ±6pt), à direita do label
+    const mesmaLinha = items
       .filter(it => it !== item &&
         Math.abs(it.transform[5]-ly) <= 6 &&
         it.transform[4] > lx &&
-        /^\d[\d\.]*,\d{2}$/.test(it.str.trim()))
+        isValBRL(it.str))
       .sort((a,b) => a.transform[4]-b.transform[4]);
-    if (cands.length) return cands[0].str.trim();
+    if (mesmaLinha.length) return mesmaLinha[0].str.trim();
+
+    // Passagem 2 — Modelo B: valor na linha ABAIXO do label (ΔY entre 8 e 25pt)
+    // e mesmo eixo X (ΔX ±40pt). Neste modelo, label e valor são células separadas.
+    const abaixo = items
+      .filter(it => it !== item &&
+        (ly - it.transform[5]) >= 8 &&
+        (ly - it.transform[5]) <= 25 &&
+        Math.abs(it.transform[4] - lx) <= 40 &&
+        isValBRL(it.str))
+      .sort((a,b) => Math.abs(a.transform[4]-lx) - Math.abs(b.transform[4]-lx));
+    if (abaixo.length) return abaixo[0].str.trim();
   }
   return null;
 }
